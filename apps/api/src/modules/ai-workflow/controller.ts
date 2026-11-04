@@ -4,8 +4,16 @@ import { checkOllamaStatus, listModels } from '../../services/ollamaService';
 import { AiWorkflowRepository, WorkflowTaskRepository } from './repository';
 import { createWorkflowSchema, type AiWorkflowType } from './schema';
 
-export async function listWorkflows(req: Request, res: Response): Promise<void> {
-  const userId = (req as any).userId as string;
+type AuthenticatedRequest = Request & { userId?: string };
+type AuthenticatedWorkflowRequest = Request<{ id: string }> & { userId?: string };
+
+export async function listWorkflows(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const userId = req.userId;
+  if (!userId) {
+    res.status(401).json({ ok: false, error: { code: 'unauthorized', message: 'User ID required' }, meta: { timestamp: new Date().toISOString() } });
+    return;
+  }
+
   const limit = parseInt((req.query.limit as string) ?? '50', 10);
   const offset = parseInt((req.query.offset as string) ?? '0', 10);
   const status = req.query.status as string | undefined;
@@ -21,8 +29,13 @@ export async function listWorkflows(req: Request, res: Response): Promise<void> 
   });
 }
 
-export async function getWorkflow(req: Request<{ id: string }>, res: Response): Promise<void> {
-  const userId = (req as any).userId as string;
+export async function getWorkflow(req: AuthenticatedWorkflowRequest, res: Response): Promise<void> {
+  const userId = req.userId;
+  if (!userId) {
+    res.status(401).json({ ok: false, error: { code: 'unauthorized', message: 'User ID required' }, meta: { timestamp: new Date().toISOString() } });
+    return;
+  }
+
   const repo = new AiWorkflowRepository();
   const workflow = await repo.findById(req.params.id);
 
@@ -37,8 +50,8 @@ export async function getWorkflow(req: Request<{ id: string }>, res: Response): 
   res.json({ ok: true, data: { workflow, tasks }, meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() } });
 }
 
-export async function createWorkflow(req: Request, res: Response): Promise<void> {
-  const userId = (req as any).userId as string;
+export async function createWorkflow(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const userId = req.userId;
   if (!userId) {
     res.status(401).json({ ok: false, error: { code: 'unauthorized', message: 'User ID required' }, meta: { timestamp: new Date().toISOString() } });
     return;
@@ -67,8 +80,13 @@ export async function createWorkflow(req: Request, res: Response): Promise<void>
   res.status(201).json({ ok: true, data: { workflow, tasks, result }, meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() } });
 }
 
-export async function cancelWorkflow(req: Request<{ id: string }>, res: Response): Promise<void> {
-  const userId = (req as any).userId as string;
+export async function cancelWorkflow(req: AuthenticatedWorkflowRequest, res: Response): Promise<void> {
+  const userId = req.userId;
+  if (!userId) {
+    res.status(401).json({ ok: false, error: { code: 'unauthorized', message: 'User ID required' }, meta: { timestamp: new Date().toISOString() } });
+    return;
+  }
+
   const ok = await aiWorkflowService.cancelWorkflow(req.params.id, userId);
 
   if (!ok) {

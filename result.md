@@ -1,60 +1,51 @@
-# Project status audit
+# Project audit and phase completion report
 
 **Reviewed:** 2026-11-04  
-**Scope:** Project documentation and instructions, workspace configuration, application/service structure, and the available build, lint, test, and shell-script checks.
+**Scope:** Project documentation and instructions, workspace configuration, application behavior, and Phases 0–2.
 
 ## Summary
 
-The repository has a substantial **prototype scaffold**: public and dashboard pages, an Express API, shared TypeScript packages, database migrations, a Python analysis service, and policy/research documentation. It is **not yet a verified end-to-end research prototype**. Important workspace checks fail, several developer/operations/product guides are empty, and documented data, analysis, and report workflows are not complete.
+The repository now contains a working, deterministic Finland fiscal-balance prototype spanning a sourced data snapshot, validation/import tooling, API endpoints, and an interactive dashboard. Repository-controlled Phase 0 documentation and setup fixes are in place. Phase 0 cannot be declared fully signed off because maintainer capacity, repository permissions, policy review, and external review are not verifiable from this workspace.
 
-The roadmap explicitly calls this early-stage and proposed work, so roadmap items below are described as outstanding rather than as missed delivery commitments.
+Phases 1 and 2 are implemented as a **prototype**, not independently research-validated or production-ready. The prototype presents historical observations separately from illustrative scenarios and includes assumptions, source information, and limitations. See the [research brief](research/domains/finnish-economy/fiscal-balance-brief.md), [ADR-0002](docs/decisions/ADR-0002-fiscal-balance-prototype.md), and [roadmap status](ROADMAP.md).
 
-## What is in place
+## Phase status
 
-- Project mission, contribution and governance policies, security/data/model policies, and a phased roadmap are present. See [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [ROADMAP.md](ROADMAP.md).
-- The web app includes public pages and authenticated dashboard routes for the major research areas. Several views load records through the shared API client; examples include [DashboardClient.tsx](apps/web/src/app/(dashboard)/dashboard/DashboardClient.tsx) and [SourcesClient.tsx](apps/web/src/app/(dashboard)/dashboard/sources/SourcesClient.tsx).
-- The API has routes/modules for authentication, sources, datasets, indicators, analyses, scenarios, forecasts, reports, notifications, and AI workflows. Database migrations and shared contracts/client packages are present.
-- The Python service has FastAPI routes, basic descriptive/time-series analysis modules, and a local Ollama provider. Data-source catalogues, example data, and an indicator schema also exist.
-- The frontend TypeScript check passed with `pnpm typecheck` in this environment. This only checked the web package; the API does not define a separate `typecheck` script.
+| Phase | Repository implementation | Remaining exit criteria |
+|---|---|---|
+| 0 — Foundation | Project policies/licence and repository scaffolding exist; previously empty developer, operations, and product guides are now populated; setup, worker instructions, CI, and root production start are aligned. | Maintainer/reviewer availability, repository/org permissions, and external policy review remain unverified. |
+| 1 — Research and data | Project-owner-selected question; research brief; Eurostat B9/GD source metadata and dated 2000–2025 fixture; schema; refresh/validation importer; validation tests. | Independent economics/statistics review and source revision review remain outstanding. |
+| 2 — Analytical prototype | Tested database-independent API for source data and bounded deterministic scenarios; typed client; dashboard with observed and projected chart lines, assumptions, update/retrieval dates, reuse terms, and caveats. | Independent researcher reproduction/review remains outstanding; no uncertainty quantification is implemented. |
 
-## Missing or incomplete against the roadmap
+## Implemented and repaired
 
-1. **Phase 0 — project foundation:** Repository policies and a licence are present. Maintainer capacity, repository permissions, and review arrangements cannot be verified from these files.
-2. **Phase 1 — traceable data foundation:** Finland-related research domains and public-source descriptions exist, but the roadmap’s single measurable research question and its reviewed research brief are not evident. The data-import script does not currently load data or validate it against the documented quality rules. Reproducible ingestion, freshness/revision handling, and end-to-end provenance still need to be demonstrated.
-3. **Phase 2 — analytical prototype:** There are analytical modules and API/UI scaffolding, but key dashboard flows are read-only. “New scenario,” “New forecast,” and “New report” are explicitly disabled in the UI. A tested path from a documented source through a reproducible calculation to a result with assumptions, uncertainty, and source attribution remains outstanding.
-4. **Phase 3 — AI evaluation:** Provider, prompt, model-card, and evaluation documentation exists, but no Python test files or evaluation runner/datasets were found in the checked paths. Repeatable factuality, citation, calibration, Finnish-language, and prompt-injection results are not established.
-5. **Phases 4–6:** Public alpha review and institutional/foundation work are roadmap proposals, not demonstrated as completed.
+- Added the Eurostat snapshot at [finland_fiscal_balance.json](data/examples/finland_fiscal_balance.json), JSON Schema, and importer. Validation checks required metadata, indicators, numeric values, debt bounds, and ascending unique years; refresh writes only after both source series validate.
+- Added API routes at `/api/v1/research/fiscal-balance/data` and `/api/v1/research/fiscal-balance/analyze`. The analysis endpoint validates inputs and returns baseline, stress, and gradual-improvement paths using the documented simplified debt-ratio equation.
+- Added the economy dashboard research panel. It separates observations from scenarios and shows source, coverage, retrieval/source update dates, reuse terms, formula, assumptions, and limitations.
+- Added API and Python importer tests, plus a worker health/readiness test. Updated worker packaging instructions and changed CI from incompatible `uv sync` commands to Poetry commands.
+- Added a root `start` script for the built web/API apps and corrected README/developer instructions so the separate Python worker is not presented as part of the pnpm workspace.
+- Filled previously empty developer, operations, and product guides; added ADR-0002; corrected architecture docs about the fiscal flow and unimplemented worker integration.
+- Updated the stale web API helper to use versioned routes and corrected response shapes. Separated the account-settings link from logout to avoid wrapping an interactive button in a link.
+- Existing generic “new scenario/report/forecast” controls remain intentionally disabled; authoring those broader product flows is not necessary for this narrow fiscal prototype.
 
-## Broken or inconsistent items found
+## Known limitations and outstanding work
 
-### Workspace checks
+- Maintainer capacity, GitHub organization/repository permissions, and external sign-off cannot be verified locally.
+- No independent domain reviewer has approved the research definitions, Eurostat snapshot, or scenario assumptions.
+- Scenario paths are illustrative calculations—not forecasts or policy recommendations—and omit stock-flow adjustments and other national-accounting effects.
+- The worker remains separate; its readiness checks and integrations are placeholders. Poetry-based worker CI could not be fully certified without the Poetry environment.
+- The dashboard header's search and notification controls still lack functional destinations/handlers.
+- Later roadmap phases (AI-assisted explanation/evaluation, public alpha review, domain expansion, and institutional development) remain out of scope.
 
-- **Build fails:** `pnpm build` stops in the API TypeScript build with `TS5103: Invalid value for '--ignoreDeprecations'`. The API sets this to `"6.0"` in [tsconfig.json](apps/api/tsconfig.json), while its declared TypeScript dependency is in the 5.x range in [package.json](apps/api/package.json). The web build was cancelled after the API failure and therefore was not verified.
-- **Lint fails:** `pnpm lint` fails for the API because ESLint 9 cannot find a flat `eslint.config.*` file. The API has a legacy [.eslintrc.json](apps/api/.eslintrc.json); the shared config is written in flat-config form in [recommended.js](packages/config/eslint/recommended.js).
-- **Tests fail:** `pnpm test` ran 7 API tests: 3 passed and 4 failed. The unit test imports in [env.test.ts](apps/api/tests/unit/config/env.test.ts) resolve to the wrong relative path. The integration tests in [app.test.ts](apps/api/tests/integration/app.test.ts) omit `DATABASE_URL`, which API initialization requires. The current root test run does not exercise web or Python tests.
+## Validation
 
-### Setup and service instructions
-
-- The root [README.md](README.md) says `pnpm dev` starts the analysis worker and suggests `pnpm dev` inside `services/analysis-worker`. The worker is deliberately excluded from pnpm workspaces in [pnpm-workspace.yaml](pnpm-workspace.yaml), has no `package.json`, and is configured as a Poetry project in [pyproject.toml](services/analysis-worker/pyproject.toml). The documented commands therefore do not start it.
-- The worker’s Poetry script points to `analysis_worker.main:main`, but the checked source entry point is [main.py](services/analysis-worker/src/main.py). The service README at [README.md](services/analysis-worker/README.md) is empty. The documented worker launch/install steps need to be aligned with the actual package layout and tested.
-
-### Data import and application behavior
-
-- `bash -n scripts/data/import_validated_data.sh` fails: the `for` loop has a redirection in its word list. Even after fixing the syntax, the script currently only parses JSON, warns for sample files, and does not load records or validate CSV/schema/quality rules.
-- The API helper [api.ts](apps/web/src/lib/api.ts) calls `/api/sources`, `/api/reports`, and `/api/analysis`, while the API routes use `/api/v1/...`. No callers of these helper functions were found in the web source, so this appears to be stale code rather than a verified live-page failure; update or remove it before reuse.
-- In [DashboardHeader.tsx](apps/web/src/components/layout/DashboardHeader.tsx), the desktop and mobile search inputs have no search handler, and the notification button has no action. The provided user menu is wrapped in a settings link even though it contains a logout button (see [layout.tsx](apps/web/src/app/(dashboard)/layout.tsx)); separate the profile navigation from logout to avoid nested interactive controls and unintended navigation.
-
-### Documentation gaps and drift
-
-- These 13 documentation files are **zero bytes**: `docs/developer/{code-standards,debugging,getting-started,local-developement,testing}.md`, `docs/operations/{backups,deployment,disaster-recovery,incident-response,monitoring}.md`, and `docs/product/{requirements,use-cases,user-roles}.md`. This leaves the corresponding advertised setup, testing, operations, and product guidance unavailable.
-- The root documentation describes `packages/observability`, but that package is absent from the current `packages/` tree. Confirm whether it is still planned; otherwise remove or correct the references in [README.md](README.md), [STRUCTURE.md](STRUCTURE.md), and [system-overview.md](docs/architecture/system-overview.md).
-- [docs/architecture/system-overview.md](docs/architecture/system-overview.md) describes the analysis service retrieving data from PostgreSQL and returning provenance-rich results. That end-to-end path is not demonstrated by the checked worker setup or tests; document the current boundary and mark unimplemented flow as planned until it is wired and tested.
-
-## Recommended next steps
-
-1. Fix the TypeScript and ESLint configuration so `pnpm build` and `pnpm lint` can complete.
-2. Correct API test import paths and supply isolated test configuration so all API tests pass without depending on a developer’s local database.
-3. Repair the data-import script, then add a small reproducible ingestion test using the checked-in sample data.
-4. Document and verify one end-to-end Finnish public-finance research question before expanding features, following the [roadmap exit criteria](ROADMAP.md).
-5. Decide the supported worker launch/package layout; update the README and add a worker health/analysis test.
-6. Fill the empty developer/product/operations guides, then implement or clearly label the disabled authoring flows and header controls.
+- `pnpm build` — passed for the API and web app.
+- `pnpm lint` — passed with 11 pre-existing API warnings and 9 pre-existing web warnings; no lint errors.
+- `pnpm test` — passed; 15 API tests.
+- `pnpm typecheck` — passed for the configured web TypeScript check.
+- `python3 scripts/data/import_fiscal_data.py` — passed; 26 snapshot observations validated.
+- `python3 -m unittest scripts.data.test_import_fiscal_data` — passed; 5 importer tests.
+- `bash -n scripts/data/import_validated_data.sh` and `git diff --check` — passed; no empty files remain under `docs/`.
+- The compiled API was started on an isolated port (4001); `/health` and the fiscal data endpoint returned successfully, including all 26 observations.
+- A default-port `pnpm start` smoke test could not complete because pre-existing local development servers occupied ports 3000/4000. The independent Next.js instance on port 3000 returned HTTP 200, but that response is not attributed to this smoke test.
+- Python worker tests were not run because Poetry/FastAPI are unavailable in the local environment. Its 30 Python source/test files passed syntax parsing; the CI workflow runs worker tests in a Poetry environment.

@@ -1,12 +1,12 @@
 # Open Polityra — Repository Structure
 
-This document lists the complete repository structure for reference.
+This document lists the main repository areas for reference; individual files and package contents change over time.
 
 ## Root
 ```
 open-polityra/
 ├── apps/                    # Application packages
-│   ├── api/                 # Express API server (1,184 LOC)
+│   ├── api/                 # Express API server
 │   └── web/                 # Next.js frontend (React 19 + Recharts)
 ├── data/                    # Data catalogues and schemas
 │   ├── catalog/sources/     # Statistics Finland, Eurostat, World Bank docs
@@ -22,7 +22,7 @@ open-polityra/
 ├── evaluation/              # Model evaluation framework
 │   ├── benchmarks/          # Economic forecasting, geopolitical prediction
 │   ├── bias-and-fairness/  # Bias monitoring and mitigation
-│   ├── calibration/         # Uncibration assessment (Brier score)
+│   ├── calibration/         # Calibration assessment (Brier score)
 │   └── factuality/         # Claim-level accuracy standards
 ├── infra/                   # Infrastructure configs
 │   ├── containers/          # Docker Compose + Dockerfiles for all services
@@ -37,21 +37,12 @@ open-polityra/
 │   ├── config/              # ESLint, TypeScript, Prettier configs
 │   ├── contracts/           # Zod schemas (shared backend/frontend)
 │   ├── database/            # PostgreSQL migrations and seeds
-│   ├── observability/       # Logging, tracing, metrics configs
 │   └── ui/                  # Design tokens and shared components
 ├── research/                # Research domain documentation
-│   ├── domains/             # 8 research domain descriptions
+│   ├── domains/             # Research domain briefs
 │   └── methodology/         # Forecasting and scenario methods
 ├── scripts/                 # Setup, database, data import, release scripts
 ├── services/                # Background services
 │   └── analysis-worker/     # Python FastAPI analysis service (ABC providers)
 └── tests/                   # Cross-app integration test fixtures
 ```
-
-## File Counts by Section
-- **Express Backend**: 23 files (1,184 lines)
-- **Frontend Pages**: 17 pages
-- **Python Analysis Service**: ~30 files
-- **Shared Packages**: 20+ files
-- **Documentation**: 50+ markdown files
-- **CI Workflows**: 8 GitHub Actions workflows

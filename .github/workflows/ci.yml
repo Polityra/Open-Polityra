@@ -49,15 +49,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-          cache-dependency-glob: services/analysis-worker/pyproject.toml
+      - name: Install Poetry
+        run: pipx install poetry==1.8.5
       - name: Install worker dependencies
-        run: uv sync --dev
+        run: poetry install --with dev
       - name: Lint
-        run: uv run ruff check src tests
+        run: poetry run ruff check src tests
       - name: Typecheck
-        run: uv run mypy src
+        run: poetry run mypy src
       - name: Test
-        run: uv run pytest
+        run: poetry run pytest
+
+  fiscal-data:
+    name: Fiscal data validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate checked-in Eurostat snapshot
+        run: python scripts/data/import_fiscal_data.py
+      - name: Test fiscal data importer
+        run: python -m unittest scripts.data.test_import_fiscal_data

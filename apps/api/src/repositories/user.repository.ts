@@ -17,7 +17,6 @@ interface UserRecord extends UserRow {
 
 export class UserRepository {
   private pool: Pool;
-  updatePasswordHash: any;
 
   constructor(pool?: Pool) {
     this.pool = pool ?? getPool();
@@ -75,6 +74,10 @@ export class UserRepository {
 
     const result = await this.pool.query(sql, values);
     return result.rows[0] ?? null;
+  }
+
+  async updatePasswordHash(id: string, passwordHash: string): Promise<void> {
+    await this.pool.query('UPDATE users SET password_hash = $2 WHERE id = $1', [id, passwordHash]);
   }
 
   async delete(id: string): Promise<boolean> {

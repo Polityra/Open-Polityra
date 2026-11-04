@@ -39,7 +39,6 @@ Do not use prototype outputs as the sole basis for financial, public-policy, sec
 | `packages/api-client/` | Typed frontend API client |
 | `packages/ui/` | Shared design system and reusable components |
 | `packages/database/` | PostgreSQL migrations, seeds, and query library |
-| `packages/observability/` | Shared logging, tracing, and metrics configuration |
 | `data/` | Data source catalogues, schemas, validation rules, sample fixtures |
 | `research/` | Research methods, domain studies, working papers, publications |
 | `models/` | AI model registry, prompts, adapters, and model cards |
@@ -73,23 +72,23 @@ pnpm install
 cp .env.example .env
 ```
 
-Python service setup (once `services/analysis-worker/pyproject.toml` is configured):
+Python analysis worker setup:
 
 ```bash
 cd services/analysis-worker
-python -m venv .venv
-source .venv/bin/activate  # on Windows: .venv\Scripts\activate
-python -m pip install -e ".[dev]"
+pipx install poetry
+poetry install --with dev
 ```
 
 ### Development commands (root)
 
 ```bash
-pnpm dev          # Start all services in parallel (web + api + analysis-worker)
+pnpm dev          # Start the web app and API in parallel
 pnpm build        # Build all apps and packages
+pnpm start        # Start the built web app and API in parallel
 pnpm lint         # Lint all code
-pnpm typecheck    # TypeScript type check across all packages
-pnpm test         # Run all tests
+pnpm typecheck    # Run configured TypeScript checks
+pnpm test         # Run configured Node workspace tests
 ```
 
 ### Frontend development
@@ -107,8 +106,10 @@ cd apps/api && pnpm dev   # http://localhost:4000
 ### Python analysis service
 
 ```bash
-cd services/analysis-worker && pnpm dev   # http://localhost:8000
+cd services/analysis-worker && poetry run dev   # http://localhost:8000
 ```
+
+The Python worker is managed separately from the pnpm workspace. The fiscal-balance prototype currently uses a deterministic calculation in the Express API and does not depend on the worker.
 
 ## Architecture overview
 

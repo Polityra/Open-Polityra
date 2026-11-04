@@ -3,8 +3,9 @@ name = "analysis-worker"
 version = "0.1.0"
 description = "Open Polityra analysis engine - FastAPI-based service for political domain data analysis"
 authors = ["Open Polityra Team"]
-license = "MIT"
+license = "Apache-2.0"
 readme = "README.md"
+packages = [{ include = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -25,7 +26,7 @@ pytest-asyncio = "^0.23.0"
 coverage = "^7.5.0"
 
 [tool.poetry.scripts]
-dev = "analysis_worker.main:main"
+dev = "src.main:main"
 
 [build-system]
 requires = ["poetry-core"]
