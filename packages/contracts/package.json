@@ -1,0 +1,16 @@
+{
+  "name": "@open-polityra/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared schemas and API contracts for Open Polityra services.",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api.ts",
+    "./events": "./src/events.ts",
+    "./schemas": "./src/schemas.ts"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  }
+}

@@ -1,0 +1,7 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "packages/config/*"
+
+# Python services under services/ are managed independently with pyproject.toml.
+# Add a directory here only when it contains a Node.js package with its own package.json.

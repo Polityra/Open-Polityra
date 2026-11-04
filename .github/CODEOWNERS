@@ -1,0 +1,7 @@
+* @Polityra
+/.github/ @Polityra
+/apps/api/src/config/ @Polityra
+/apps/api/src/middleware/ @Polityra
+/packages/database/ @Polityra
+/services/analysis-worker/src/security/ @Polityra
+/governance/ @Polityra

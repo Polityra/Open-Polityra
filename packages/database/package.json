@@ -1,0 +1,6 @@
+{
+  "name": "@open-polityra/database",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PostgreSQL database schemas, migrations, and seed data for Open Polityra."
+}

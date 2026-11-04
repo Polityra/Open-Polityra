@@ -1,0 +1,23 @@
+{
+  "request": {
+    "topic": "Impact of EU agricultural policy changes on Finnish dairy sector",
+    "scope": ["economy", "agriculture", "trade"],
+    "time_horizon_months": 24,
+    "methodology": "mixed-methods",
+    "parameters": {
+      "include_scenario_analysis": true,
+      "comparison_countries": ["SWE", "DNK", "NLD"],
+      "data_sources": ["eurostat", "statistics_finland"]
+    }
+  },
+  "expected_output": {
+    "summary": "Narrative summary of projected impacts",
+    "sources": [
+      {"source_id": "uuid-1", "relevance": "high"},
+      {"source_id": "uuid-2", "relevance": "medium"}
+    ],
+    "confidence": 0.7,
+    "method": "quantitative with expert review",
+    "uncertainty_notes": "Results depend on final EU policy text not yet published."
+  }
+}

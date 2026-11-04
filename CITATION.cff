@@ -1,0 +1,22 @@
+cff-version: 2.0.0
+message: "If you use this project, please cite:"
+title: "Open Polityra"
+type: software
+version: "0.1.0"
+license: Apache-2.0
+license-url: "https://opensource.org/licenses/Apache-2.0"
+repository-code: "https://github.com/Polityra/open-polityra"
+abstract: >
+  Open Polityra is an independent, international, open-source research and
+  strategic intelligence platform. It brings together researchers, developers,
+  economists, analysts, and contributors to study global economics, geopolitics,
+  security, cybersecurity, resilience, energy, governance, and long-term global
+  developments.
+keywords:
+  - strategic-intelligence
+  - geopolitics
+  - economics
+  - forecasting
+  - open-source
+  - research
+  - data-analysis

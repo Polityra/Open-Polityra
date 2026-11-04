@@ -1,0 +1,99 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import {
+  LayoutDashboard, BarChart3, Globe2, Shield, Layers, GitBranch, Brain, FileText, Bookmark, Settings, Sparkles,
+} from 'lucide-react'
+
+const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/economy', label: 'Economy', icon: BarChart3 },
+  { href: '/dashboard/geopolitics', label: 'Geopolitics', icon: Globe2 },
+  { href: '/dashboard/security', label: 'Security', icon: Shield },
+  { href: '/dashboard/resilience', label: 'Resilience', icon: Layers },
+  { href: '/dashboard/scenarios', label: 'Scenarios', icon: GitBranch },
+  { href: '/dashboard/forecasting', label: 'Forecasting', icon: Brain },
+  { href: '/dashboard/reports', label: 'Reports', icon: FileText },
+  { href: '/dashboard/sources', label: 'Sources', icon: Bookmark },
+  { href: '/ai-workflow', label: 'AI Workflows', icon: Sparkles, separator: false },
+]
+
+interface SidebarProps {
+  mobile?: boolean;
+  onNavigate?: () => void;
+}
+
+export default function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
+  const pathname = usePathname()
+
+  const itemClass = (active: boolean, pad: string) =>
+    `flex items-center gap-3 rounded-lg px-3 ${pad} text-sm font-medium transition-colors ${active
+      ? 'bg-[#1478fd]/15 text-[#41cbfd] shadow-[inset_2px_0_0_#41cbfd]'
+      : 'text-[#9aa8c7] hover:bg-white/5 hover:text-[#eef2fc]'
+    }`
+
+  const isActive = (href: string) =>
+    pathname === href || (href !== '/dashboard' && !!pathname?.startsWith(href))
+
+  if (mobile) {
+    return (
+      <nav aria-label="Mobile navigation" className="space-y-1">
+        {navItems.map(({ href, label, icon: Icon, separator }) => (
+          separator ? (
+            <div key="separator" className="my-4 border-t border-[#12306a]/70" />
+          ) : (
+            <Link key={href} href={href} onClick={onNavigate} className={itemClass(isActive(href), 'py-3')}>
+              <Icon className="h-5 w-5" />
+              {label}
+            </Link>
+          )
+        ))}
+        <Link href="/dashboard/settings" onClick={onNavigate} className={itemClass(pathname === '/dashboard/settings', 'py-3')}>
+          <Settings className="h-5 w-5" />
+          Settings
+        </Link>
+      </nav>
+    )
+  }
+
+  return (
+   <aside className="fixed left-0 top-16 bottom-0 z-40 hidden w-64 flex-col overflow-hidden border-r border-[#12306a]/70 bg-[#061230]/95 py-6 lg:flex">
+  <div className="min-h-0 flex-1 overflow-y-auto">
+    <p className="px-7 pb-3 font-mono text-[11px] font-medium uppercase tracking-wider text-[#74829f]">
+      Analysis
+    </p>
+
+    <nav className="space-y-1 px-4">
+      {navItems.map(({ href, label, icon: Icon, separator }) => (
+        separator ? (
+          <div key="separator" className="my-4 border-t border-[#12306a]/70" />
+        ) : (
+          <Link
+            key={href}
+            href={href}
+            className={itemClass(isActive(href), 'py-2')}
+          >
+            <Icon className="h-5 w-5 shrink-0" />
+            {label}
+          </Link>
+        )
+      ))}
+    </nav>
+  </div>
+
+  {/* Always pinned to the bottom */}
+  <div className="mt-auto shrink-0 border-t border-[#12306a]/70 px-4 pt-4">
+    <nav>
+      <Link
+        href="/dashboard/settings"
+        className={itemClass(pathname === '/dashboard/settings', 'py-2')}
+      >
+        <Settings className="h-5 w-5 shrink-0" />
+        Settings
+      </Link>
+    </nav>
+  </div>
+</aside>
+  )
+}

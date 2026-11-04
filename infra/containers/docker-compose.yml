@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ../../apps/api
+      dockerfile: ../../infra/containers/Dockerfile.api
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:${DATABASE_PASSWORD:-change_me}@postgres:5432/open_polityra
+      - ANALYSIS_SERVICE_URL=http://analysis-worker:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      analysis-worker:
+        condition: service_started
+
+  web:
+    build:
+      context: ../../apps/web
+      dockerfile: ../../infra/containers/Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - API_URL=http://api:4000
+      - NEXT_PUBLIC_API_URL=/api
+    depends_on:
+      - api
+
+  analysis-worker:
+    build:
+      context: ../../services/analysis-worker
+      dockerfile: ../../infra/containers/Dockerfile.worker
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: open_polityra
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-change_me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../../packages/database/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

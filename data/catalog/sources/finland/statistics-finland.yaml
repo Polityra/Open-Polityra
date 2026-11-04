@@ -1,0 +1,24 @@
+# data/catalog/sources/finland/statistics-finland.yaml
+
+id: statistics-finland
+name: Statistics Finland
+category: economic_statistics
+
+country: FI
+
+access:
+  type: public_api
+  authentication: none
+
+data:
+  formats:
+    - json
+  update_frequency: periodic
+
+quality:
+  requires_validation: true
+  provenance_tracking: true
+
+usage:
+  license_verification_required: true
+  attribution_required: true

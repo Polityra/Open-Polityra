@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-polityra.dev/schemas/economic/indicator.json",
+  "title": "Economic Indicator Record",
+  "description": "Schema for a time-series economic indicator record from any source.",
+  "type": "object",
+  "required": ["id", "name", "unit", "source_id", "values"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unit of measurement (e.g., 'billion_usd', 'percent', 'index')"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["gdp", "inflation", "employment", "trade", "fiscal", "demographic", "other"]
+    },
+    "source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "country_codes": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 3 }
+    },
+    "frequency": {
+      "type": "string",
+      "enum": ["realtime", "daily", "weekly", "monthly", "quarterly", "annual"]
+    },
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["period", "value"],
+        "properties": {
+          "period": { "type": "string", "format": "date" },
+          "value": { "type": "number" },
+          "is_estimate": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+name: Markdown links
+
+on:
+  pull_request:
+    paths:
+      - "**/*.md"
+      - ".github/workflows/markdown-link-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --verbose --no-progress --accept 200,206,301,302,403,429 "**/*.md"
+          fail: true

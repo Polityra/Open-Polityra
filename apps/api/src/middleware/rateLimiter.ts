@@ -1,0 +1,24 @@
+import rateLimit from 'express-rate-limit';
+import { getEnv } from '../config/env';
+import type { Env } from '../config/env';
+
+export function rateLimiter(env?: Env) {
+  const cfg = env ?? getEnv();
+  return rateLimit({
+    windowMs: cfg.RATE_LIMIT_WINDOW_MS,
+    max: cfg.RATE_LIMIT_MAX,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => req.ip ?? 'unknown',
+    handler: (req, res) => {
+      res.status(429).json({
+        ok: false,
+        error: {
+          code: 'rate_limit_exceeded',
+          message: 'Too many requests. Please try again later.',
+        },
+        meta: { timestamp: new Date().toISOString() },
+      });
+    },
+  });
+}

@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "analysis-worker"
+version = "0.1.0"
+description = "Open Polityra analysis engine - FastAPI-based service for political domain data analysis"
+authors = ["Open Polityra Team"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.111.0"
+uvicorn = {extras = ["standard"], version = "^0.30.0"}
+pydantic = "^2.6.0"
+numpy = "^1.26.0"
+pandas = "^2.2.0"
+scipy = "^1.13.0"
+requests = "^2.31.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.0"
+ruff = "^0.4.0"
+mypy = "^1.10.0"
+httpx = "^0.27.0"
+pytest-asyncio = "^0.23.0"
+coverage = "^7.5.0"
+
+[tool.poetry.scripts]
+dev = "analysis_worker.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

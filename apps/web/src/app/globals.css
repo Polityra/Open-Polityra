@@ -1,0 +1,294 @@
+@import "tailwindcss";
+
+/* ── Open Polityra Design Tokens (logo-matched) ─────────────── */
+
+@layer base {
+:root {
+  /* Light theme */
+  --background: #ffffff;
+  --foreground: #0b1226;
+  --surface: #f6f8fc;
+  --surface-elevated: #ffffff;
+  --border: #dde4f0;
+
+  --text-primary: #0b1226;
+  --text-secondary: #4a566e;
+  --text-tertiary: #63718c;
+  --text-inverse: #eef2fc;
+
+  /* Brand: electric blue + cyan from the logo arcs */
+  --brand-primary: #1478fd;
+  --brand-primary-hover: #0b5fd9;
+  --brand-accent: #41cbfd;
+  --brand-light: #d3e6ff;
+  --brand-dark: #0f3370;
+  --brand-silver: #eef2fc;
+
+  --gradient-brand: linear-gradient(135deg, #1478fd 0%, #41cbfd 55%, #eef2fc 100%);
+
+  /* Space navy */
+  --navy-950: #000610;
+  --navy-900: #061230;
+  --navy-800: #0f2147;
+  --navy-700: #1f3561;
+  --navy-600: #324c80;
+
+  /* Semantic colors */
+  --success: #22c55e;
+  --success-light: #dcfce7;
+  --warning: #f59e0b;
+  --warning-light: #fef3c7;
+  --error: #ef4444;
+  --error-light: #fee2e2;
+  --info: #1478fd;
+  --info-light: #d3e6ff;
+
+  /* Spacing tokens */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 2.5rem;
+  --space-3xl: 3rem;
+
+  /* Radius tokens */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-display: var(--font-outfit), 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-sans: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Dark is the primary brand look (matches logo + landing page) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #000610;
+    --foreground: #eef2fc;
+    --surface: #061230;
+    --surface-elevated: #0a1a3d;
+    --border: #12306a;
+
+    --text-primary: #eef2fc;
+    --text-secondary: #9aa8c7;
+    --text-tertiary: #74829f;
+    --text-inverse: #000610;
+
+    --brand-primary: #3f92fd;
+    --brand-primary-hover: #74b0ff;
+    --brand-light: rgba(20, 120, 253, 0.16);
+  }
+}
+
+[data-theme="dark"] {
+  --background: #000610;
+  --foreground: #eef2fc;
+  --surface: #061230;
+  --surface-elevated: #0a1a3d;
+  --border: #12306a;
+
+  --text-primary: #eef2fc;
+  --text-secondary: #9aa8c7;
+  --text-tertiary: #74829f;
+  --text-inverse: #000610;
+
+  --brand-primary: #3f92fd;
+  --brand-primary-hover: #74b0ff;
+  --brand-light: rgba(20, 120, 253, 0.16);
+}
+
+/* ── Global Reset & Base ─────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+/* Logo-style headings: light weight, with the key word heavier */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+h1 strong, h2 strong, h3 strong { font-weight: 600; }
+}
+
+/* ── Data-focused Design System ──────────────────────────────── */
+
+@layer components {
+.card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 1px var(--brand-primary), 0 4px 20px rgba(20, 120, 253, 0.18);
+}
+
+/* Glassy rounded tile, like the app icon */
+.glass-tile {
+  background: linear-gradient(160deg, rgba(20,120,253,0.14), rgba(0,6,16,0.6));
+  border: 1px solid rgba(65, 203, 253, 0.28);
+  border-radius: var(--radius-2xl);
+  backdrop-filter: blur(8px);
+}
+
+.stat-tile {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.stat-tile .stat-value {
+  font-family: var(--font-display);
+  font-size: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.stat-tile .stat-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table thead th {
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.data-table tbody td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.data-table tbody tr:hover td {
+  background: var(--surface);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.tag-primary { background: var(--brand-light); color: var(--brand-primary); }
+.tag-success { background: var(--success-light); color: var(--success); }
+.tag-warning { background: var(--warning-light); color: var(--warning); }
+.tag-error   { background: var(--error-light);   color: var(--error); }
+
+/* Primary button: electric blue, glows like the logo */
+.btn-primary {
+  background: var(--brand-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg);
+  font-weight: 500;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-primary:hover {
+  background: var(--brand-primary-hover);
+  box-shadow: 0 0 24px rgba(20, 120, 253, 0.45);
+}
+
+.chart-container {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  overflow: hidden;
+}
+
+.section-heading {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-md);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Utility classes ─────────────────────────────────────────── */
+
+.text-gradient {
+  background: linear-gradient(135deg, #1478fd, #41cbfd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Tagline underline from the banner */
+.accent-rule {
+  height: 2px;
+  width: 8rem;
+  background: linear-gradient(90deg, #32b2f7, #3468f5);
+}
+
+.border-gradient {
+  border-image: linear-gradient(135deg, #1478fd, #41cbfd) 1;
+}
+}

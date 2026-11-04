@@ -1,0 +1,6 @@
+{
+  "extends": ["@open-polityra/eslint-config"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}

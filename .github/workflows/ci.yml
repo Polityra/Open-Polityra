@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node:
+    name: Node.js workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm run lint --if-present
+      - name: Typecheck
+        run: pnpm run typecheck --if-present
+      - name: Test
+        run: pnpm run test --if-present
+      - name: Build
+        run: pnpm run build --if-present
+
+  python:
+    name: Python analysis worker
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/analysis-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: services/analysis-worker/pyproject.toml
+      - name: Install worker dependencies
+        run: uv sync --dev
+      - name: Lint
+        run: uv run ruff check src tests
+      - name: Typecheck
+        run: uv run mypy src
+      - name: Test
+        run: uv run pytest

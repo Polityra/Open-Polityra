@@ -1,0 +1,199 @@
+"""Pydantic v2 models for analysis request and response schemas."""
+
+from __future__ import annotations
+
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field, field_validator
+
+
+# ── Enums ──────────────────────────────────────────────────────────────────────
+
+
+class Methodology(str, Enum):
+    """Analysis methodology to apply."""
+
+    DESCRIPTIVE = "descriptive"
+    TIMESERIES = "timeseries"
+    FORECASTING = "forecasting"
+    SIMULATION = "simulation"
+    COMPREHENSIVE = "comprehensive"
+
+
+class DataScope(str, Enum):
+    """Geographic or thematic scope of the analysis."""
+
+    GLOBAL = "global"
+    REGIONAL = "regional"
+    NATIONAL = "national"
+    SUBNATIONAL = "subnational"
+    ORGANIZATION = "organization"
+    TOPIC = "topic"
+
+
+# ── Request schemas ────────────────────────────────────────────────────────────
+
+
+class AnalysisRequest(BaseModel):
+    """Schema for a single analysis request.
+
+    All external input is validated at the trust boundary before any
+    downstream processing occurs.
+    """
+
+    topic: str = Field(
+        ...,
+        min_length=2,
+        max_length=512,
+        description="The political topic or question to analyse",
+    )
+    scope: DataScope = Field(
+        default=DataScope.TOPIC,
+        description="Geographic or thematic scope of the analysis",
+    )
+    time_horizon: int = Field(
+        default=30,
+        ge=1,
+        le=3650,
+        description="Number of days into the future for forecasts (1-3650)",
+    )
+    methodology: Methodology = Field(
+        default=Methodology.COMPREHENSIVE,
+        description="Analysis methodology to use",
+    )
+    enable_ai_synthesis: bool = Field(
+        default=True,
+        description="Whether to run AI-assisted synthesis after statistical analysis",
+    )
+    custom_parameters: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Optional methodology-specific parameters",
+    )
+
+    @field_validator("topic")
+    @classmethod
+    def _topic_not_whitespace(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("topic must contain non-whitespace characters")
+        return value
+
+
+class AnalysisResponse(BaseModel):
+    """Schema for the analysis result.
+
+    Every response contains at minimum: summary, evidence/sources,
+    confidence level (0-1), methodology used, and uncertainty notes.
+    """
+
+    topic: str = Field(description="The analysed topic")
+    scope: DataScope = Field(description="Analysis scope")
+    summary: str = Field(
+        ...,
+        description="Human-readable narrative summary of the analysis findings",
+    )
+    evidence: list[EvidenceItem] = Field(
+        default_factory=list,
+        description="List of supporting evidence and data sources",
+    )
+    confidence: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Overall confidence in the findings (0.0-1.0)",
+    )
+    methodology: Methodology = Field(description="Methodology that was applied")
+    uncertainty: UncertaintyNote = Field(
+        default_factory=UncertaintyNote,
+        description="Breakdown of identified uncertainties",
+    )
+    statistics: dict[str, Any] | None = Field(
+        default=None,
+        description="Descriptive statistics for the data (mean, std, percentiles)",
+    )
+    forecast: ForecastInfo | None = Field(
+        default=None,
+        description="Forecasted values if applicable",
+    )
+    scenarios: list[ScenarioResult] | None = Field(
+        default=None,
+        description="Simulation results for different scenarios",
+    )
+    processed_at: datetime = Field(default_factory=datetime.utcnow)
+    processing_duration_ms: float = Field(
+        ...,
+        description="Total wall-clock time for the analysis in milliseconds",
+    )
+
+    def to_dict(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
+
+
+# ── Supporting models ──────────────────────────────────────────────────────────
+
+
+class EvidenceItem(BaseModel):
+    """A single piece of evidence supporting the analysis."""
+
+    source: str = Field(description="Name or URL of the data source")
+    type: str = Field(description="Type of evidence (e.g. dataset, report, statistic)")
+    description: str = Field(description="Brief description of this evidence")
+    relevance: float = Field(
+        ge=0.0, le=1.0, default=0.5, description="Relevance to the analysis"
+    )
+
+
+class UncertaintyNote(BaseModel):
+    """Identified uncertainty factors for the analysis."""
+
+    overall_level: str = Field(default="medium")
+    data_gaps: list[str] = Field(default_factory=list)
+    model_limitations: list[str] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
+
+
+class ForecastInfo(BaseModel):
+    """Forecasted values for a time horizon."""
+
+    period_days: int = Field(description="Forecast period in days")
+    projected_values: list[ProjectedValue] = Field(default_factory=list)
+    trend_direction: str = Field(description="Overall trend (increasing/decreasing/stable)")
+
+
+class ProjectedValue(BaseModel):
+    """A single projected value at a specific day."""
+
+    day: int = Field(description="Day index in the forecast horizon")
+    point_estimate: float = Field(description="Point estimate")
+    lower_bound: float | None = Field(
+        default=None, description="Lower bound of confidence interval"
+    )
+    upper_bound: float | None = Field(
+        default=None, description="Upper bound of confidence interval"
+    )
+
+
+class ScenarioResult(BaseModel):
+    """Result from a scenario simulation."""
+
+    name: str = Field(description="Name of the scenario")
+    outcome_summary: str = Field(description="Summary of outcomes for this scenario")
+    key_metrics: dict[str, float] = Field(
+        default_factory=dict, description="Key numerical metrics for this scenario"
+    )
+
+
+class HealthResponse(BaseModel):
+    """Schema for health check endpoints."""
+
+    status: str = Field(default="ok")
+    service: str = Field(default="analysis-worker")
+    uptime_seconds: float
+    components: dict[str, str] = Field(default_factory=dict)
+
+
+class ReadyResponse(BaseModel):
+    """Schema for the readiness probe."""
+
+    ready: bool = Field(description="Whether the service is ready to process requests")
+    checks: dict[str, bool] = Field(default_factory=dict)
