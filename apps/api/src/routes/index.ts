@@ -14,10 +14,31 @@ import * as auditService from '../modules/audit/service';
 import * as forecastService from '../modules/forecasts/service';
 import * as modelRegistryService from '../modules/model-registry/service';
 import * as notificationService from '../modules/notifications/service';
+import { fiscalScenarioInputSchema } from '../modules/fiscal-balance/schema';
+import { analyzeFiscalBalance, getFiscalDataset } from '../modules/fiscal-balance/service';
 
 export function registerRoutes(app: Express): void {
   // Apply rate limiter to all /api/v1 routes
   app.use('/api/v1', rateLimiter());
+
+  // Public-source, deterministic research prototype; it does not depend on the database.
+  app.get('/api/v1/research/fiscal-balance/data', async (_req, res) => {
+    const dataset = await getFiscalDataset();
+    res.json({ ok: true, data: dataset, meta: { timestamp: new Date().toISOString() } });
+  });
+  app.post('/api/v1/research/fiscal-balance/analyze', async (req, res) => {
+    const parsed = fiscalScenarioInputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        ok: false,
+        error: { code: 'validation_error', message: parsed.error.message },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const result = await analyzeFiscalBalance(parsed.data);
+    res.json({ ok: true, data: result, meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() } });
+  });
 
   // ---- Authentication routes ----
   app.post('/api/v1/auth/login', userController.login);

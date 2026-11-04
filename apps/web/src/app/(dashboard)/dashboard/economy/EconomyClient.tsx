@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/set-state-in-effect */
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -7,6 +5,7 @@ import { TrendingUp, Calendar, Ruler, Search } from 'lucide-react'
 import { api, type IndicatorRow } from '@open-polityra/api-client'
 import { PageHeader, StatCard, EmptyState, LoadingBlock, ErrorNote, InfoNote, Badge, panel, sectionTitle, inputClass, th } from '@/components/dashboard/kit'
 import { pick, pickTotal } from '@/components/dashboard/kit'
+import FiscalBalanceExplorer from './FiscalBalanceExplorer'
 
 export default function EconomyClient() {
   const [indicators, setIndicators] = useState<IndicatorRow[]>([])
@@ -35,6 +34,7 @@ export default function EconomyClient() {
   return (
     <div className="space-y-8">
       <PageHeader title="Economic" accent="Analysis" description="Macroeconomic indicators tracked in the platform registry." />
+      <FiscalBalanceExplorer />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatCard label="Indicators" value={loading ? '—' : total} icon={TrendingUp} sub="In the registry" />

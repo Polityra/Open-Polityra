@@ -168,6 +168,58 @@ export interface NotificationRow { id: string; user_id: string; type: string; ti
 
 export interface AuditLogRow { id: string; user_id: string; action: string; resource_type: string; details: Record<string, unknown> | null; ip_address: string | null; created_at: string }
 
+export interface FiscalObservation { year: number; balance_pct_gdp: number; debt_pct_gdp: number }
+export interface FiscalDataset {
+  dataset: string;
+  title: string;
+  source: {
+    publisher: string;
+    dataset_id: string;
+    url: string;
+    license: string;
+    license_url: string;
+    geography: string;
+    frequency: string;
+    unit: string;
+    sector: string;
+    retrieved_at: string;
+    last_updated: string;
+  };
+  indicators: {
+    balance_pct_gdp: { code: string; label: string; interpretation: string };
+    debt_pct_gdp: { code: string; label: string };
+  };
+  observations: FiscalObservation[];
+  limitations: string[];
+}
+export interface FiscalScenarioRequest {
+  projectionYears: number;
+  stressAnnualBalanceChange: number;
+  stressNominalGdpGrowth: number;
+  stressEffectiveInterest: number;
+}
+export interface FiscalScenario {
+  id: 'baseline' | 'stress' | 'improvement';
+  name: string;
+  description: string;
+  assumptions: {
+    annual_balance_change_pp: number;
+    nominal_gdp_growth_percent: number;
+    effective_interest_rate_percent: number;
+  };
+  values: FiscalObservation[];
+}
+export interface FiscalAnalysis {
+  research_question: string;
+  source: FiscalDataset['source'];
+  indicators: FiscalDataset['indicators'];
+  history: FiscalObservation[];
+  latest: FiscalObservation;
+  projection: { years: number; method: string; scenarios: FiscalScenario[] };
+  limitations: string[];
+  is_forecast: false;
+}
+
 export type AiWorkflowStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
 export type AiWorkflowType = 'economic-analysis' | 'geopolitical-assessment' | 'scenario-generation' | 'text-summary' | 'forecast' | 'custom'
 
@@ -358,6 +410,19 @@ export const api = {
       if (params?.limit) qs.set('limit', String(params.limit))
       if (params?.offset) qs.set('offset', String(params.offset))
       return _buildClient().get<{ forecasts: ForecastRow[] }>(`/api/v1/forecasts?${qs}`)
+    },
+  },
+
+  /* ── Fiscal balance research prototype ─────────────────── */
+  fiscalBalance: {
+    data() {
+      return _buildClient().get<FiscalDataset>('/api/v1/research/fiscal-balance/data')
+    },
+    analyze(payload: FiscalScenarioRequest) {
+      return _buildClient().post<FiscalAnalysis, FiscalScenarioRequest>(
+        '/api/v1/research/fiscal-balance/analyze',
+        payload,
+      )
     },
   },
 

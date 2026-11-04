@@ -2,6 +2,8 @@
 
 ## Architecture Diagram (Text Description)
 
+The diagram shows the intended service layout; the Python worker integration is not currently wired into the fiscal-balance prototype.
+
 ```
 +------------------+       +----------------------+       +------------------------+
 |  Next.js Front   | ----> |  Express Backend API | ----> |  PostgreSQL Database   |
@@ -34,33 +36,36 @@
 
 ### Backend API (apps/api/)
 - Request validation, authentication, and authorization
-- Database queries through repository pattern
-- Business logic orchestration across modules
-- Communication with Python analysis service
+- Database queries and business logic for existing application modules
+- Public fiscal-balance data and deterministic scenario routes independent of the database
 - Consistent JSON API responses with standardized error handling
 
 ### Python Analysis Service (services/analysis-worker/)
-- Computational analysis: statistical methods, forecasting, scenario modeling
-- AI-assisted synthesis via provider abstraction layer
-- Data processing pipelines with provenance tracking
-- Returns structured results with confidence levels and source attribution
+- Separate FastAPI service with analysis and health routes
+- Contains statistical, scenario, and provider scaffolding
+- Is not currently invoked by the fiscal-balance prototype
+- Its readiness response includes placeholders and does not verify external dependencies
 
 ### Shared Packages
 - **@open-polityra/contracts**: Common data schemas for frontend, backend, and Python service
 - **@open-polityra/api-client**: Typed client used by the frontend to call the backend API
 - **@open-polityra/ui**: Shared design system components and tokens
 - **@open-polityra/database**: PostgreSQL migrations, seed data, and query library
-- **@open-polityra/observability**: Shared logging, tracing, and metrics configuration
 
 ## Data Flow
 
-1. User initiates a request through the frontend
-2. Frontend sends authenticated API call via `@open-polityra/api-client`
-3. Express backend validates the request, checks permissions, and processes business logic
-4. For analytical tasks, backend submits a structured request to the Python service
-5. Python service retrieves relevant data from PostgreSQL and performs analysis
-6. Results are returned with evidence, confidence levels, and methodology documentation
-7. Backend formats the response and sends it to the frontend for display
+### Fiscal-balance prototype
+
+1. The dashboard calls the public-source research endpoints through `@open-polityra/api-client`.
+2. The Express API reads and validates the checked-in Eurostat snapshot.
+3. The analysis route validates scenario inputs and calculates deterministic illustrative paths.
+4. The dashboard presents observed values, scenarios, source metadata, assumptions, and limitations.
+
+This flow does not use PostgreSQL or the Python worker.
+
+### Existing database-backed application routes
+
+Authenticated routes validate requests and use the API's data-access modules for configured database operations. The Python worker is a separate service; a general end-to-end API-to-worker-to-database analytical flow is not yet demonstrated.
 
 ## Security Model
 

@@ -3,8 +3,11 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
+    "noEmit": false,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "verbatimModuleSyntax": false,
     "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@open-polityra/contracts": ["../../packages/contracts/src"]
     }

@@ -6,6 +6,14 @@ This roadmap describes a proposed order of work for an early-stage volunteer ini
 
 The first objective is a narrow, reproducible prototype—not a general-purpose AI system for government use.
 
+## Implementation status — 2026-11-04
+
+- **Phase 0 — repository-controlled work substantially complete:** baseline project policies, contributor instructions, ownership/template scaffolding, development guides, and an initial architecture decision are documented. Maintainer availability, repository permissions, policy review, and contribution/review capacity remain externally unverified, so the Phase 0 exit criteria are not fully confirmed.
+- **Phase 1 — prototype pipeline implemented; external review pending:** the project owner selected the Finland fiscal-balance question, a research brief and Eurostat snapshot/schema/importer are checked in, and validation tests cover the fixture and malformed data. Independent economics/statistics review is still required.
+- **Phase 2 — deterministic prototype implemented; independent reproduction pending:** tested API endpoints and an economy-dashboard view provide observed values plus baseline, stress, and improvement scenarios with assumptions and limitations. The scenarios are illustrative, not forecasts; no independent researcher has yet reproduced or reviewed the result.
+
+These are implementation-status notes, not a claim of independent approval or completion of external exit criteria.
+
 ## Guiding delivery principles
 
 - Start with public, well-documented data.
@@ -42,7 +50,7 @@ Exit criteria:
 
 **Goal:** select one useful and measurable research question and build a traceable data pipeline.
 
-Candidate initial use case: analyse selected public indicators related to Finnish public finances and compare clearly defined fiscal scenarios. The exact question should be chosen after review by contributors with relevant economics and statistics expertise.
+Initial prototype question: “How have Finland's general-government deficit/surplus and gross debt changed, and how do transparent assumptions alter illustrative debt paths?” It was selected for the implementation prototype; review by contributors with relevant economics and statistics expertise remains outstanding. See the [research brief](research/domains/finnish-economy/fiscal-balance-brief.md).
 
 Proposed work:
 

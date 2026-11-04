@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-polityra.dev/schemas/finland-fiscal-balance.schema.json",
+  "title": "Finland General Government Fiscal Balance Snapshot",
+  "type": "object",
+  "required": ["dataset", "source", "indicators", "observations", "limitations"],
+  "properties": {
+    "dataset": { "const": "finland_general_government_fiscal_balance" },
+    "title": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": ["publisher", "dataset_id", "url", "license", "license_url", "geography", "frequency", "unit", "sector", "retrieved_at", "last_updated"],
+      "properties": {
+        "publisher": { "const": "Eurostat" },
+        "dataset_id": { "const": "gov_10dd_edpt1" },
+        "url": { "type": "string", "format": "uri" },
+        "license": { "type": "string", "minLength": 1 },
+        "license_url": { "type": "string", "format": "uri" },
+        "geography": { "const": "FI" },
+        "frequency": { "const": "Annual" },
+        "unit": { "const": "Percent of GDP" },
+        "sector": { "const": "General government (S13)" },
+        "retrieved_at": { "type": "string", "format": "date" },
+        "last_updated": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "indicators": {
+      "type": "object",
+      "required": ["balance_pct_gdp", "debt_pct_gdp"],
+      "properties": {
+        "balance_pct_gdp": {
+          "type": "object",
+          "required": ["code", "label", "interpretation"],
+          "properties": {
+            "code": { "const": "B9" },
+            "label": { "type": "string" },
+            "interpretation": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "debt_pct_gdp": {
+          "type": "object",
+          "required": ["code", "label"],
+          "properties": {
+            "code": { "const": "GD" },
+            "label": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "observations": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["year", "balance_pct_gdp", "debt_pct_gdp"],
+        "properties": {
+          "year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+          "balance_pct_gdp": { "type": "number" },
+          "debt_pct_gdp": { "type": "number", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false
+}

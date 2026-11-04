@@ -4,6 +4,7 @@ import DashboardHeader from "@/components/layout/DashboardHeader";
 import Sidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/lib/protected-route";
 import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
 import { LogOut } from "lucide-react";
 
 function UserMenu() {
@@ -11,7 +12,7 @@ function UserMenu() {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-600 dark:bg-[#1a2d45]">
+      <Link href="/dashboard/settings" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-600 dark:bg-[#1a2d45]">
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
           {(user?.name ?? "U")[0].toUpperCase()}
         </div>
@@ -19,7 +20,7 @@ function UserMenu() {
         <span className="hidden text-sm font-medium text-slate-700 dark:text-slate-200 sm:inline">
           {user?.name || "Analyst"}
         </span>
-      </div>
+      </Link>
 
       <button
         type="button"

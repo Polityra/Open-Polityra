@@ -1,0 +1,61 @@
+{
+  "dataset": "finland_general_government_fiscal_balance",
+  "title": "Finland: general government net lending and consolidated gross debt",
+  "source": {
+    "publisher": "Eurostat",
+    "dataset_id": "gov_10dd_edpt1",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/gov_10dd_edpt1",
+    "license": "Reuse subject to Eurostat's copyright and reuse policy; attribution required.",
+    "license_url": "https://ec.europa.eu/eurostat/about-us/policies/copyright",
+    "geography": "FI",
+    "frequency": "Annual",
+    "unit": "Percent of GDP",
+    "sector": "General government (S13)",
+    "retrieved_at": "2026-11-04",
+    "last_updated": "2026-10-21T11:00:00+02:00"
+  },
+  "indicators": {
+    "balance_pct_gdp": {
+      "code": "B9",
+      "label": "Net lending (+) / net borrowing (-)",
+      "interpretation": "A negative value indicates net borrowing (a deficit); a positive value indicates net lending (a surplus)."
+    },
+    "debt_pct_gdp": {
+      "code": "GD",
+      "label": "Government consolidated gross debt"
+    }
+  },
+  "observations": [
+    { "year": 2000, "balance_pct_gdp": 6.9, "debt_pct_gdp": 45.1 },
+    { "year": 2001, "balance_pct_gdp": 5.0, "debt_pct_gdp": 43.4 },
+    { "year": 2002, "balance_pct_gdp": 4.1, "debt_pct_gdp": 42.6 },
+    { "year": 2003, "balance_pct_gdp": 2.4, "debt_pct_gdp": 45.2 },
+    { "year": 2004, "balance_pct_gdp": 2.2, "debt_pct_gdp": 44.9 },
+    { "year": 2005, "balance_pct_gdp": 2.7, "debt_pct_gdp": 42.1 },
+    { "year": 2006, "balance_pct_gdp": 4.0, "debt_pct_gdp": 40.2 },
+    { "year": 2007, "balance_pct_gdp": 5.1, "debt_pct_gdp": 36.0 },
+    { "year": 2008, "balance_pct_gdp": 4.2, "debt_pct_gdp": 34.7 },
+    { "year": 2009, "balance_pct_gdp": -2.5, "debt_pct_gdp": 44.1 },
+    { "year": 2010, "balance_pct_gdp": -2.6, "debt_pct_gdp": 50.1 },
+    { "year": 2011, "balance_pct_gdp": -1.0, "debt_pct_gdp": 52.0 },
+    { "year": 2012, "balance_pct_gdp": -2.2, "debt_pct_gdp": 57.9 },
+    { "year": 2013, "balance_pct_gdp": -2.5, "debt_pct_gdp": 60.8 },
+    { "year": 2014, "balance_pct_gdp": -3.0, "debt_pct_gdp": 64.8 },
+    { "year": 2015, "balance_pct_gdp": -2.4, "debt_pct_gdp": 68.8 },
+    { "year": 2016, "balance_pct_gdp": -1.7, "debt_pct_gdp": 68.6 },
+    { "year": 2017, "balance_pct_gdp": -0.6, "debt_pct_gdp": 66.6 },
+    { "year": 2018, "balance_pct_gdp": -0.9, "debt_pct_gdp": 65.4 },
+    { "year": 2019, "balance_pct_gdp": -0.9, "debt_pct_gdp": 65.3 },
+    { "year": 2020, "balance_pct_gdp": -5.5, "debt_pct_gdp": 75.3 },
+    { "year": 2021, "balance_pct_gdp": -2.7, "debt_pct_gdp": 73.1 },
+    { "year": 2022, "balance_pct_gdp": -0.2, "debt_pct_gdp": 74.1 },
+    { "year": 2023, "balance_pct_gdp": -3.0, "debt_pct_gdp": 77.2 },
+    { "year": 2024, "balance_pct_gdp": -4.4, "debt_pct_gdp": 82.5 },
+    { "year": 2025, "balance_pct_gdp": -3.8, "debt_pct_gdp": 88.4 }
+  ],
+  "limitations": [
+    "Annual Eurostat observations can be revised after publication; this file is a dated snapshot.",
+    "Net lending/borrowing and debt-to-GDP are observed statistics, not policy recommendations.",
+    "The prototype's debt scenarios are simplified calculations and omit stock-flow adjustments and other national-accounting effects."
+  ]
+}

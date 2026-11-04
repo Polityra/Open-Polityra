@@ -88,13 +88,11 @@ export default function DashboardHeader({
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-indigo-500" />
           </button>
 
-          <Link href="/dashboard/settings" className="hidden lg:block">
           {userMenu && (
-            <div className="hidden border-l border-slate-200 pl-3 dark:border-slate-700 sm:block">
+            <div className="hidden border-l border-slate-200 pl-3 dark:border-slate-700 lg:block">
               {userMenu}
             </div>
           )}
-          </Link>
 
           {mobileMenu && (
             <button
@@ -135,13 +133,11 @@ export default function DashboardHeader({
       {/* Mobile Navigation */}
       {menuOpen && mobileMenu && (
         <div className="max-h-[calc(100dvh-64px)] w-full overflow-y-auto border-t border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#0b1728] lg:hidden">
-          <Link href="/dashboard/settings">
          {userMenu && (
-            <div className="mb-4 border-b border-slate-200 pb-4 dark:border-slate-700 sm:hidden">
+            <div className="mb-4 border-b border-slate-200 pb-4 dark:border-slate-700 lg:hidden">
               {userMenu}
             </div>
           )}
-          </Link>
 
           {mobileMenu(closePanels)}
         </div>
