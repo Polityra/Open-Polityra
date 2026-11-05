@@ -302,6 +302,8 @@ export interface OllamaHealthStatus {
   available: boolean;
   models: string[];
   modelAvailable: boolean;
+  provider: 'ollama' | 'ollama-cloud' | null;
+  selectedModel: string | null;
   available_models?: Array<{ name: string; model: string; size: number; digest: string; format: string; family: string; parameter_size: string }>;
 }
 

@@ -17,11 +17,14 @@ export interface OllamaChatMessage {
 
 export interface OllamaGenerateOptions {
   model?: string;
+  provider?: 'ollama' | 'ollama-cloud';
   system?: string;
   stream?: boolean;
   format?: 'json' | 'text';
   template?: string;
 }
+
+export type OllamaProvider = 'ollama' | 'ollama-cloud';
 
 export interface OllamaChatResponse {
   model: string;
@@ -49,27 +52,75 @@ export interface OllamaListModelsResponse {
   models: OllamaModelInfo[];
 }
 
+function getCloudApiKey(cfg: Env): string {
+  return cfg.OLLAMA_API_KEY || (cfg.AI_PROVIDER.toLowerCase() === 'ollama' ? cfg.AI_API_KEY : '');
+}
+
+async function fetchModels(baseUrl: string, apiKey?: string): Promise<OllamaModelInfo[] | null> {
+  try {
+    const res = await fetch(`${baseUrl}/api/tags`, {
+      headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined,
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return null;
+
+    const body: OllamaListModelsResponse = await res.json();
+    return Array.isArray(body.models) ? body.models : null;
+  } catch {
+    return null;
+  }
+}
+
+function hasModel(models: OllamaModelInfo[], model: string): boolean {
+  return models.some((item) => item.model === model || item.name === model);
+}
+
 /**
- * Check if Ollama is reachable and the required model is available.
+ * Select a configured local model when available, otherwise use Ollama Cloud.
  */
-export async function checkOllamaStatus(): Promise<{
+export async function checkOllamaStatus(requestedModel?: string): Promise<{
   available: boolean;
   models: string[];
   modelAvailable: boolean;
+  provider: OllamaProvider | null;
+  selectedModel: string | null;
 }> {
-  try {
-    const cfg = _getEnv();
-    const res = await fetch(`${cfg.OLLAMA_BASE_URL}/api/tags`, { signal: AbortSignal.timeout(3000) });
-    if (!res.ok) return { available: false, models: [], modelAvailable: false };
+  const cfg = _getEnv();
+  const localModels = await fetchModels(cfg.OLLAMA_BASE_URL);
+  const localModel = requestedModel || cfg.AI_MODEL;
 
-    const body: OllamaListModelsResponse = await res.json();
-    const modelTag = cfg.AI_MODEL;
-    const found = body.models.some((m) => m.model.startsWith(modelTag) || m.name === modelTag);
-
-    return { available: true, models: body.models.map((m) => m.model), modelAvailable: !!found };
-  } catch {
-    return { available: false, models: [], modelAvailable: false };
+  if (localModels && hasModel(localModels, localModel)) {
+    return {
+      available: true,
+      models: localModels.map((item) => item.model),
+      modelAvailable: true,
+      provider: 'ollama',
+      selectedModel: localModel,
+    };
   }
+
+  const apiKey = getCloudApiKey(cfg);
+  if (apiKey) {
+    const cloudModels = await fetchModels('https://ollama.com', apiKey);
+    const cloudModel = requestedModel || cfg.OLLAMA_CLOUD_MODEL;
+    if (cloudModels && hasModel(cloudModels, cloudModel)) {
+      return {
+        available: true,
+        models: localModels?.map((item) => item.model) ?? [],
+        modelAvailable: true,
+        provider: 'ollama-cloud',
+        selectedModel: cloudModel,
+      };
+    }
+  }
+
+  return {
+    available: false,
+    models: localModels?.map((item) => item.model) ?? [],
+    modelAvailable: false,
+    provider: null,
+    selectedModel: null,
+  };
 }
 
 /**
@@ -81,11 +132,27 @@ export async function generateChat(
 ): Promise<{ content: string; model: string; durationMs: number }> {
   const cfg = _getEnv();
   const { model = cfg.AI_MODEL, system, format = 'text' } = options;
+  let provider = options.provider;
+  let selectedModel = model;
+
+  if (!provider) {
+    const status = await checkOllamaStatus(options.model);
+    if (!status.available || !status.provider || !status.selectedModel) {
+      throw new AppError(503, 'ollama_unavailable', 'No configured Ollama model is available locally or in Ollama Cloud.');
+    }
+    provider = status.provider;
+    selectedModel = status.selectedModel;
+  }
+
+  const apiKey = provider === 'ollama-cloud' ? getCloudApiKey(cfg) : '';
+  if (provider === 'ollama-cloud' && !apiKey) {
+    throw new AppError(503, 'ollama_cloud_api_key_missing', 'OLLAMA_API_KEY is required to use Ollama Cloud.');
+  }
 
   const ollamaMessages = messages.filter((m) => m.content.trim());
 
   const body: Record<string, unknown> = {
-    model,
+    model: selectedModel,
     messages: system
       ? [
         { role: 'system' as const, content: system },
@@ -101,16 +168,20 @@ export async function generateChat(
     },
   };
 
-  const res = await fetch(`${cfg.OLLAMA_BASE_URL}/api/chat`, {
+  const baseUrl = provider === 'ollama-cloud' ? 'https://ollama.com' : cfg.OLLAMA_BASE_URL;
+  const res = await fetch(`${baseUrl}/api/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+    },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(120_000),
   });
 
   if (!res.ok) {
     const bodyText = await res.text().catch(() => '');
-    throw new AppError(res.status, 'ollama_error', `Ollama chat error (${res.status}): ${bodyText || 'Unknown error'}`);
+    throw new AppError(res.status, 'ollama_error', `Ollama ${provider} chat error (${res.status}): ${bodyText || 'Unknown error'}`);
   }
 
   const raw: OllamaChatResponse = await res.json();
@@ -146,12 +217,32 @@ export async function generateText(
 ): Promise<{ content: string; model: string; durationMs: number }> {
   const cfg = _getEnv();
   const { model = cfg.AI_MODEL, system } = options;
+  let provider = options.provider;
+  let selectedModel = model;
 
-  const res = await fetch(`${cfg.OLLAMA_BASE_URL}/api/generate`, {
+  if (!provider) {
+    const status = await checkOllamaStatus(options.model);
+    if (!status.available || !status.provider || !status.selectedModel) {
+      throw new AppError(503, 'ollama_unavailable', 'No configured Ollama model is available locally or in Ollama Cloud.');
+    }
+    provider = status.provider;
+    selectedModel = status.selectedModel;
+  }
+
+  const apiKey = provider === 'ollama-cloud' ? getCloudApiKey(cfg) : '';
+  if (provider === 'ollama-cloud' && !apiKey) {
+    throw new AppError(503, 'ollama_cloud_api_key_missing', 'OLLAMA_API_KEY is required to use Ollama Cloud.');
+  }
+
+  const baseUrl = provider === 'ollama-cloud' ? 'https://ollama.com' : cfg.OLLAMA_BASE_URL;
+  const res = await fetch(`${baseUrl}/api/generate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+    },
     body: JSON.stringify({
-      model,
+      model: selectedModel,
       prompt,
       system,
       format: undefined,
@@ -163,7 +254,7 @@ export async function generateText(
 
   if (!res.ok) {
     const bodyText = await res.text().catch(() => '');
-    throw new AppError(res.status, 'ollama_error', `Ollama text error (${res.status}): ${bodyText || 'Unknown error'}`);
+    throw new AppError(res.status, 'ollama_error', `Ollama ${provider} text error (${res.status}): ${bodyText || 'Unknown error'}`);
   }
 
   const raw: { response: string; model: string; total_duration?: number } = await res.json();

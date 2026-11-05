@@ -96,7 +96,7 @@ export default function DashboardClient() {
             <StatCard label="Key Indicators" value={data.indicatorsTotal} icon={TrendingUp} sub="In the indicator registry" />
             <StatCard label="Forecasts" value={data.forecasts} icon={Activity} sub="Stored projections" />
             <StatCard label="Scenarios" value={data.scenarios} icon={GitBranch} sub="Saved pathways" />
-            <StatCard label="AI Workflows" value={data.workflowsTotal} icon={Sparkles} sub="Local Ollama analyses" />
+            <StatCard label="AI Workflows" value={data.workflowsTotal} icon={Sparkles} sub="Ollama analyses" />
             <StatCard label="Completed Workflows" value={data.workflows.filter((w) => w.status === 'completed').length} icon={CheckCircle2} sub="Among the latest 50" />
           </div>
 
