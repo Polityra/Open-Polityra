@@ -54,7 +54,7 @@ function isPublicIpv6(address: string): boolean {
 function decodeXml(value: string): string {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-    .replace(/<[^>]*>/g, ' ')
+    .replace(/<[^<>]*>/g, ' ')
     .replace(/&#x([0-9a-f]+);/gi, (_match, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
     .replace(/&#([0-9]+);/g, (_match, decimal: string) => String.fromCodePoint(parseInt(decimal, 10)))
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
@@ -72,14 +72,17 @@ export function parseFeed(xml: string, allowedHost: string): IngestedNewsItem[] 
   const items: IngestedNewsItem[] = [];
   for (const [, kind, entry] of entries.slice(0, MAX_ITEMS_PER_FEED)) {
     const title = tagValue(entry, 'title');
-    const rawLink = kind.toLowerCase() === 'entry'
-      ? entry.match(/<link\b[^>]*href=["']([^"']+)["'][^>]*\/?>/i)?.[1] ?? tagValue(entry, 'link')
-      : tagValue(entry, 'link');
+    const atomHref = kind.toLowerCase() === 'entry'
+      ? entry.match(/<link\b[^>]*href=["']([^"']+)["'][^>]*\/?>/i)?.[1]
+      : undefined;
+    const rawLink = atomHref === undefined
+      ? tagValue(entry, 'link')
+      : decodeXml(atomHref);
     if (!title || !rawLink) continue;
 
     let url: URL;
     try {
-      url = new URL(decodeXml(rawLink));
+      url = new URL(rawLink);
     } catch {
       continue;
     }

@@ -8,16 +8,16 @@ import WorkflowDetail from './components/WorkflowDetail';
 import { panelClass } from './components/workflow-config';
 
 const highlights = [
-  { icon: Cpu, title: 'Local models', text: 'Runs on your own Ollama instance with Qwen3:0.6b.' },
-  { icon: ShieldCheck, title: 'Private by design', text: 'No external APIs or cloud services touch your data.' },
+  { icon: Cpu, title: 'Local or cloud models', text: 'Prefers your configured local Ollama model and can fall back to Ollama Cloud.' },
+  { icon: ShieldCheck, title: 'Choose your privacy level', text: 'Local inference keeps prompts on your machine. Cloud fallback sends prompts to Ollama and requires an API key.' },
   { icon: Database, title: 'Saved results', text: 'Every analysis is stored in the database for later review.' },
 ];
 
 const setupSteps = [
-  { icon: Download, title: 'Install Ollama', body: <>Visit <code>ollama.ai</code> and install it for your platform.</> },
-  { icon: Package, title: 'Pull the model', body: <>Run <code>ollama pull qwen3:0.6b</code></> },
-  { icon: Play, title: 'Start Ollama', body: <>Run <code>ollama serve</code></> },
-  { icon: ToggleRight, title: 'Enable in .env', body: <>Set <code>AI_WORKFLOW_ENABLED=true</code></> },
+  { icon: Download, title: 'Install Ollama (optional)', body: <>Install from <code>ollama.com</code> to use local inference.</> },
+  { icon: Package, title: 'Pull a local model (optional)', body: <>Set <code>AI_MODEL</code> and pull it with <code>ollama pull &lt;AI_MODEL&gt;</code>.</> },
+  { icon: Play, title: 'Enable cloud fallback (optional)', body: <>Set server-side <code>OLLAMA_API_KEY</code> and <code>OLLAMA_CLOUD_MODEL</code>.</> },
+  { icon: ToggleRight, title: 'Start local Ollama', body: <>Run <code>ollama serve</code>. Cloud is selected when the configured local model is unavailable.</> },
 ];
 
 export default function AiWorkflowPage() {
@@ -38,7 +38,7 @@ export default function AiWorkflowPage() {
           </h1>
           <div className="mt-3 h-0.5 w-16 bg-gradient-to-r from-[#32b2f7] to-[#3468f5]" />
           <p className="mt-3 max-w-2xl text-sm text-[#9aa8c7]">
-            Run Ollama-powered AI analysis using Qwen3:0.6b. Results are saved to the database for later review.
+            Run AI analysis with your configured local Ollama model, or use Ollama Cloud when the local model is unavailable. Results are saved to the database for later review.
           </p>
         </div>
         <button

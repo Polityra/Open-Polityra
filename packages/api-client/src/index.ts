@@ -54,7 +54,11 @@ export class ApiClient {
 
   constructor(options: ApiClientOptions = {}) {
     const opts = { ...defaultOptions, ...options }
-    this.baseUrl = opts.baseUrl.replace(/\/+$/, '')
+    let baseUrlEnd = opts.baseUrl.length
+    while (baseUrlEnd > 0 && opts.baseUrl.charCodeAt(baseUrlEnd - 1) === 47) {
+      baseUrlEnd -= 1
+    }
+    this.baseUrl = opts.baseUrl.slice(0, baseUrlEnd)
     this.token = opts.token
     this.timeout = opts.timeout
     this.onUnauthorized = opts.onUnauthorized
@@ -302,6 +306,8 @@ export interface OllamaHealthStatus {
   available: boolean;
   models: string[];
   modelAvailable: boolean;
+  provider: 'ollama' | 'ollama-cloud' | null;
+  selectedModel: string | null;
   available_models?: Array<{ name: string; model: string; size: number; digest: string; format: string; family: string; parameter_size: string }>;
 }
 

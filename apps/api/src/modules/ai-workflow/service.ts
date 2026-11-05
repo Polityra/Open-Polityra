@@ -1,6 +1,4 @@
 import { createHash } from 'node:crypto';
-import { getEnv } from '../../config/env';
-import type { Env } from '../../config/env';
 import { AppError } from '../../errors/appError';
 import { generateChat, checkOllamaStatus } from '../../services/ollamaService';
 import { SYSTEM_PROMPTS, AI_WORKFLOW_TYPES, type AiWorkflowType } from './schema';
@@ -103,12 +101,10 @@ export async function executeWorkflow(
 ): Promise<WorkflowRunResult> {
   const repo = _getRepo();
   const taskRepo = _getTaskRepo();
-  const cfg = getEnv();
-
-  // Check if Ollama is available
-  const ollamaStatus = await checkOllamaStatus();
-  if (!ollamaStatus.available) {
-    throw new AppError(503, 'ollama_unavailable', 'Ollama service is not reachable. Ensure it is running at the configured base URL.');
+  // Select an available local model or the configured Ollama Cloud model.
+  const ollamaStatus = await checkOllamaStatus(model?.trim() || undefined);
+  if (!ollamaStatus.available || !ollamaStatus.provider || !ollamaStatus.selectedModel) {
+    throw new AppError(503, 'ollama_unavailable', 'No configured Ollama model is available. Start Ollama with the configured model or configure OLLAMA_API_KEY and OLLAMA_CLOUD_MODEL for cloud fallback.');
   }
 
   // Create workflow record
@@ -117,7 +113,8 @@ export async function executeWorkflow(
     title,
     type,
     description: (parameters.context as string | undefined) ?? '',
-    model: model ?? cfg.AI_MODEL,
+    model: ollamaStatus.selectedModel,
+    provider: ollamaStatus.provider,
     systemPrompt: systemPrompt ?? SYSTEM_PROMPTS[type],
     parameters,
   });
@@ -149,7 +146,7 @@ export async function executeWorkflow(
           { role: 'system', content: systemPrompt ?? SYSTEM_PROMPTS[type] },
           { role: 'user', content: step.prompt },
         ],
-        { model: workflow.model, format: 'json' },
+        { model: workflow.model, provider: ollamaStatus.provider, format: 'json' },
       );
 
       // Try to parse the response as JSON for storage

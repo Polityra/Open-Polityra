@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { api, type AiWorkflowType } from '@open-polityra/api-client';
+import { api, type AiWorkflowType, type OllamaHealthStatus } from '@open-polityra/api-client';
 import { Sparkles, Loader2, AlertCircle, Check } from 'lucide-react';
 import { WORKFLOW_TYPES, inputClass, labelClass, panelClass } from './workflow-config';
 
@@ -21,11 +21,18 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
 
   // Ollama status
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'ok' | 'unavailable'>('checking');
+  const [ollamaProvider, setOllamaProvider] = useState<OllamaHealthStatus['provider']>(null);
 
   useEffect(() => {
     api.aiHealth().then(
-      (res) => setOllamaStatus(res.available ? 'ok' : 'unavailable'),
-      () => setOllamaStatus('unavailable'),
+      (res) => {
+        setOllamaProvider(res.provider);
+        setOllamaStatus(res.available ? 'ok' : 'unavailable');
+      },
+      () => {
+        setOllamaProvider(null);
+        setOllamaStatus('unavailable');
+      },
     );
   }, []);
 
@@ -55,7 +62,7 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('unavailable') || msg.includes('Ollama')) {
-        setError('Ollama service is unavailable. Please start Ollama and pull the qwen3:0.6b model.');
+        setError('No configured Ollama model is available. Start Ollama with its configured model or configure OLLAMA_API_KEY for Ollama Cloud.');
       } else {
         setError(`Failed to create workflow: ${msg}`);
       }
@@ -79,7 +86,9 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
         <h2 className="font-display text-xl font-semibold text-white">New AI analysis</h2>
         <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${statusStyle}`}>
           <span className={`h-2 w-2 rounded-full ${dotStyle}`} />
-          {ollamaStatus === 'ok' ? 'Ollama ready' : ollamaStatus === 'checking' ? 'Checking…' : 'Ollama offline'}
+          {ollamaStatus === 'ok'
+            ? ollamaProvider === 'ollama-cloud' ? 'Ollama Cloud ready' : 'Local Ollama ready'
+            : ollamaStatus === 'checking' ? 'Checking…' : 'No model available'}
         </span>
       </div>
 
@@ -181,7 +190,7 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
             type="text"
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            placeholder="qwen3:0.6b"
+            placeholder="Use configured local/cloud model"
             className={`${inputClass} font-mono`}
           />
         </div>

@@ -49,6 +49,24 @@ describe('news feed scraper safety and parsing', () => {
     });
   });
 
+  it('decodes an Atom href exactly once', () => {
+    const xml = `<feed><entry><title>Encoded link</title>
+      <link rel="alternate" href="https://example.org/story?value=a&amp;amp;b"/>
+    </entry></feed>`;
+
+    expect(parseFeed(xml, 'example.org')[0]?.url).toBe('https://example.org/story?value=a&amp;b');
+  });
+
+  it('handles repeated unterminated XML opening delimiters', () => {
+    const malformedSummary = '<'.repeat(10_000) + 'summary';
+    const xml = `<rss><channel><item><title>Update</title>
+      <link>https://example.org/story/4</link>
+      <description>${malformedSummary}</description>
+    </item></channel></rss>`;
+
+    expect(parseFeed(xml, 'example.org')[0]?.summary).toBe(malformedSummary.slice(0, 8000));
+  });
+
   it('requires HTTPS feed and source URLs with matching domains and relevant categories', () => {
     const source = {
       name: 'Example feed',

@@ -16,6 +16,19 @@ describe('ApiClient unauthorized responses', () => {
     expect(resolveApiBaseUrl(undefined, false)).toBe('http://localhost:4000');
   });
 
+  it('removes trailing base URL slashes with bounded linear scanning', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ ok: true, data: {} }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new ApiClient({ baseUrl: `https://api.example.org${'/'.repeat(20_000)}` });
+
+    await client.get('/health');
+
+    expect(fetchMock).toHaveBeenCalledWith('https://api.example.org/health', expect.any(Object));
+  });
+
   it('sends same-origin API requests when the base URL is empty', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(
       JSON.stringify({ ok: true, data: { status: 'healthy' } }),
