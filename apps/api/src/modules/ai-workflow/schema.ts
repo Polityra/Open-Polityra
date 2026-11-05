@@ -21,14 +21,14 @@ export const createTaskSchema = z.object({
   description: z.string().max(2048).optional(),
   stepOrder: z.number().int().min(0).default(0),
   prompt: z.string().min(1),
-  metadata: z.record(z.unknown()).default({}),
+  metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 
 export const updateWorkflowStatusSchema = z.object({
   status: z.enum(['running', 'completed', 'failed', 'cancelled']),
-  result: z.record(z.unknown()).optional(),
+  result: z.record(z.string(), z.unknown()).optional(),
   errorMessage: z.string().max(2048).optional(),
 });
 
