@@ -8,6 +8,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@open-polityra/contracts": "workspace:*"
+    "@open-polityra/contracts": "file:../contracts"
   }
 }

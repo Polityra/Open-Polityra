@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Github, Menu, X } from "lucide-react";
+import { GitBranch, Menu, X } from "lucide-react";
 
 import { REPO_URL } from "@/lib/site";
 
@@ -67,7 +67,7 @@ export default function Navbar() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg bg-[#1478fd] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#0b5fd9] hover:shadow-[0_0_24px_rgba(20,120,253,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#41cbfd]"
             >
-              <Github className="h-4 w-4" /> GitHub
+              <GitBranch className="h-4 w-4" /> GitHub
             </a>
           </li>
         </ul>
@@ -107,7 +107,7 @@ export default function Navbar() {
             rel="noopener noreferrer"
             className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#1478fd] px-4 py-3 text-sm font-semibold text-white"
           >
-            <Github className="h-4 w-4" /> GitHub
+            <GitBranch className="h-4 w-4" /> GitHub
           </a>
         </div>
       )}

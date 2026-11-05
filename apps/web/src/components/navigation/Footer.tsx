@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Github } from "lucide-react";
+import { ArrowUpRight, GitBranch } from "lucide-react";
 import { REPO_URL } from "@/lib/site";
 
 const columns = [
@@ -57,7 +57,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="mt-6 inline-flex items-center gap-2 rounded-lg border border-white/10 px-3.5 py-2 text-sm font-medium text-slate-200 transition hover:border-cyan-200/30 hover:bg-white/[0.03]"
             >
-              <Github className="h-4 w-4" /> Project repository{" "}
+              <GitBranch className="h-4 w-4" /> Project repository{" "}
               <ArrowUpRight className="h-3.5 w-3.5 text-slate-500" />
             </a>
           </div>

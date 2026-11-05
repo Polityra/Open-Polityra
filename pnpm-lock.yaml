@@ -106,14 +106,14 @@ importers:
   apps/web:
     dependencies:
       '@open-polityra/api-client':
-        specifier: workspace:*
+        specifier: file:../../packages/api-client
         version: link:../../packages/api-client
       '@open-polityra/contracts':
-        specifier: workspace:*
+        specifier: file:../../packages/contracts
         version: link:../../packages/contracts
       '@open-polityra/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
+        specifier: file:../../packages/ui
+        version: file:packages/ui(@types/react@19.3.0)(next@16.4.3(@babel/core@7.29.7)(@types/node@26.6.6)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       lucide-react:
         specifier: ^1.66.0
         version: 1.66.0(@types/react@19.3.0)(react@19.3.0)
@@ -158,7 +158,7 @@ importers:
   packages/api-client:
     dependencies:
       '@open-polityra/contracts':
-        specifier: workspace:*
+        specifier: file:../contracts
         version: link:../contracts
 
   packages/config/eslint: {}
@@ -790,6 +790,12 @@ packages:
   '@nolyfill/is-core-module@1.0.39':
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
+
+  '@open-polityra/ui@file:packages/ui':
+    resolution: {directory: packages/ui, type: directory}
+    peerDependencies:
+      next: 16.4.3
+      react: 19.3.0
 
   '@paralleldrive/cuid2@2.3.1':
     resolution: {integrity: sha512-XO7cAxhnTZl0Yggq6jOgjiOHhbgcO4NqFqwSmQpjK3b6TEE6Uj/jfSk6wzYyemh3+I0sHirKSetjQwn5cZktFw==}
@@ -4051,6 +4057,14 @@ snapshots:
       fastq: 1.20.3
 
   '@nolyfill/is-core-module@1.0.39': {}
+
+  '@open-polityra/ui@file:packages/ui(@types/react@19.3.0)(next@16.4.3(@babel/core@7.29.7)(@types/node@26.6.6)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      lucide-react: 1.66.0(@types/react@19.3.0)(react@19.3.0)
+      next: 16.4.3(@babel/core@7.29.7)(@types/node@26.6.6)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react: 19.3.0
+    transitivePeerDependencies:
+      - '@types/react'
 
   '@paralleldrive/cuid2@2.3.1':
     dependencies:
