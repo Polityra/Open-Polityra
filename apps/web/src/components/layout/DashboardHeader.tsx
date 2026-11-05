@@ -33,7 +33,7 @@ export default function DashboardHeader({
 
 
         <Link
-          href="/dashboard"
+          href="/"
           aria-label="Open Polityra dashboard"
           className="flex shrink-0 items-center"
         >

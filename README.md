@@ -1,3 +1,11 @@
+<a href="https://facebook.com/zel.pon">
+  <img
+    alt="Repository banner"
+    width="1100"
+    src="https://repository-images.githubusercontent.com/1445344815/d90ab79d-be9f-421e-b2e8-2ec518092c8d"
+  />
+</a>
+
 # Open Polityra
 
 **Independent open-source research and strategic intelligence platform for transparent, source-grounded analysis using public data.**
@@ -33,7 +41,7 @@ Do not use prototype outputs as the sole basis for financial, public-policy, sec
 | Path | Purpose |
 |---|---|
 | `apps/web/` | Next.js frontend — research platform dashboard, landing pages, reports |
-| `apps/api/` | Express backend API — auth, users, sources, datasets, analyses, reports |
+| `apps/api/` | Express backend API — auth, sources, datasets, analyses, reports, and RSS/Atom news ingestion |
 | `services/analysis-worker/` | Python analysis engine — forecasting, scenario modeling, AI-assisted analysis |
 | `packages/contracts/` | Shared schemas and API contracts across all services |
 | `packages/api-client/` | Typed frontend API client |
@@ -71,6 +79,14 @@ pnpm install
 
 cp .env.example .env
 ```
+
+After configuring PostgreSQL, apply the feed-article schema once:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/database/migrations/004_news_items.sql
+```
+
+The API starts a rate-limited RSS/Atom polling loop in both development and production start modes. Add HTTPS source domains and feed URLs from the Sources page. Only the exact configured feeds are requested; no arbitrary site crawling or security scanning takes place.
 
 Python analysis worker setup:
 

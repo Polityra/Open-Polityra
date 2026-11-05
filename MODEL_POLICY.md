@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This policy governs the selection, integration, evaluation and use of language models, machine-learning systems, statistical models, retrieval systems and AI agents in Suomi Strategia AI.
+This policy governs the selection, integration, evaluation and use of language models, machine-learning systems, statistical models, retrieval systems and AI agents in OpenPolityra.
 
 The project is a decision-support and research initiative. Models must not be presented as autonomous political decision-makers, authoritative sources of truth or substitutes for accountable public institutions.
 
