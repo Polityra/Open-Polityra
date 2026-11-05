@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This document describes the interim governance of Suomi Strategia AI, an independent open-source research and technology initiative. Its purpose is to make responsibility, decision-making and accountability understandable while the project is small and volunteer-led.
+This document describes the interim governance of OpenPolityra an independent open-source research and technology initiative. Its purpose is to make responsibility, decision-making and accountability understandable while the project is small and volunteer-led.
 
 This document does not create a company, association, foundation, employment relationship or legal partnership. The project is not currently presented as a registered Finnish foundation or as an organisation representing the Finnish Government.
 

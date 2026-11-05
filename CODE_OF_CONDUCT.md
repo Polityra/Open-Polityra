@@ -2,7 +2,7 @@
 
 ## Our commitment
 
-Suomi Strategia AI aims to be a respectful, evidence-led and welcoming open-source community. We welcome participation regardless of professional background, experience level, nationality, language, age, disability, gender, identity, religion or other personal characteristics.
+OpenPolityra aims to be a respectful, evidence-led and welcoming open-source community. We welcome participation regardless of professional background, experience level, nationality, language, age, disability, gender, identity, religion or other personal characteristics.
 
 We are committed to a community where people can disagree about methods, interpretations and policy implications without harassment, intimidation or personal attacks.
 
