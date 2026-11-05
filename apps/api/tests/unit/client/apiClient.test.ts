@@ -1,11 +1,34 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiClient } from '../../../../../packages/api-client/src/index';
+import { ApiClient, resolveApiBaseUrl } from '../../../../../packages/api-client/src/index';
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe('ApiClient unauthorized responses', () => {
+  it('uses the same-origin API route in production unless an external API origin is configured', () => {
+    expect(resolveApiBaseUrl(undefined, true)).toBe('');
+    expect(resolveApiBaseUrl('http://localhost:4000', true)).toBe('');
+    expect(resolveApiBaseUrl('https://api.example.org', true)).toBe('https://api.example.org');
+  });
+
+  it('defaults to the local API server during development', () => {
+    expect(resolveApiBaseUrl(undefined, false)).toBe('http://localhost:4000');
+  });
+
+  it('sends same-origin API requests when the base URL is empty', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ ok: true, data: { status: 'healthy' } }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new ApiClient({ baseUrl: resolveApiBaseUrl(undefined, true) });
+
+    await client.get('/api/v1/health');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/health', expect.any(Object));
+  });
+
   it('notifies the auth provider when an authenticated request has an invalid token', async () => {
     const onUnauthorized = vi.fn();
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(

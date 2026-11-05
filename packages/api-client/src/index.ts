@@ -20,10 +20,27 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
+export function resolveApiBaseUrl(configuredUrl: string | undefined, isProduction: boolean): string {
+  const configured = configuredUrl?.trim()
+  if (!isProduction) return configured || 'http://localhost:4000'
+  if (!configured) return ''
+
+  try {
+    const hostname = new URL(configured).hostname.toLowerCase()
+    if (hostname === 'localhost' || hostname.endsWith('.localhost') || hostname === '127.0.0.1' || hostname === '[::1]') {
+      return ''
+    }
+  } catch {
+    return configured
+  }
+
+  return configured
+}
+
 const defaultOptions: ResolvedApiClientOptions = {
   baseUrl: typeof process !== 'undefined'
-    ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000')
-    : 'http://localhost:4000',
+    ? resolveApiBaseUrl(process.env.NEXT_PUBLIC_API_URL, process.env.NODE_ENV === 'production')
+    : '',
   token: undefined,
   timeout: 30_000,
   onUnauthorized: undefined,
