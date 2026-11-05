@@ -20,8 +20,8 @@ function _hasRole(reqPath: string, role: string): boolean {
 }
 
 export function authMiddleware(env?: Env) {
-  const cfg = env ?? getEnv();
   return async (req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> => {
+    const cfg = env ?? getEnv();
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
       throw new UnauthorizedError('Missing or invalid authorization header');
