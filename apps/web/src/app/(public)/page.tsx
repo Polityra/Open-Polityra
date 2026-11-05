@@ -15,7 +15,7 @@ import {
   Shield,
   ShieldCheck,
   TrendingUp,
-  Github,
+  GitBranch,
   Users,
 } from "lucide-react";
 import { REPO_URL } from "@/lib/site";
@@ -95,7 +95,7 @@ export default async function HomePage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#000610] shadow-sm transition-all hover:bg-[#eef2fc] hover:shadow-[0_0_28px_rgba(65,203,253,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#41cbfd]"
             >
-              <Github className="h-5 w-5" /> Repository Source
+              <GitBranch className="h-5 w-5" /> Repository Source
             </a>
             <Link
               href="/research"
@@ -285,7 +285,7 @@ export default async function HomePage() {
           <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-slate-400">Explore the working prototype, read the methods, or contribute to an open project still taking shape.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/research" className="inline-flex items-center gap-2 rounded-lg bg-cyan-200 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-white">Explore research <ArrowRight className="h-4 w-4" /></Link>
-            <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/5"><Github className="h-4 w-4" />View the source</a>
+            <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/5"><GitBranch className="h-4 w-4" />View the source</a>
           </div>
         </div>
       </section>

@@ -10,9 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@open-polityra/api-client": "workspace:*",
-    "@open-polityra/contracts": "workspace:*",
-    "@open-polityra/ui": "workspace:*",
+    "@open-polityra/api-client": "file:../../packages/api-client",
+    "@open-polityra/contracts": "file:../../packages/contracts",
+    "@open-polityra/ui": "file:../../packages/ui",
     "lucide-react": "^1.66.0",
     "next": "16.4.3",
     "react": "19.3.0",
