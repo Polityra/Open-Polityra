@@ -80,14 +80,6 @@ pnpm install
 cp .env.example .env
 ```
 
-After configuring PostgreSQL, apply the feed-article schema once:
-
-```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/database/migrations/004_news_items.sql
-```
-
-The API starts a rate-limited RSS/Atom polling loop in both development and production start modes. Add HTTPS source domains and feed URLs from the Sources page. Only the exact configured feeds are requested; no arbitrary site crawling or security scanning takes place.
-
 Python analysis worker setup:
 
 ```bash

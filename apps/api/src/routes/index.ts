@@ -16,9 +16,6 @@ import * as modelRegistryService from '../modules/model-registry/service';
 import * as notificationService from '../modules/notifications/service';
 import { fiscalScenarioInputSchema } from '../modules/fiscal-balance/schema';
 import { analyzeFiscalBalance, getFiscalDataset } from '../modules/fiscal-balance/service';
-import { assertNewsSchema, listNews, NewsSchemaMissingError } from '../modules/news/service';
-import { scrapeConfiguredSources } from '../modules/news/scraper';
-import { z } from 'zod';
 
 export function registerRoutes(app: Express): void {
   // Apply rate limiter to all /api/v1 routes
@@ -41,50 +38,6 @@ export function registerRoutes(app: Express): void {
     }
     const result = await analyzeFiscalBalance(parsed.data);
     res.json({ ok: true, data: result, meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() } });
-  });
-
-  app.get('/api/v1/news', authMiddleware(), async (req, res) => {
-    const querySchema = z.object({
-      limit: z.coerce.number().int().min(1).max(100).default(30),
-      offset: z.coerce.number().int().min(0).default(0),
-      category: z.enum(['geopolitical', 'security']).optional(),
-      topic: z.enum(['geopolitics', 'conflict', 'security', 'cybersecurity', 'terrorism', 'sanctions']).optional(),
-      search: z.string().trim().min(1).max(200).optional(),
-    });
-    const parsed = querySchema.safeParse(req.query);
-    if (!parsed.success) {
-      res.status(400).json({ ok: false, error: { code: 'validation_error', message: parsed.error.message }, meta: { timestamp: new Date().toISOString() } });
-      return;
-    }
-    try {
-      await assertNewsSchema();
-      const result = await listNews(parsed.data);
-      res.json({
-        ok: true,
-        data: { items: result.rows, meta: { total: result.total, limit: parsed.data.limit, offset: parsed.data.offset } },
-        meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() },
-      });
-    } catch (error) {
-      if (!(error instanceof NewsSchemaMissingError)) throw error;
-      res.status(503).json({
-        ok: false,
-        error: { code: 'news_schema_not_ready', message: error.message },
-        meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() },
-      });
-    }
-  });
-  app.post('/api/v1/news/sync', authMiddleware(), async (req, res) => {
-    try {
-      const result = await scrapeConfiguredSources();
-      res.json({ ok: true, data: result, meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() } });
-    } catch (error) {
-      if (!(error instanceof NewsSchemaMissingError)) throw error;
-      res.status(503).json({
-        ok: false,
-        error: { code: 'news_schema_not_ready', message: error.message },
-        meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() },
-      });
-    }
   });
 
   // ---- Authentication routes ----

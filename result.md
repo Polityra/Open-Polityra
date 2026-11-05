@@ -37,19 +37,7 @@ Phases 1 and 2 are implemented as a **prototype**, not independently research-va
 - The dashboard header's search and notification controls still lack functional destinations/handlers.
 - Later roadmap phases (AI-assisted explanation/evaluation, public alpha review, domain expansion, and institutional development) remain out of scope.
 
-## Public news monitor (added 2026-11-05)
-
-- Added the authenticated World News Monitor at `/dashboard/news`, with category, topic, and headline/summary search filters, publisher links, manual sync, and a clear notice that publisher claims are not independently verified.
-- The Sources page now accepts multiple HTTPS RSS/Atom feeds, their source websites, publisher names, categories, and one or more topics. Source listings can be filtered by category and topic.
-- The API polls enabled feeds at startup and every 15 minutes, exposes filtered news items, stores unique feed entries, and prunes old entries when a feed successfully supplies new items. Per-feed failures are logged and included in manual-sync results.
-- Feed requests are intentionally restricted to the configured source domain or a subdomain. DNS is checked and pinned to a public address for the request; redirects are not followed; responses have a 10-second timeout, 2 MB cap, and 20-entry processing cap. This reads only configured RSS/Atom endpoints—it does not crawl arbitrary pages or scan systems.
-- No feed list is preconfigured. Add sources from the Sources page only after reviewing their credibility, terms, and reuse rights. The `004_news_items.sql` migration was applied to the configured local database after a missing-table startup error was reported.
-- The scraper and news endpoints now detect an unapplied migration and give an actionable migration command; the scheduled scraper emits the warning once per process instead of printing a database stack trace every polling interval.
-- A configured Cyber News source was pointing to its HTML homepage. Updated its local feed URL to the verified RSS endpoint (`https://cybersecuritynews.com/feed/`); the next sync parsed and stored 10 entries. The Geopolitical Monitor homepage also returns HTML, so the scraper now reports it as an invalid feed rather than silently treating it as a successful empty sync.
-- Sync summaries distinguish parsed feed entries from newly inserted items, so a zero insertion count can be interpreted (empty/non-feed response versus entries that were already stored).
-- News is a public-source collection aid, not intelligence verification, threat assessment, or operational guidance. It does not independently corroborate reports, detect attacks, or provide alerting.
-
-## Validation (Phases 0–2)
+## Validation
 
 - `pnpm build` — passed for the API and web app.
 - `pnpm lint` — passed with 11 pre-existing API warnings and 9 pre-existing web warnings; no lint errors.
@@ -61,8 +49,3 @@ Phases 1 and 2 are implemented as a **prototype**, not independently research-va
 - The compiled API was started on an isolated port (4001); `/health` and the fiscal data endpoint returned successfully, including all 26 observations.
 - A default-port `pnpm start` smoke test could not complete because pre-existing local development servers occupied ports 3000/4000. The independent Next.js instance on port 3000 returned HTTP 200, but that response is not attributed to this smoke test.
 - Python worker tests were not run because Poetry/FastAPI are unavailable in the local environment. Its 30 Python source/test files passed syntax parsing; the CI workflow runs worker tests in a Poetry environment.
-## News monitor validation
-
-- `pnpm --filter @open-polityra/api build` and API tests (22 tests) passed.
-- Web typecheck and production build passed. Web lint passed with 0 errors and 9 existing unused-disable warnings.
-- `git diff --check` passed. Verified `news_items` exists and a live sync parsed/stored 10 entries from Cyber News; the Geopolitical Monitor homepage was correctly reported as non-feed HTML.

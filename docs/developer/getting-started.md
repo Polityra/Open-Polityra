@@ -18,7 +18,6 @@ cp .env.example .env
 ```
 
 Review `.env.example` and set local values before starting the database-backed API. Never commit `.env` or paste credentials into issues.
-For the World News Monitor, apply `packages/database/migrations/004_news_items.sql` once with `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/database/migrations/004_news_items.sql`.
 
 ## Run applications
 
@@ -35,7 +34,6 @@ poetry run dev
 ```
 
 The worker listens on port 8000. The fiscal-balance research prototype uses the API's deterministic calculator and does not require the Python worker.
-The API polls configured public RSS/Atom feeds on startup and every 15 minutes; manage feed domains and topics from the Sources page. Feed URLs must be HTTPS and on the configured source domain or a subdomain. Redirects are not followed, DNS results are checked and pinned to public addresses, and responses are limited to 2 MB and 10 seconds. Add only feeds you are permitted to access and review their publishers' reuse terms. No default feeds are bundled.
 
 ## Build and production start
 
