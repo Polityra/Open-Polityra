@@ -1,10 +1,10 @@
-import { ApiClient } from "@open-polityra/api-client";
+import { ApiClient, resolveApiBaseUrl } from "@open-polityra/api-client";
 
 /**
- * Shared API client instance. Configure via NEXT_PUBLIC_API_URL or NEXTAUTH_TOKEN environment variables.
+ * Shared API client instance. Production uses Vercel's same-origin /api service route by default.
  */
 export const api = new ApiClient({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
+  baseUrl: resolveApiBaseUrl(process.env.NEXT_PUBLIC_API_URL, process.env.NODE_ENV === "production"),
   token: process.env.NEXTAUTH_TOKEN,
 });
 
