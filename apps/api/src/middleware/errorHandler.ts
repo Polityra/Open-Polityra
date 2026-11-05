@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
 import winston from 'winston';
 import { AppError } from '../errors/appError';
+import apiLogger from '../config/logger';
 
-export function errorHandler(_env?: winston.Logger) {
-  const logger = _env ?? winston;
+export function errorHandler(logger: winston.Logger = apiLogger) {
   return (err: Error, _req: Request, res: Response, _next: NextFunction): void => {
     if (err instanceof AppError) {
       res.status(err.statusCode).json({
@@ -21,11 +21,7 @@ export function errorHandler(_env?: winston.Logger) {
       stack: err.stack,
     };
 
-    if (Array.isArray(logger.transports) && logger.transports.length > 0) {
-      logger.error(errorDetails);
-    } else {
-      console.error('[api] Unhandled error', errorDetails);
-    }
+    logger.error('[api] Unhandled error', errorDetails);
 
     res.status(500).json({
       ok: false,

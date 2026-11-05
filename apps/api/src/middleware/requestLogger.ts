@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import winston from 'winston';
+import apiLogger from '../config/logger';
 
-export function requestLogger(_env?: winston.Logger) {
-  const logger = _env ?? winston;
+export function requestLogger(logger: winston.Logger = apiLogger) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     const start = Date.now();
     const reqId = req.headers['x-request-id'] ?? req.id ?? 'none';
