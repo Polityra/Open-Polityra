@@ -13,7 +13,6 @@ export function requestLogger(_env?: winston.Logger) {
       requestId: reqId,
       method: req.method,
       url: req.originalUrl,
-      ip: req.ip,
     });
 
     _res.on('finish', () => {
