@@ -8,7 +8,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
-
 # ── Enums ──────────────────────────────────────────────────────────────────────
 
 
@@ -104,7 +103,7 @@ class AnalysisResponse(BaseModel):
     )
     methodology: Methodology = Field(description="Methodology that was applied")
     uncertainty: UncertaintyNote = Field(
-        default_factory=UncertaintyNote,
+        default_factory=lambda: UncertaintyNote(),
         description="Breakdown of identified uncertainties",
     )
     statistics: dict[str, Any] | None = Field(
@@ -197,3 +196,7 @@ class ReadyResponse(BaseModel):
 
     ready: bool = Field(description="Whether the service is ready to process requests")
     checks: dict[str, bool] = Field(default_factory=dict)
+
+
+ForecastInfo.model_rebuild()
+AnalysisResponse.model_rebuild()

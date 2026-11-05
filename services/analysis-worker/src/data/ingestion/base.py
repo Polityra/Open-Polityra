@@ -8,7 +8,7 @@ analysis pipeline.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.common.errors import ValidationError
@@ -91,6 +91,6 @@ class DataIngestor(ABC):
             "ingestor": self.name,
             "rows": len(normalised),
             "cols": len(normalised[0]) if normalised else 0,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         return normalised, metadata

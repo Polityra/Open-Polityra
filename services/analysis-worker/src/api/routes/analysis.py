@@ -5,8 +5,8 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
-from scipy import stats as sp_stats  # noqa: N814 – convention alias
+from fastapi import APIRouter
+from scipy import stats as sp_stats
 
 from src.ai.providers.local_provider import OllamaProvider
 from src.analytics.statistics.descriptive import (
@@ -25,18 +25,13 @@ from src.api.schemas.analysis import (
 )
 from src.common.errors import (
     DataSourceError,
-    ModelUnavailableError,
-    PipelineError,
     ValidationError,
 )
 from src.common.logger import get_logger, log_with_extra
-from src.data.ingestion.base import DataIngestor
 from src.data.storage.local_store import FileStore
 from src.forecasting.time_series.moving_average import (
-    exponential_moving_average,
     moving_average,
 )
-from src.scenarios.simulation.base import SimulationScenario
 
 router = APIRouter(tags=["analysis"])
 
@@ -111,7 +106,7 @@ async def analyse(req: AnalysisRequest) -> AnalysisResponse:
                 relevance=0.6,
             )
         ]
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise DataSourceError(
             message=f"Failed to retrieve data for topic '{req.topic}'",
             details={"topic": req.topic},
@@ -137,7 +132,6 @@ async def analyse(req: AnalysisRequest) -> AnalysisResponse:
     forecast: ForecastInfo | None = None
     if req.methodology in (Methodology.FORECASTING, Methodology.COMPREHENSIVE):
         ma_vals = moving_average(observations, window=7)
-        ema_vals = exponential_moving_average(observations, span=14)
         std_dev = max(statistics_dict.get("std", 1.0), 0.1)
         projected = []
         for i in range(min(req.time_horizon, 30)):

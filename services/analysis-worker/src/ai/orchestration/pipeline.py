@@ -11,14 +11,11 @@ import time
 from typing import Any
 
 import numpy as np
-from scipy import stats as sp_stats  # noqa: N814 – convention alias
 
 from src.ai.providers.base import AIProvider, ModelRegistry
-from src.ai.providers.local_provider import OllamaProvider
 from src.analytics.statistics.descriptive import describe as compute_descriptive
 from src.common.logger import get_logger, log_with_extra
 from src.forecasting.time_series.moving_average import (
-    exponential_moving_average,
     moving_average,
 )
 
@@ -68,7 +65,6 @@ def _stage_forecast(
         return None, {"reason": "insufficient_data"}
 
     ma = moving_average(observations, window=min(7, len(observations)))
-    ema = exponential_moving_average(observations, span=14)
 
     # Uncertainty grows with distance from observed data
     std = np.std(observations) if len(observations) > 1 else 1.0
@@ -214,13 +210,13 @@ async def run_pipeline(
         raise ValueError("observations must be provided")
 
     # Stage 1 – data retrieval (data already in hand; record evidence)
-    observations, ev1 = _stage_retrieve(observations)
+    observations, _ev1 = _stage_retrieve(observations)
 
     # Stage 2 – descriptive statistics
-    stats, ev2 = _stage_statistics(observations)
+    stats, _ev2 = _stage_statistics(observations)
 
     # Stage 2b – forecast
-    forecast_vals, forecast_meta = _stage_forecast(observations, horizon)
+    _forecast_vals, forecast_meta = _stage_forecast(observations, horizon)
 
     # Stage 3 – AI synthesis (optional)
     synthesis = ""
