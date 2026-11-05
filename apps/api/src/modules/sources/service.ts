@@ -13,7 +13,7 @@ function _getRepo(): SourceRepository {
 
 export async function createSource(params: CreateSourceInput): Promise<SourceRow> {
   const repo = _getRepo();
-  const existing = await repo.findAll(1, 0);
+  const existing = await repo.findAll(200, 0);
   const dupes = existing.rows.filter((r) => r.name.toLowerCase() === params.name.toLowerCase());
   if (dupes.length > 0) throw new ValidationError(`Source "${params.name}" already exists`);
 
@@ -24,13 +24,18 @@ export async function createSource(params: CreateSourceInput): Promise<SourceRow
     dataType: params.dataType,
     category: params.category,
     canonicalUrl: params.canonicalUrl,
-    metadata: params.metadata,
+    metadata: {
+      ...params.metadata,
+      ...(params.feedUrl && params.topics ? {
+        news_scraper: { enabled: true, feedUrl: params.feedUrl, topics: params.topics },
+      } : {}),
+    },
   });
 }
 
-export async function listSources(limit = 50, offset = 0, category?: string) {
+export async function listSources(limit = 50, offset = 0, category?: string, topic?: string) {
   const repo = _getRepo();
-  return repo.findAll(limit, offset, category);
+  return repo.findAll(limit, offset, category, topic);
 }
 
 export async function getSourceById(id: string): Promise<SourceRow | null> {

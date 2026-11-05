@@ -1,144 +1,231 @@
 import Link from "next/link";
 import {
-  BarChart3,
-  Globe2,
-  ShieldAlert,
+  ArrowRight,
+  ArrowUpRight,
   Activity,
+  BarChart3,
   Building2,
+  Globe2,
   Ship,
-  ChevronRight,
+  Shield,
 } from "lucide-react";
-import PageHeader from "@/components/layout/PageHeader";
 import Navbar from "@/components/navigation/Navbar";
+import Footer from "@/components/navigation/Footer";
+import { REPO_URL } from "@/lib/site";
 
-const researchAreas = [
+const areas = [
   {
     icon: BarChart3,
-    title: "Economics",
-    domain: "economic-analysis",
+    number: "01",
+    title: "Economics & public finance",
     description:
-      "Macroeconomic indicators, trade flow analysis, monetary policy impact assessment, and supply chain vulnerability mapping. Cross-references fiscal data across sovereign and supranational entities.",
-    tags: ["Monetary Policy", "Trade Flows", "Fiscal Analysis"],
+      "Explore public economic data, fiscal indicators, and transparent scenario calculations.",
+    focus: ["Fiscal balance", "Public data", "Scenario assumptions"],
+    href: "/dashboard/economy",
+    status: "Working prototype",
   },
   {
     icon: Globe2,
+    number: "02",
     title: "Geopolitics",
-    domain: "geopolitical-analysis",
     description:
-      "Diplomatic relationship mapping, alliance network analysis, territorial dispute tracking, and strategic resource distribution. Monitors institutional shifts in multilateral organizations.",
-    tags: ["Alliance Networks", "Territorial Analysis", "Institutional Shifts"],
+      "A research scope for examining international developments, institutions, and relationships through public information.",
+    focus: ["International affairs", "Institutions", "Public reporting"],
+    href: "/dashboard/geopolitics",
+    status: "Exploratory dashboard",
   },
   {
-    icon: ShieldAlert,
-    title: "Security",
-    domain: "security-assessment",
+    icon: Shield,
+    number: "03",
+    title: "Security & cyber",
     description:
-      "Conventional and asymmetric threat assessment, military capability tracking, cyber vulnerability analysis, and arms proliferation monitoring. Integrates open-source intelligence with verified classified reporting.",
-    tags: ["Threat Assessment", "Capability Tracking", "Cyber Analysis"],
+      "Follow configured public reporting on security topics, with publisher attribution and clear verification caveats.",
+    focus: ["Security news", "Cybersecurity", "Source context"],
+    href: "/dashboard/news",
+    status: "News monitor",
   },
   {
     icon: Activity,
+    number: "04",
     title: "Resilience",
-    domain: "resilience-monitoring",
     description:
-      "Critical infrastructure vulnerability mapping, systemic risk propagation modeling, emergency response capacity assessment, and continuity planning. Focuses on cascading failure scenarios across interconnected systems.",
-    tags: ["Infrastructure Risk", "Cascading Failure", "Response Capacity"],
+      "Consider how public services, infrastructure, and connected systems may respond to disruption.",
+    focus: ["System resilience", "Infrastructure", "Public information"],
+    href: "/dashboard/resilience",
+    status: "Exploratory dashboard",
   },
   {
     icon: Building2,
-    title: "Public Services",
-    domain: "public-services-analysis",
+    number: "05",
+    title: "Public services",
     description:
-      "Healthcare system capacity, education infrastructure assessment, social safety net analysis, and institutional effectiveness measurement. Benchmarks performance against international standards.",
-    tags: ["Healthcare Systems", "Education Metrics", "Institutional Quality"],
+      "A research direction focused on service capacity, access, and outcomes using documented public evidence.",
+    focus: ["Service delivery", "Capacity", "Outcomes"],
+    href: `${REPO_URL}/tree/main/research/domains/public-services`,
+    status: "Research scope",
+    external: true,
   },
   {
     icon: Ship,
-    title: "International Trade",
-    domain: "trade-analysis",
+    number: "06",
+    title: "International trade",
     description:
-      "Supply chain disruption analysis, tariff impact modeling, shipping route vulnerability assessment, and commodity flow monitoring. Tracks bilateral and multilateral trade agreements and their strategic implications.",
-    tags: ["Trade Agreements", "Commodity Flows", "Route Analysis"],
+      "A research direction on trade patterns, supply chains, and how external shocks can affect connected economies.",
+    focus: ["Trade flows", "Supply chains", "Disruptions"],
+    href: `${REPO_URL}/tree/main/research/domains`,
+    status: "Research scope",
+    external: true,
   },
 ];
 
 export default function ResearchPage() {
   return (
-    <div className="min-h-screen bg-[#000610] text-[#eef2fc]">
+    <div className="min-h-screen bg-[#050a12] text-[#eef2fc]">
       <Navbar />
-      <PageHeader
-        eyebrow="Research Domains"
-        title={
-          <>
-            Six analysis <strong className="font-semibold">pillars</strong>
-          </>
-        }
-        description="Open Polityra structures its research across six interdependent domains. Each pillar produces independently verifiable analysis that feeds into cross-domain strategic assessments."
-      />
-
-      {/* Research Area Cards */}
-      <section className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
-        <div className="space-y-6">
-          {researchAreas.map((area, index) => (
-            <Link
-              key={area.title}
-              href={`/dashboard/${area.domain.replace("-", "")}`}
-              className="group flex gap-6 rounded-xl border border-[#12306a] bg-[#0a1a3d] p-6 "
-            >
-              <div className="flex-shrink-0">
-                <div className="inline-flex items-center justify-center rounded-lg bg-[#1478fd]/15 p-3 text-[#41cbfd] transition-colors group-hover:bg-[#1478fd]/25">
-                  <area.icon className="h-6 w-6" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs font-medium text-[#74829f]">
-                    0{index + 1}
-                  </span>
-                  <h2 className="font-display text-xl font-semibold text-white transition-colors group-hover:text-[#41cbfd]">
-                    {area.title}
-                  </h2>
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-[#9aa8c7]">{area.description}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {area.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-[#41cbfd]/20 bg-[#1478fd]/10 px-2.5 py-0.5 text-xs font-medium text-[#a3ecff]"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 flex-shrink-0 self-center text-[#324c80] transition-transform group-hover:translate-x-1 group-hover:text-[#41cbfd]" />
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Cross-Domain Note */}
-      <section className="border-t border-[#12306a]/70 bg-[#061230] py-16">
-        <div className="mx-auto max-w-4xl px-6 lg:px-8">
-          <div className="rounded-xl border border-[#41cbfd]/25 bg-gradient-to-br from-[#1478fd]/15 to-transparent p-8">
-            <h2 className="font-display text-lg font-semibold text-white">
-              Cross-Domain Analysis
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-[#9aa8c7]">
-              The six pillars feed into quarterly cross-domain strategic assessments. Each
-              assessment identifies priority scenarios where developments across multiple domains
-              create compound risk profiles that cannot be understood through single-domain
-              analysis alone.
+      <main>
+        <section className="relative isolate overflow-hidden border-b border-white/[0.08] px-6 pb-16 pt-36 sm:pb-20 sm:pt-40">
+          <div
+            aria-hidden
+            className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_55%_0%,rgba(20,120,253,0.2),transparent_60%)]"
+          />
+          <div className="mx-auto max-w-7xl">
+            <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan-300">
+              Research areas
             </p>
-            <Link
-              href="/dashboard/scenarios"
-              className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#41cbfd] hover:text-[#a3ecff]"
-            >
-              Explore Cross-Domain Scenarios &rarr;
-            </Link>
+            <div className="mt-6 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+              <h1 className="max-w-3xl font-display text-4xl font-light leading-[1.1] tracking-tight text-white sm:text-6xl">
+                Many systems.
+                <br />
+                <span className="text-cyan-200">One connected world.</span>
+              </h1>
+              <p className="max-w-xl text-base leading-7 text-slate-400 sm:text-lg">
+                The project organizes its research around connected public questions. These are
+                focus areas—not a claim that complete datasets, analysis, or tools already exist for
+                every domain.
+              </p>
+            </div>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <Link
+                href="/methodology"
+                className="inline-flex items-center gap-2 rounded-lg bg-cyan-200 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-white"
+              >
+                How we approach research <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href={`${REPO_URL}/tree/main/research/domains`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/5"
+              >
+                Browse domain notes <ArrowUpRight className="h-4 w-4" />
+              </a>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
+          <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-300">
+                Current and emerging work
+              </p>
+              <h2 className="mt-4 font-display text-3xl font-light text-white sm:text-4xl">
+                Research map
+              </h2>
+            </div>
+            <p className="max-w-md text-sm leading-6 text-slate-500">
+              Each area has a different maturity level. Follow the status label to understand what
+              is available today.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {areas.map(
+              ({ icon: Icon, number, title, description, focus, href, status, external }) => {
+                const content = (
+                  <>
+                    <div className="flex items-start justify-between">
+                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-200/15 bg-cyan-200/[0.06] text-cyan-200">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className="font-mono text-xs text-slate-600">{number}</span>
+                    </div>
+                    <h3 className="mt-7 font-display text-xl font-medium text-white">{title}</h3>
+                    <p className="mt-3 min-h-[4.5rem] text-sm leading-6 text-slate-400">
+                      {description}
+                    </p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {focus.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] text-slate-400"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-7 flex items-center justify-between border-t border-white/[0.08] pt-4">
+                      <span className="text-xs font-medium text-cyan-200/80">{status}</span>
+                      <ArrowUpRight className="h-4 w-4 text-slate-500 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-cyan-200" />
+                    </div>
+                  </>
+                );
+                return external ? (
+                  <a
+                    key={number}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group rounded-2xl border border-white/[0.08] bg-[#0a1422] p-6 transition hover:-translate-y-1 hover:border-cyan-200/30 hover:bg-[#0c1929] sm:p-7"
+                  >
+                    {content}
+                  </a>
+                ) : (
+                  <Link
+                    key={number}
+                    href={href}
+                    className="group rounded-2xl border border-white/[0.08] bg-[#0a1422] p-6 transition hover:-translate-y-1 hover:border-cyan-200/30 hover:bg-[#0c1929] sm:p-7"
+                  >
+                    {content}
+                  </Link>
+                );
+              },
+            )}
+          </div>
+        </section>
+
+        <section className="border-y border-white/[0.07] bg-[#080f1b]">
+          <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:px-8">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-200">
+                How to read this page
+              </p>
+              <h2 className="mt-4 font-display text-3xl font-light text-white">
+                Scope is not the same as capability.
+              </h2>
+            </div>
+            <div className="space-y-4 text-sm leading-7 text-slate-400">
+              <p>
+                Some dashboard areas are early interface explorations. The Finland fiscal-balance
+                work is the clearest end-to-end research prototype in the repository; the public
+                news monitor only collects configured publisher feeds and does not independently
+                verify their claims.
+              </p>
+              <p>
+                All outputs can be incomplete or wrong. They are for research and exploration, not
+                official decisions or a substitute for expert review.
+              </p>
+              <Link
+                href="/about"
+                className="inline-flex items-center gap-2 font-medium text-cyan-200 hover:text-white"
+              >
+                About the project <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
     </div>
   );
 }

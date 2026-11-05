@@ -2,7 +2,7 @@
 
 ## 1. Status and scope
 
-This notice describes privacy expectations for participation in the Suomi Strategia AI open-source project and use of project-operated development resources.
+This notice describes privacy expectations for participation in the OpenPolityra open-source project and use of project-operated development resources.
 
 The project is currently an early-stage initiative and does not, by this document alone, establish a hosted public service or identify a legally registered organisation as a data controller. GitHub and other infrastructure providers process information under their own terms and privacy notices.
 

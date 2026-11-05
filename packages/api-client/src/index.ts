@@ -6,12 +6,14 @@ export interface ApiClientOptions {
   baseUrl?: string
   token?: string
   timeout?: number
+  onUnauthorized?: () => void
 }
 
 interface ResolvedApiClientOptions {
   baseUrl: string
   token: string | undefined
   timeout: number
+  onUnauthorized: (() => void) | undefined
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -24,18 +26,21 @@ const defaultOptions: ResolvedApiClientOptions = {
     : 'http://localhost:4000',
   token: undefined,
   timeout: 30_000,
+  onUnauthorized: undefined,
 }
 
 export class ApiClient {
   private baseUrl: string
   private token?: string
   private timeout: number
+  private onUnauthorized?: () => void
 
   constructor(options: ApiClientOptions = {}) {
     const opts = { ...defaultOptions, ...options }
     this.baseUrl = opts.baseUrl.replace(/\/+$/, '')
     this.token = opts.token
     this.timeout = opts.timeout
+    this.onUnauthorized = opts.onUnauthorized
   }
 
   private buildHeaders(extra?: Record<string, string>): Record<string, string> {
@@ -68,6 +73,9 @@ export class ApiClient {
       if (!res.ok) {
         const response = isRecord(body) ? body : {}
         const error = isRecord(response.error) ? response.error : response
+        if (res.status === 401 && this.token && error.code === 'unauthorized') {
+          this.onUnauthorized?.()
+        }
         throw new ApiError(
           typeof error.code === 'string' ? error.code : 'api_error',
           typeof error.message === 'string' ? error.message : 'Request failed',
@@ -146,6 +154,20 @@ export interface UserRow {
 
 export interface SourceRow {
   id: string; name: string; publisher: string | null; license: string | null; data_type: string; category: string; canonical_url: string | null; metadata: Record<string, unknown> | null; is_active: boolean; created_at: string; updated_at: string
+}
+export type NewsTopic = 'geopolitics' | 'conflict' | 'security' | 'cybersecurity' | 'terrorism' | 'sanctions'
+export interface NewsItem {
+  id: string;
+  source_id: string;
+  source_name: string;
+  publisher: string | null;
+  category: string;
+  title: string;
+  summary: string | null;
+  url: string;
+  published_at: string | null;
+  topics: NewsTopic[];
+  fetched_at: string;
 }
 
 export interface DatasetRow { id: string; name: string; format: string; size_bytes: number | null; source_id: string; created_at: string }
@@ -270,10 +292,20 @@ export interface PaginatedMeta { total: number; limit: number; offset: number }
 
 /* ── API Client Method Layer ────────────────────────────────── */
 
-const _config: ResolvedApiClientOptions = { baseUrl: defaultOptions.baseUrl, token: undefined, timeout: defaultOptions.timeout }
+const _config: ResolvedApiClientOptions = {
+  baseUrl: defaultOptions.baseUrl,
+  token: undefined,
+  timeout: defaultOptions.timeout,
+  onUnauthorized: undefined,
+}
 
 function _buildClient(): ApiClient {
-  return new ApiClient({ baseUrl: _config.baseUrl, token: _config.token, timeout: _config.timeout })
+  return new ApiClient({
+    baseUrl: _config.baseUrl,
+    token: _config.token,
+    timeout: _config.timeout,
+    onUnauthorized: _config.onUnauthorized,
+  })
 }
 
 export const api = {
@@ -298,21 +330,43 @@ export const api = {
 
   /* ── Sources ───────────────────────────────────────────── */
   sources: {
-    list(params?: { limit?: number; offset?: number; category?: string }) {
+    list(params?: { limit?: number; offset?: number; category?: string; topic?: NewsTopic }) {
       const qs = new URLSearchParams()
       if (params?.limit) qs.set('limit', String(params.limit))
       if (params?.offset) qs.set('offset', String(params.offset))
       if (params?.category) qs.set('category', params.category)
+      if (params?.topic) qs.set('topic', params.topic)
       return _buildClient().get<{ sources: SourceRow[]; meta: PaginatedMeta }>(`/api/v1/sources?${qs}`)
     },
-    create(payload: { name: string; publisher?: string; license?: string; dataType: string; category: string; canonicalUrl?: string; metadata?: Record<string, unknown> }) {
+    create(payload: { name: string; publisher?: string; license?: string; dataType: string; category: string; canonicalUrl?: string; feedUrl?: string; topics?: NewsTopic[]; metadata?: Record<string, unknown> }) {
       return _buildClient().post<{ source: SourceRow }, typeof payload>('/api/v1/sources', payload)
     },
+
     byId(id: string) { return _buildClient().get<{ source: SourceRow }>(`/api/v1/sources/${id}`) },
     update(id: string, updates: Partial<Pick<SourceRow, 'name' | 'publisher' | 'license' | 'canonical_url' | 'metadata'>>) {
       return _buildClient().patch<{ source: SourceRow }, typeof updates>(`/api/v1/sources/${id}`, updates)
     },
     remove(id: string) { return _buildClient().delete<{ data: null }>(`/api/v1/sources/${id}`) },
+  },
+
+  news: {
+    list(params?: { limit?: number; offset?: number; category?: 'geopolitical' | 'security'; topic?: NewsTopic; search?: string }) {
+      const qs = new URLSearchParams()
+      if (params?.limit) qs.set('limit', String(params.limit))
+      if (params?.offset) qs.set('offset', String(params.offset))
+      if (params?.category) qs.set('category', params.category)
+      if (params?.topic) qs.set('topic', params.topic)
+      if (params?.search) qs.set('search', params.search)
+      return _buildClient().get<{ items: NewsItem[]; meta: PaginatedMeta }>(`/api/v1/news?${qs}`)
+    },
+    sync() {
+      return _buildClient().post<{
+        sources: number;
+        itemsParsed: number;
+        inserted: number;
+        failures: { source: string; message: string }[];
+      }, Record<string, never>>('/api/v1/news/sync', {})
+    },
   },
 
   /* ── Datasets ──────────────────────────────────────────── */
@@ -472,4 +526,7 @@ export function init(options?: ApiClientOptions): void {
   }
   if (options?.baseUrl) _config.baseUrl = options.baseUrl
   if (options?.timeout) _config.timeout = options.timeout
+  if (options && Object.prototype.hasOwnProperty.call(options, 'onUnauthorized')) {
+    _config.onUnauthorized = options.onUnauthorized
+  }
 }
