@@ -9,7 +9,9 @@ export const createWorkflowSchema = z.object({
   type: z.enum(AI_WORKFLOW_TYPES),
   model: z.string().optional(),
   systemPrompt: z.string().max(4096).optional(),
-  parameters: z.record(z.unknown()).default({}),
+  parameters: z.record(z.string(), z.unknown()).default({}),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+  result: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CreateWorkflowInput = z.infer<typeof createWorkflowSchema>;
