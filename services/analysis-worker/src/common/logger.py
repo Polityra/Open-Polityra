@@ -6,8 +6,8 @@ import json
 import logging
 import sys
 import time
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
+from typing import Any, Self
 
 
 class JSONFormatter(logging.Formatter):
@@ -19,7 +19,7 @@ class JSONFormatter(logging.Formatter):
             extra_fields = getattr(record, "extra_fields", {})  # type: ignore[attr-defined]
 
         log_entry: dict[str, Any] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -91,7 +91,7 @@ def log_with_extra(
         logger.name, level, "(none)", 0, message, (), None
     )
     if extra:
-        setattr(record, "extra_fields", extra)  # type: ignore[attr-defined]
+        record.extra_fields = extra  # type: ignore[attr-defined]
         for key, value in extra.items():
             setattr(record, key, value)  # type: ignore[attr-defined]
     logger.handle(record)
@@ -109,11 +109,11 @@ def with_timing(logger: logging.Logger, label: str):
     """
 
     class _Timing:
-        def __enter__(self) -> "_Timing":
+        def __enter__(self) -> Self:
             self._start = time.perf_counter()
             return self
 
-        def __exit__(self, *args: Any) -> None:
+        def __exit__(self, *args: object) -> None:
             elapsed = time.perf_counter() - self._start
             log_with_extra(
                 logger,
