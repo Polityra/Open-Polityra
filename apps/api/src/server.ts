@@ -1,8 +1,3 @@
-import { config } from 'dotenv';
-import { resolve } from 'node:path';
-
-config({ path: resolve(__dirname, '../../../.env') });
-
 async function startServer(): Promise<void> {
   const [{ createApp }, { getEnv }, { closePool }] = await Promise.all([
     import('./app'),
