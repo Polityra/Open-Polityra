@@ -53,7 +53,7 @@ class SimulationScenario:
         """Update multiple simulation parameters at once."""
         self.params.update(overrides)
 
-    def with_name(self, name: str) -> "SimulationScenario":
+    def with_name(self, name: str) -> SimulationScenario:
         """Return a copy of this scenario with the given name."""
         clone = SimulationScenario(
             name=name,
