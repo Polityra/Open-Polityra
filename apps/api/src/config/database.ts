@@ -9,7 +9,7 @@ export function getPool(env?: Env): Pool {
   const cfg = env ?? getEnv();
   pool = new Pool({
     connectionString: cfg.DATABASE_URL,
-    max: 20,
+    max: process.env.VERCEL ? 1 : 20,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
   });
