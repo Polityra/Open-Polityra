@@ -9,10 +9,6 @@
       "root": "apps/web",
       "framework": "nextjs"
     },
-    "ui": {
-      "root": "packages/ui",
-      "framework": "nextjs"
-    },
     "analysis-worker": {
       "root": "services/analysis-worker",
       "framework": "fastapi"
