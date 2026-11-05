@@ -22,7 +22,7 @@ export class SourceRepository {
     this.pool = pool ?? getPool();
   }
 
-  async findAll(limit = 50, offset = 0, categoryFilter?: string): Promise<{ rows: SourceRow[]; total: number }> {
+  async findAll(limit = 50, offset = 0, categoryFilter?: string, topicFilter?: string): Promise<{ rows: SourceRow[]; total: number }> {
     const whereClauses: string[] = ['is_active = true'];
     const values: unknown[] = [];
     let idx = 1;
@@ -30,6 +30,10 @@ export class SourceRepository {
     if (categoryFilter) {
       whereClauses.push(`category = $${idx++}`);
       values.push(categoryFilter);
+    }
+    if (topicFilter) {
+      whereClauses.push(`metadata #> '{news_scraper,topics}' ? $${idx++}`);
+      values.push(topicFilter);
     }
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';

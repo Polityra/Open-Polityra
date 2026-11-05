@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, BarChart3, Globe2, Shield, Layers, GitBranch, Brain, FileText, Bookmark, Settings, Sparkles,
+  LayoutDashboard, BarChart3, Globe2, Shield, Layers, GitBranch, Brain, FileText, Bookmark, Settings, Sparkles, Newspaper,
 } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/economy', label: 'Economy', icon: BarChart3 },
+  { href: '/dashboard/news', label: 'World News', icon: Newspaper },
   { href: '/dashboard/geopolitics', label: 'Geopolitics', icon: Globe2 },
   { href: '/dashboard/security', label: 'Security', icon: Shield },
   { href: '/dashboard/resilience', label: 'Resilience', icon: Layers },

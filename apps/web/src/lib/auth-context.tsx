@@ -46,7 +46,13 @@ function clear(): void {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, token: null, isAuthenticated: false, isLoading: true })
 
+  const handleUnauthorized = useCallback(() => {
+    clear()
+    setState({ user: null, token: null, isAuthenticated: false, isLoading: false })
+  }, [])
+
   useEffect(() => {
+    init({ onUnauthorized: handleUnauthorized })
     const token = getToken()
     const user = getUser()
     if (token && user) {
@@ -55,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setState(s => ({ ...s, isLoading: false }))
     }
-  }, [])
+  }, [handleUnauthorized])
 
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     const result = await api.auth.login({ email, password })
