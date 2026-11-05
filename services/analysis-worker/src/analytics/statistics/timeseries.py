@@ -10,7 +10,6 @@ models (SARIMAX, Prophet, etc.) while preserving this module's interface.
 from __future__ import annotations
 
 import numpy as np
-from scipy import signal  # noqa: N814
 
 
 def rolling_mean(data: list[float], window: int) -> list[float]:
