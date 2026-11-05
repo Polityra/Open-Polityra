@@ -54,7 +54,11 @@ export class ApiClient {
 
   constructor(options: ApiClientOptions = {}) {
     const opts = { ...defaultOptions, ...options }
-    this.baseUrl = opts.baseUrl.replace(/\/+$/, '')
+    let baseUrlEnd = opts.baseUrl.length
+    while (baseUrlEnd > 0 && opts.baseUrl.charCodeAt(baseUrlEnd - 1) === 47) {
+      baseUrlEnd -= 1
+    }
+    this.baseUrl = opts.baseUrl.slice(0, baseUrlEnd)
     this.token = opts.token
     this.timeout = opts.timeout
     this.onUnauthorized = opts.onUnauthorized

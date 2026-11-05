@@ -78,8 +78,13 @@ class FileStore:
 
     def get(self, topic: str, scope: DataScope) -> Path | None:
         """Return the most recent snapshot path for *topic* and *scope*, or ``None``."""
-        safe_topic = "".join(c if c.isalnum() or c in "_-" else "_" for c in topic)
-        candidates = list(self._base.glob(f"{safe_topic}_{scope.value}_*.csv"))
+        # Keep user-controlled topic text out of filesystem patterns. Match
+        # against the metadata written alongside each snapshot instead.
+        candidates: list[Path] = []
+        for path in self._base.glob("*.csv"):
+            metadata = self.get_metadata(path)
+            if metadata and metadata.get("topic") == topic and metadata.get("scope") == scope.value:
+                candidates.append(path)
         if not candidates:
             return None
         # Return the most recently modified file
