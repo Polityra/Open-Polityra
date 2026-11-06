@@ -78,7 +78,7 @@ export function registerRoutes(app: Express): void {
       meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() },
     });
   });
-  app.post('/api/v1/news/sync', authMiddleware(), async (_req, res) => {
+  app.post('/api/v1/news/sync', authMiddleware(), async (req, res) => {
     const result = await scrapeConfiguredSources();
     res.json({ ok: true, data: result, meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() } });
   });
