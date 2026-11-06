@@ -46,6 +46,35 @@ describe('GET /api/v1/nonexistent', () => {
   });
 });
 
+describe('GET /api/v1/news/sync cron authorization', () => {
+  let app: ReturnType<typeof createApp>;
+
+  beforeEach(() => {
+    vi.stubEnv('NODE_ENV', 'test');
+    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
+    vi.stubEnv('JWT_SECRET', 'test_secret_at_least_32_characters_long!!');
+    app = createApp();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('requires a configured cron secret', async () => {
+    vi.stubEnv('CRON_SECRET', '');
+    const res = await request(app).get('/api/v1/news/sync');
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('cron_secret_missing');
+  });
+
+  it('rejects requests with an invalid cron secret', async () => {
+    vi.stubEnv('CRON_SECRET', 'a'.repeat(32));
+    const res = await request(app).get('/api/v1/news/sync').set('Authorization', `Bearer ${'b'.repeat(32)}`);
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('unauthorized');
+  });
+});
+
 describe('Fiscal balance research API', () => {
   let app: ReturnType<typeof createApp>;
 

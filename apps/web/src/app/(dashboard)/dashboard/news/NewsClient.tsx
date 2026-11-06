@@ -114,7 +114,7 @@ export default function NewsClient() {
       {error && <ErrorNote>{error}</ErrorNote>}
       {error ? null : loading ? <LoadingBlock label="Loading public news…" /> : (
         items.length === 0
-          ? <EmptyState icon={Newspaper} title="No feed items found" text="Add HTTPS RSS/Atom feeds in Sources, then sync them. The API also checks configured feeds every 15 minutes while running." />
+          ? <EmptyState icon={Newspaper} title="No feed items found" text="Add HTTPS RSS/Atom feeds in Sources, then sync them. Configured feeds are checked every 15 minutes, including by Vercel Cron in production." />
           : <div className="space-y-3">
             <p className="text-xs text-[#74829f]">Showing {items.length} of {total} stored items · retained for up to 90 days</p>
             {items.map((item) => (

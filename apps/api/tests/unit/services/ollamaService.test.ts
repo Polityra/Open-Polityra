@@ -79,6 +79,28 @@ describe('Ollama provider selection', () => {
     );
   });
 
+  it('returns free-form chat text without requesting JSON format', async () => {
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, _init?: RequestInit) => {
+      if (String(input).endsWith('/api/tags')) {
+        return Response.json({ models: [{ name: 'qwen3:14b', model: 'qwen3:14b' }] });
+      }
+      return Response.json({
+        model: 'qwen3:14b',
+        message: { role: 'assistant', content: 'A readable response.' },
+        total_duration: 1_000_000,
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { generateChat } = await import('../../../src/services/ollamaService');
+    const result = await generateChat([{ role: 'user', content: 'Explain briefly.' }]);
+
+    expect(result.content).toBe('A readable response.');
+    const chatCall = fetchMock.mock.calls.find(([input]) => String(input).endsWith('/api/chat'));
+    expect(chatCall).toBeDefined();
+    expect(JSON.parse(String(chatCall?.[1]?.body))).not.toHaveProperty('format');
+  });
+
   it('reports unavailable when no local model or cloud key is configured', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => {
       throw new Error('Ollama is offline');

@@ -39,7 +39,7 @@ export interface WorkflowTaskRow {
   step_order: number;
   status: string;
   prompt: string | null;
-  response: Record<string, unknown> | null;
+  response: string | Record<string, unknown> | null;
   metadata: Record<string, unknown> | null;
   error_message: string | null;
   started_at: Date | null;
@@ -220,7 +220,7 @@ export class WorkflowTaskRepository {
     return result.rows.map(formatTaskRow);
   }
 
-  async update(id: string, status: string, extras?: { response?: Record<string, unknown>; errorMessage?: string; startedAt?: Date; completedAt?: Date }): Promise<WorkflowTaskRow | null> {
+  async update(id: string, status: string, extras?: { response?: string | Record<string, unknown>; errorMessage?: string; startedAt?: Date; completedAt?: Date }): Promise<WorkflowTaskRow | null> {
     const fields: string[] = ['status = $1'];
     const values: unknown[] = [status];
     let idx = 2;
@@ -309,7 +309,7 @@ function formatTaskRow(raw: Record<string, unknown>): WorkflowTaskRow {
     step_order: raw.step_order as number,
     status: raw.status as string,
     prompt: raw.prompt as string | null,
-    response: (raw.response ? p(raw.response) : null) as Record<string, unknown> | null,
+    response: raw.response == null ? null : typeof raw.response === 'string' ? raw.response : p(raw.response) as Record<string, unknown>,
     metadata: (raw.metadata ? p(raw.metadata) : {}) as Record<string, unknown> | null,
     error_message: raw.error_message as string | null,
     started_at: raw.started_at instanceof Date ? raw.started_at : null,

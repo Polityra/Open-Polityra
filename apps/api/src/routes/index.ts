@@ -1,4 +1,5 @@
 import type { Express, Request } from 'express';
+import { timingSafeEqual } from 'node:crypto';
 import { rateLimiter } from '../middleware/rateLimiter';
 import { authMiddleware } from '../middleware/auth';
 import type { AuthenticatedRequest } from '../middleware/auth';
@@ -16,6 +17,9 @@ import * as modelRegistryService from '../modules/model-registry/service';
 import * as notificationService from '../modules/notifications/service';
 import { fiscalScenarioInputSchema } from '../modules/fiscal-balance/schema';
 import { analyzeFiscalBalance, getFiscalDataset } from '../modules/fiscal-balance/service';
+import * as newsService from '../modules/news/service';
+import type { NewsTopic } from '../modules/news/service';
+import { scrapeConfiguredSources } from '../modules/news/scraper';
 
 export function registerRoutes(app: Express): void {
   // Apply rate limiter to all /api/v1 routes
@@ -57,6 +61,46 @@ export function registerRoutes(app: Express): void {
   app.get('/api/v1/sources/:id', authMiddleware(), sourceController.getSource);
   app.patch('/api/v1/sources/:id', authMiddleware(), sourceController.updateSource);
   app.delete('/api/v1/sources/:id', authMiddleware(), sourceController.deleteSource);
+
+  // Protected: /news
+  app.get('/api/v1/news', authMiddleware(), async (req, res) => {
+    const requestedLimit = Number.parseInt((req.query.limit as string) ?? '50', 10);
+    const requestedOffset = Number.parseInt((req.query.offset as string) ?? '0', 10);
+    const limit = Number.isFinite(requestedLimit) ? Math.min(200, Math.max(1, requestedLimit)) : 50;
+    const offset = Number.isFinite(requestedOffset) ? Math.max(0, requestedOffset) : 0;
+    const category = req.query.category as string | undefined;
+    const topic = req.query.topic as NewsTopic | undefined;
+    const search = req.query.search as string | undefined;
+    const result = await newsService.listNews({ limit, offset, category, topic, search });
+    res.json({
+      ok: true,
+      data: { items: result.rows, meta: { total: result.total, limit, offset } },
+      meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() },
+    });
+  });
+  app.post('/api/v1/news/sync', authMiddleware(), async (_req, res) => {
+    const result = await scrapeConfiguredSources();
+    res.json({ ok: true, data: result, meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() } });
+  });
+  app.get('/api/v1/news/sync', async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret || cronSecret.length < 32) {
+      res.status(503).json({ ok: false, error: { code: 'cron_secret_missing', message: 'CRON_SECRET must be configured with at least 32 characters to run scheduled news syncs' }, meta: { timestamp: new Date().toISOString() } });
+      return;
+    }
+
+    const authorization = req.get('authorization') ?? '';
+    const token = /^Bearer ([^\s]+)$/i.exec(authorization)?.[1] ?? '';
+    const expected = Buffer.from(cronSecret);
+    const provided = Buffer.from(token);
+    if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
+      res.status(401).json({ ok: false, error: { code: 'unauthorized', message: 'A valid cron authorization token is required' }, meta: { timestamp: new Date().toISOString() } });
+      return;
+    }
+
+    const result = await scrapeConfiguredSources();
+    res.json({ ok: true, data: result, meta: { requestId: req.id ?? '', timestamp: new Date().toISOString() } });
+  });
 
   // Protected: /datasets
   app.get('/api/v1/datasets', authMiddleware(), async (req, res) => {
