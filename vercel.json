@@ -37,7 +37,7 @@
   "crons": [
     {
       "path": "/api/v1/news/sync",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
