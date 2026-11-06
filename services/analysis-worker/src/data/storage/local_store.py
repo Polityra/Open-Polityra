@@ -9,8 +9,7 @@ from __future__ import annotations
 
 import csv
 import json
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -53,7 +52,7 @@ class FileStore:
         Returns:
             The absolute path to the CSV file.
         """
-        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         safe_topic = "".join(c if c.isalnum() or c in "_-" else "_" for c in topic)
         filename = f"{safe_topic}_{scope.value}_{ts}.csv"
         filepath = self._base / filename

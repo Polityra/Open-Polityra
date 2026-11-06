@@ -90,7 +90,7 @@ def moving_average_uncertainty(
     Returns:
         Dict with keys ``point_estimate``, ``lower_bound``, ``upper_bound``, and ``margin``.
     """
-    from scipy import stats as sp_stats  # noqa: N814
+    from scipy import stats as sp_stats
 
     ma_vals = moving_average(data, window)
     valid_ma = [v for v in ma_vals if not np.isnan(v)]
