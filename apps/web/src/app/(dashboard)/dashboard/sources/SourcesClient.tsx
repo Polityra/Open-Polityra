@@ -30,6 +30,15 @@ function getNewsFeedUrl(metadata: SourceRow['metadata']): string {
   return typeof feedUrl === 'string' ? feedUrl : ''
 }
 
+function getSuggestedFeedUrl(sourceUrl: string): string {
+  try {
+    const url = new URL(sourceUrl)
+    return url.protocol === 'https:' ? `${url.origin}/rss.xml` : ''
+  } catch {
+    return ''
+  }
+}
+
 export default function SourcesClient() {
   const [sources, setSources] = useState<SourceRow[]>([])
   const [total, setTotal] = useState(0)
@@ -94,7 +103,7 @@ export default function SourcesClient() {
       setFeedUrl('')
       setPage(1)
       setCategory('')
-      setFormSuccess('RSS/Atom source added. The scraper will check it now and then every 15 minutes while the API is running.')
+      setFormSuccess('RSS/Atom source added. It will be checked on the next 15-minute feed sync.')
       try {
         const refreshed = await api.sources.list({ limit: PAGE, offset: 0 })
         const rows = pick<SourceRow>(refreshed, 'sources')
@@ -125,7 +134,7 @@ export default function SourcesClient() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="text-xs text-[#9aa8c7]">Source name<input required maxLength={255} value={name} onChange={(event) => setName(event.target.value)} className={`${inputClass} mt-2`} placeholder="Example: Public broadcaster" /></label>
           <label className="text-xs text-[#9aa8c7]">Publisher (optional)<input maxLength={255} value={publisher} onChange={(event) => setPublisher(event.target.value)} className={`${inputClass} mt-2`} placeholder="Organization name" /></label>
-          <label className="text-xs text-[#9aa8c7]">Source website (HTTPS)<input required type="url" value={domainUrl} onChange={(event) => setDomainUrl(event.target.value)} className={`${inputClass} mt-2`} placeholder="https://news.example.org" /></label>
+          <label className="text-xs text-[#9aa8c7]">Source website (HTTPS)<input required type="url" value={domainUrl} onChange={(event) => { const url = event.target.value; setDomainUrl(url); setFeedUrl(getSuggestedFeedUrl(url)) }} className={`${inputClass} mt-2`} placeholder="https://news.example.org" /></label>
           <label className="text-xs text-[#9aa8c7]">RSS/Atom feed URL (HTTPS)<input required type="url" value={feedUrl} onChange={(event) => setFeedUrl(event.target.value)} className={`${inputClass} mt-2`} placeholder="https://news.example.org/rss.xml" /></label>
         </div>
         <div className="flex flex-wrap items-center gap-2">

@@ -33,5 +33,11 @@
         "service": "web"
       }
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/v1/news/sync",
+      "schedule": "*/15 * * * *"
+    }
   ]
 }

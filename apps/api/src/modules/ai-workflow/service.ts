@@ -29,50 +29,52 @@ function buildWorkflowPlan(type: AiWorkflowType, parameters: Record<string, unkn
   const ctx = parameters.context || parameters.input || '';
   const data = parameters.data || '';
   const scope = parameters.scope || 'global';
+  const textOnly = (instructions: string) =>
+    `${instructions}\n\nRespond in clear, readable prose. Markdown headings and bullets are fine; do not return JSON or a code block.`;
 
   switch (type) {
     case 'economic-analysis':
       return [
-        { stepOrder: 1, title: 'Data Assessment', description: 'Evaluate available economic data', prompt: `You are an economic analyst. Given the following context and data, assess the current state of the economy described.\n\nContext: ${ctx}\n\nEconomic Data:\n${data}\n\nProvide a structured JSON assessment with: current_state, key_indicators, trends, confidence_level (0-1).` },
-        { stepOrder: 2, title: 'Cross-Domain Correlation', description: 'Identify correlations between economic factors', prompt: `You are an economic analyst. Given the following context and data, identify cross-domain correlations.\n\nContext: ${ctx}\n\nEconomic Data:\n${data}\n\nProvide a structured JSON response with: correlated_factors (array of {factor1, factor2, relationship, evidence}), market_implications (array of strings), confidence_level (0-1).` },
-        { stepOrder: 3, title: 'Scenario Analysis', description: 'Generate possible economic futures', prompt: `You are an economic analyst. Given the following context and data, generate plausible economic scenarios.\n\nContext: ${ctx}\n\nEconomic Data:\n${data}\n\nProvide a structured JSON response with: base_case (description, probability, timeline), optimistic_scenario (description, probability, timeline), pessimistic_scenario (description, probability, timeline), key_risks (array of strings), confidence_level (0-1).` },
-        { stepOrder: 4, title: 'Final Synthesis', description: 'Aggregate findings into comprehensive report', prompt: `You are a senior economic analyst. Based on the following analysis steps, synthesize a comprehensive economic report.\n\nContext: ${ctx}\n\nEconomic Data:\n${data}\n\nProvide a structured JSON executive summary with: executive_summary (paragraph), key_findings (array), strategic_recommendations (array of {action, priority, timeline, expected_impact}), confidence_level (0-1).` },
+        { stepOrder: 1, title: 'Data Assessment', description: 'Evaluate available economic data', prompt: textOnly(`Assess the current state of the economy described by this context and data. Explain the important indicators, trends, and limitations.\n\nContext: ${ctx}\n\nEconomic Data:\n${data}`) },
+        { stepOrder: 2, title: 'Cross-Domain Correlation', description: 'Identify correlations between economic factors', prompt: textOnly(`Identify meaningful relationships between economic factors, the evidence for each relationship, and their possible market implications. Avoid presenting correlation as causation.\n\nContext: ${ctx}\n\nEconomic Data:\n${data}`) },
+        { stepOrder: 3, title: 'Scenario Analysis', description: 'Generate possible economic futures', prompt: textOnly(`Describe plausible baseline, optimistic, and pessimistic economic scenarios, including their assumptions, time horizons, likelihoods, and key risks.\n\nContext: ${ctx}\n\nEconomic Data:\n${data}`) },
+        { stepOrder: 4, title: 'Final Synthesis', description: 'Aggregate findings into comprehensive report', prompt: textOnly(`Synthesize the analysis into a concise report with an executive summary, key findings, practical recommendations, and a clear discussion of uncertainty.\n\nContext: ${ctx}\n\nEconomic Data:\n${data}`) },
       ];
 
     case 'geopolitical-assessment':
       return [
-        { stepOrder: 1, title: 'Actor Analysis', description: 'Identify and assess key geopolitical actors', prompt: `You are a geopolitical analyst. Given the following context, identify and analyze the key geopolitical actors.\n\nContext: ${ctx}\n\nScope: ${scope}\n\nProvide a structured JSON response with: key_actors (array of {actor, type, influence, interests, capabilities, stance}), power_dynamics (description), confidence_level (0-1).` },
-        { stepOrder: 2, title: 'Threat Assessment', description: 'Assess potential threats and risks', prompt: `You are a geopolitical analyst. Given the following context, assess potential threats.\n\nContext: ${ctx}\n\nScope: ${scope}\n\nProvide a structured JSON response with: threat_level (low|medium|high|critical), primary_threats (array of {source, type, probability, timeline, potential_impact}), secondary_threats (array), confidence_level (0-1).` },
-        { stepOrder: 3, title: 'Scenario Generation', description: 'Generate geopolitical scenarios', prompt: `You are a geopolitical analyst. Given the following context, generate strategic scenarios.\n\nContext: ${ctx}\n\nScope: ${scope}\n\nProvide a structured JSON response with: likely_scenarios (array of {scenario_name, description, probability, timeline, outcome_implications}), wildcards (array), early_warning_indicators (array), confidence_level (0-1).` },
-        { stepOrder: 4, title: 'Strategic Recommendations', description: 'Generate actionable recommendations', prompt: `You are a senior geopolitical analyst. Based on the analysis of context:\n\nContext: ${ctx}\n\nScope: ${scope}\n\nProvide a structured JSON response with: executive_summary (paragraph), strategic_recommendations (array of {action, rationale, timeline, resource_requirements, risk_level}), confidence_level (0-1).` },
+        { stepOrder: 1, title: 'Actor Analysis', description: 'Identify and assess key geopolitical actors', prompt: textOnly(`Identify the relevant actors, their interests and capabilities, and the relationships and power dynamics between them.\n\nContext: ${ctx}\n\nScope: ${scope}`) },
+        { stepOrder: 2, title: 'Threat Assessment', description: 'Assess potential threats and risks', prompt: textOnly(`Assess the main risks and threats in this context, explaining their sources, likelihood, possible impact, and time horizon. Distinguish risks supported by evidence from speculation.\n\nContext: ${ctx}\n\nScope: ${scope}`) },
+        { stepOrder: 3, title: 'Scenario Generation', description: 'Generate geopolitical scenarios', prompt: textOnly(`Describe plausible geopolitical scenarios, the assumptions and developments behind each, their implications, and indicators that could signal a change in direction.\n\nContext: ${ctx}\n\nScope: ${scope}`) },
+        { stepOrder: 4, title: 'Strategic Recommendations', description: 'Generate actionable recommendations', prompt: textOnly(`Write an executive summary and proportionate recommendations. Explain the rationale, relevant time horizon, resource considerations, and risks for each recommendation.\n\nContext: ${ctx}\n\nScope: ${scope}`) },
       ];
 
     case 'scenario-generation':
       return [
-        { stepOrder: 1, title: 'Context Analysis', description: 'Understand the situation context', prompt: `You are a scenario planner. Analyze this context for scenario planning.\n\nContext: ${ctx}\n\nParameters:\n${JSON.stringify(parameters, null, 2)}\n\nProvide a structured JSON response with: situation_summary (paragraph), key_variables (array of {variable, current_state, volatility, influence}), driving_forces (array of strings), confidence_level (0-1).` },
-        { stepOrder: 2, title: 'Scenario Development', description: 'Develop plausible scenarios', prompt: `You are a scenario planner. Based on this analysis, develop strategic scenarios.\n\nContext: ${ctx}\n\nKey Variables:\n${JSON.stringify(parameters.key_variables || [])}\n\nParameters:\n${JSON.stringify(parameters, null, 2)}\n\nProvide a structured JSON response with: scenarios (array of {name, description, probability, timeline_horizon, key_assumptions, triggering_events, positive_outcome, negative_outcome}), confidence_level (0-1).` },
-        { stepOrder: 3, title: 'Impact Assessment', description: 'Assess scenario impacts', prompt: `You are a scenario planner. Assess the impacts of these scenarios.\n\nContext: ${ctx}\n\nScenarios:\n${JSON.stringify(parameters.scenarios || [])}\n\nProvide a structured JSON response with: sectoral_impacts (array of {sector, impact_severity, affected_stakeholders}), cascading_effects (array), monitoring_metrics (array of {metric, threshold, measurement_frequency}), confidence_level (0-1).` },
-        { stepOrder: 4, title: 'Response Planning', description: 'Generate response strategies', prompt: `You are a strategic planner. Generate response strategies for these scenarios.\n\nContext: ${ctx}\n\nScenarios:\n${JSON.stringify(parameters.scenarios || [])}\n\nProvide a structured JSON response with: response_strategies (array of {strategy_name, applicable_scenarios, implementation_steps, resource_needs, timeline, success_metrics}), contingency_plans (array), confidence_level (0-1).` },
+        { stepOrder: 1, title: 'Context Analysis', description: 'Understand the situation context', prompt: textOnly(`Analyze the situation for scenario planning. Explain its current state, important variables, and forces that could shape change.\n\nContext: ${ctx}\n\nParameters:\n${JSON.stringify(parameters, null, 2)}`) },
+        { stepOrder: 2, title: 'Scenario Development', description: 'Develop plausible scenarios', prompt: textOnly(`Develop a range of plausible scenarios. For each, explain its narrative, assumptions, timeline, triggering events, and potential outcomes.\n\nContext: ${ctx}\n\nKey Variables:\n${JSON.stringify(parameters.key_variables || [])}\n\nParameters:\n${JSON.stringify(parameters, null, 2)}`) },
+        { stepOrder: 3, title: 'Impact Assessment', description: 'Assess scenario impacts', prompt: textOnly(`Assess how the scenarios could affect sectors and stakeholders, including possible cascading effects and indicators worth monitoring.\n\nContext: ${ctx}\n\nScenarios:\n${JSON.stringify(parameters.scenarios || [])}`) },
+        { stepOrder: 4, title: 'Response Planning', description: 'Generate response strategies', prompt: textOnly(`Describe proportionate response strategies for the scenarios, including implementation steps, resources, timelines, success measures, and contingency plans.\n\nContext: ${ctx}\n\nScenarios:\n${JSON.stringify(parameters.scenarios || [])}`) },
       ];
 
     case 'text-summary':
       return [
-        { stepOrder: 1, title: 'Content Analysis', description: 'Analyze the structure and key elements', prompt: `You are a research assistant. Analyze this text for its key components.\n\nText:\n${ctx}\n\nProvide a structured JSON response with: main_topic (string), document_type (string), key_sections (array of {section_title, summary}), entities_mentioned (array of {name, type, relevance}), confidence_level (0-1).` },
-        { stepOrder: 2, title: 'Summary Generation', description: 'Generate comprehensive summary', prompt: `You are a research assistant. Generate a comprehensive summary of this text.\n\nText:\n${ctx}\n\nProvide a structured JSON response with: executive_summary (paragraph), key_arguments (array of {argument, supporting_evidence, counter_arguments}), supporting_data (array of {data_point, significance}), confidence_level (0-1).` },
-        { stepOrder: 3, title: 'Insight Extraction', description: 'Extract actionable insights', prompt: `You are a research assistant. Extract insights and implications from this text.\n\nText:\n${ctx}\n\nProvide a structured JSON response with: key_insights (array of {insight, evidence, implications}), gaps_and_uncertainties (array), action_items (array), confidence_level (0-1).` },
+        { stepOrder: 1, title: 'Content Analysis', description: 'Analyze the structure and key elements', prompt: textOnly(`Identify the text's main topic, structure, important sections, and notable people or organizations.\n\nText:\n${ctx}`) },
+        { stepOrder: 2, title: 'Summary Generation', description: 'Generate comprehensive summary', prompt: textOnly(`Write a comprehensive summary that explains the main argument, supporting evidence, and any relevant counterarguments or limitations.\n\nText:\n${ctx}`) },
+        { stepOrder: 3, title: 'Insight Extraction', description: 'Extract actionable insights', prompt: textOnly(`Explain the text's key insights and implications, and identify gaps, uncertainties, and useful follow-up questions.\n\nText:\n${ctx}`) },
       ];
 
     case 'forecast':
       return [
-        { stepOrder: 1, title: 'Trend Analysis', description: 'Analyze historical trends and patterns', prompt: `You are a strategic forecaster. Analyze the historical data for trends.\n\nContext: ${ctx}\n\nHistorical Data:\n${data}\n\nParameters:\n${JSON.stringify(parameters, null, 2)}\n\nProvide a structured JSON response with: identified_trends (array of {trend, direction, strength, timeframe}), pattern_analysis (description), seasonality_notes (string), confidence_level (0-1).` },
-        { stepOrder: 2, title: 'Driver Identification', description: 'Identify key influencing factors', prompt: `You are a strategic forecaster. Identify the key drivers for the target.\n\nContext: ${ctx}\n\nTrends:\n${JSON.stringify(parameters.trends || [])}\n\nTarget: ${parameters.target || 'unspecified'}\n\nProvide a structured JSON response with: primary_drivers (array of {driver, influence_type, current_strength, trajectory_change_probability}), secondary_drivers (array), exogenous_factors (array), confidence_level (0-1).` },
-        { stepOrder: 3, title: 'Forecast Generation', description: 'Generate predictions with confidence intervals', prompt: `You are a strategic forecaster. Generate forecasts based on this analysis.\n\nContext: ${ctx}\n\nKey Drivers:\n${JSON.stringify(parameters.drivers || [])}\n\nTarget to forecast: ${parameters.target || 'unspecified'}\nTime horizon: ${parameters.time_horizon || '6-12 months'}\n\nProvide a structured JSON response with: forecasts (array of {timeframe, predicted_direction, confidence_interval_low, confidence_interval_high, key_assumptions}), alternative_outcomes (array of {outcome, probability, conditions}), methodology_notes (string), confidence_level (0-1).` },
-        { stepOrder: 4, title: 'Confidence Assessment', description: 'Assess forecast reliability and limitations', prompt: `You are a strategic forecaster. Assess the confidence in these forecasts.\n\nContext: ${ctx}\n\nForecasts:\n${JSON.stringify(parameters.forecasts || [])}\n\nProvide a structured JSON response with: confidence_assessment (high|medium|low), reasoning (paragraph), data_limitations (array of {limitation, impact_on_forecast, mitigation}), monitoring_recommendations (array of {metric, check_frequency, action_threshold}), confidence_level (0-1).` },
+        { stepOrder: 1, title: 'Trend Analysis', description: 'Analyze historical trends and patterns', prompt: textOnly(`Analyze the historical data for trends, patterns, and seasonality. Explain their direction, strength, and time horizon.\n\nContext: ${ctx}\n\nHistorical Data:\n${data}\n\nParameters:\n${JSON.stringify(parameters, null, 2)}`) },
+        { stepOrder: 2, title: 'Driver Identification', description: 'Identify key influencing factors', prompt: textOnly(`Identify the main factors that could influence the forecast target, how they may affect it, and any external factors to consider.\n\nContext: ${ctx}\n\nTrends:\n${JSON.stringify(parameters.trends || [])}\n\nTarget: ${parameters.target || 'unspecified'}`) },
+        { stepOrder: 3, title: 'Forecast Generation', description: 'Generate predictions with confidence intervals', prompt: textOnly(`Describe likely outcomes and alternatives for the target and time horizon. Explain assumptions and the basis for your uncertainty estimates.\n\nContext: ${ctx}\n\nKey Drivers:\n${JSON.stringify(parameters.drivers || [])}\n\nTarget to forecast: ${parameters.target || 'unspecified'}\nTime horizon: ${parameters.time_horizon || '6-12 months'}`) },
+        { stepOrder: 4, title: 'Confidence Assessment', description: 'Assess forecast reliability and limitations', prompt: textOnly(`Assess the reliability and limitations of the forecast. Explain the main sources of uncertainty and recommend indicators to monitor.\n\nContext: ${ctx}\n\nForecasts:\n${JSON.stringify(parameters.forecasts || [])}`) },
       ];
 
     case 'custom':
       return [
-        { stepOrder: 1, title: 'Analysis', description: 'Process the request', prompt: `You are an analytical assistant. Process this request.\n\nUser Request:\n${ctx}\n\nParameters:\n${JSON.stringify(parameters, null, 2)}\n\nProvide your analysis as structured JSON output.` },
+        { stepOrder: 1, title: 'Analysis', description: 'Process the request', prompt: textOnly(`Process this request and any supplied parameters.\n\nUser Request:\n${ctx}\n\nParameters:\n${JSON.stringify(parameters, null, 2)}`) },
       ];
   }
 }
@@ -143,22 +145,17 @@ export async function executeWorkflow(
       // Call Ollama via the service layer
       const response = await generateChat(
         [
-          { role: 'system', content: systemPrompt ?? SYSTEM_PROMPTS[type] },
+          {
+            role: 'system',
+            content: `${systemPrompt ?? SYSTEM_PROMPTS[type]}\n\nReturn the answer as readable prose, not JSON. Do not wrap the response in a JSON object or code block.`,
+          },
           { role: 'user', content: step.prompt },
         ],
-        { model: workflow.model, provider: ollamaStatus.provider, format: 'json' },
+        { model: workflow.model, provider: ollamaStatus.provider, format: 'text' },
       );
 
-      // Try to parse the response as JSON for storage
-      let parsedResponse: Record<string, unknown> | null = null;
-      try {
-        parsedResponse = JSON.parse(response.content);
-      } catch {
-        parsedResponse = { raw_output: response.content };
-      }
-
       await taskRepo.update(task.id, 'completed', {
-        response: parsedResponse ?? undefined,
+        response: response.content,
         completedAt: new Date(),
       });
 
@@ -213,7 +210,7 @@ export async function executeWorkflow(
  * Aggregate task results into a unified output.
  */
 function aggregateResults(tasks: WorkflowTaskRow[], type: AiWorkflowType): Record<string, unknown> {
-  const taskResults = tasks.map((t) => ({
+  const taskResults: Array<{ title: string; order: number; response: string | Record<string, unknown> }> = tasks.map((t) => ({
     title: t.title,
     order: t.step_order,
     response: t.response ?? {},
@@ -229,12 +226,13 @@ function aggregateResults(tasks: WorkflowTaskRow[], type: AiWorkflowType): Recor
   };
 }
 
-function generateSummary(results: Array<{ title: string; order: number; response: Record<string, unknown> }>, type: AiWorkflowType): string {
-  const completed = results.filter((r) => Object.keys(r.response).length > 0);
-  const lastResult = completed[completed.length - 1]?.response ?? {};
+function generateSummary(results: Array<{ title: string; order: number; response: string | Record<string, unknown> }>, type: AiWorkflowType): string {
+  const completed = results.filter((r) => typeof r.response === 'string' ? r.response.trim().length > 0 : Object.keys(r.response).length > 0);
+  const lastResult: string | Record<string, unknown> = completed[completed.length - 1]?.response ?? {};
 
+  if (typeof lastResult === 'string') return lastResult;
   if (type === 'economic-analysis' || type === 'geopolitical-assessment') {
-    return typeof (lastResult as Record<string, unknown>).executive_summary === 'string' ? String((lastResult as Record<string, unknown>).executive_summary) : `Analysis complete across ${completed.length} steps.`;
+    return typeof lastResult.executive_summary === 'string' ? lastResult.executive_summary : `Analysis complete across ${completed.length} steps.`;
   }
   if (type === 'forecast') {
     const forecasts = (lastResult.forecasts || []) as Array<Record<string, unknown>>;
@@ -249,9 +247,9 @@ function generateSummary(results: Array<{ title: string; order: number; response
   return `Analysis complete: ${type}. Processed ${completed.length} of ${results.length} steps successfully.`;
 }
 
-function calculateConfidence(results: Array<{ title: string; order: number; response: Record<string, unknown> }>): number {
+function calculateConfidence(results: Array<{ title: string; order: number; response: string | Record<string, unknown> }>): number {
   const confidences = results.flatMap((r) => {
-    const c = r.response.confidence_level;
+    const c = typeof r.response === 'string' ? undefined : r.response.confidence_level;
     return typeof c === 'number' && c >= 0 && c <= 1 ? [c] : [];
   });
   if (confidences.length === 0) return 0.5;

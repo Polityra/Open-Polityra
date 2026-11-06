@@ -293,7 +293,7 @@ export interface WorkflowTaskRow {
   step_order: number;
   status: 'pending' | 'running' | 'completed' | 'failed';
   prompt: string | null;
-  response: Record<string, unknown> | null;
+  response: string | Record<string, unknown> | null;
   metadata: Record<string, unknown> | null;
   error_message: string | null;
   started_at: string | null;
