@@ -15,7 +15,7 @@ _startup_time: float | None = None
 
 def set_bootstrap_timestamp(ts: float) -> None:
     """Record the application start time (called from lifespan)."""
-    global _startup_time  # noqa: PLW0603
+    global _startup_time
     _startup_time = ts
 
 

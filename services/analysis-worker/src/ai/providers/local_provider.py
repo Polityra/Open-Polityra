@@ -11,8 +11,9 @@ interface.
 
 from __future__ import annotations
 
-import httpx
 from typing import Any
+
+import httpx
 
 from src.ai.providers.base import AIProvider
 
@@ -92,7 +93,7 @@ class OllamaProvider(AIProvider):
 
             url = f"{self._base_url}/api/tags"
             request = urllib.request.Request(url, method="GET")
-            with urllib.request.urlopen(request, timeout=5.0) as resp:  # type: ignore[no-untyped-call]
+            with urllib.request.urlopen(request, timeout=5.0) as resp:  # type: ignore[no-untyped-call]  # noqa: ASYNC210
                 status = "ok" if resp.status == 200 else "unreachable"
         except Exception:  # noqa: BLE001
             status = "unreachable"

@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import contextlib
 import signal
-import sys
 import time
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
@@ -30,7 +27,7 @@ async def lifespan(app: FastAPI):
     health.set_bootstrap_timestamp(time.time())
 
     # Signal handler for graceful shutdown
-    _signal_stop: signal.Signals | None = None  # noqa: ANN401
+    _signal_stop: signal.Signals | None = None
 
     def _handle_signal(signum: int, frame):  # type: ignore[type-arg]
         nonlocal _signal_stop

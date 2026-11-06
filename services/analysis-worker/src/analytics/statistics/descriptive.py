@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
-from scipy import stats as sp_stats  # noqa: N814 – convention alias
+from scipy import stats as sp_stats
 
 
 def describe(data: Sequence[float]) -> dict[str, float]:
