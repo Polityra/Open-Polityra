@@ -1,5 +1,15 @@
 import { Suspense } from 'react'
+import { createPageMetadata } from "@/lib/site";
 import LoginForm from './login-form'
+
+export const metadata = {
+  ...createPageMetadata({
+    title: "Sign In",
+    description: "Sign in to your Open Polityra research workspace.",
+    path: "/login",
+  }),
+  robots: { index: false, follow: false },
+};
 
 export default function LoginPage() {
   return (

@@ -11,7 +11,14 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
-import { REPO_URL } from "@/lib/site";
+import { createPageMetadata, REPO_URL } from "@/lib/site";
+
+export const metadata = createPageMetadata({
+  title: "Research Areas: Economics, Security and More",
+  description:
+    "Explore Open Polityra's research areas, including economics and public finance, geopolitics, security and cybersecurity, resilience, public services, and international trade.",
+  path: "/research",
+});
 
 const areas = [
   {

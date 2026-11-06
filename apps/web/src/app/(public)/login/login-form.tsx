@@ -28,10 +28,15 @@ export default function LoginForm() {
         await login(email, password);
 
         const redirect = searchParams.get("redirect") ?? "/dashboard";
-
-        // Prevent redirects to external websites.
-        const safeRedirect =
-          redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/dashboard";
+        let safeRedirect = "/dashboard";
+        try {
+          const target = new URL(redirect, window.location.origin);
+          if (target.origin === window.location.origin) {
+            safeRedirect = `${target.pathname}${target.search}${target.hash}`;
+          }
+        } catch {
+          // Keep the default route when the supplied redirect is not a valid URL.
+        }
 
         router.push(safeRedirect);
         router.refresh();

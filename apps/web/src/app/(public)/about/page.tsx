@@ -2,7 +2,14 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Eye, GitBranch, Scale, Users } from "lucide-react";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
-import { REPO_URL } from "@/lib/site";
+import { createPageMetadata, REPO_URL } from "@/lib/site";
+
+export const metadata = createPageMetadata({
+  title: "About the Open Polityra Project",
+  description:
+    "Learn about Open Polityra, an independent open-source research project focused on public evidence, transparent methods, uncertainty, and human accountability.",
+  path: "/about",
+});
 
 const principles = [
   {

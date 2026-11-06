@@ -4,12 +4,7 @@
     "api": {
       "root": "apps/api",
       "framework": "express",
-      "entrypoint": "src/index.ts",
-      "functions": {
-        "src/index.ts": {
-          "includeFiles": "node_modules/**"
-        }
-      }
+      "entrypoint": "src/index.ts"
     },
     "web": {
       "root": "apps/web",
@@ -37,7 +32,7 @@
   "crons": [
     {
       "path": "/api/v1/news/sync",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
