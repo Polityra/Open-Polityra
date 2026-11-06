@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Open Polityra Web
 
-## Getting Started
+The web application is the Next.js frontend for Open Polityra. It includes public
+project and research pages, plus an authenticated workspace for exploring
+research data and analyses.
 
-First, run the development server:
+## Requirements
+
+- Node.js 22 or later
+- pnpm 10 (the version managed by the repository's `packageManager` field)
+- The repository dependencies installed from the monorepo root
+
+## Run locally
+
+From the repository root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+corepack enable
+pnpm install
+pnpm --filter web dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To run the frontend from its package directory instead:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cd apps/web
+pnpm dev
+```
 
-## Learn More
+The workspace provides the following frontend commands:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm --filter web build
+pnpm --filter web start
+pnpm --filter web lint
+pnpm --filter web typecheck
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`build` creates a production Next.js build; run `start` after building to serve
+it locally.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Pages
 
-## Deploy on Vercel
+| Route | Purpose |
+|---|---|
+| `/` | Project overview |
+| `/about` | Project scope and principles |
+| `/research` | Research areas and project status |
+| `/methodology` | Research methods and standards |
+| `/login` and `/register` | Workspace access |
+| `/dashboard` | Authenticated research workspace |
+| `/ai-workflow` | Authenticated analysis workflows |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The dashboard and workflow routes are protected application pages rather than
+public search landing pages. Login, registration, and workspace pages are
+marked `noindex`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Configuration
+
+The frontend reads its public API address from `NEXT_PUBLIC_API_URL`. For local
+development, the repository's root `.env.example` documents the default API at
+`http://localhost:4000`; copy it to `.env` at the repository root if you are
+running the API locally. The API can also be run with:
+
+```bash
+pnpm --filter @open-polityra/api dev
+```
+
+`NEXT_PUBLIC_REPO_URL` optionally overrides the GitHub repository link shown
+in the site. Do not put credentials or server-only secrets in `NEXT_PUBLIC_*`
+variables; Next.js exposes those values to browsers.
+
+## SEO metadata
+
+Page titles, descriptions, canonical URLs, and social-sharing metadata use
+Next.js's Metadata API. Public informational pages are listed in the generated
+`/sitemap.xml`; `/robots.txt` points crawlers to that sitemap. The Open Graph
+image is served from `/og-image.png`.
+
+The canonical origin is configured in `src/lib/site.ts`. Update `SITE_URL`
+there if the production domain changes.
+
+## Related documentation
+
+- [Monorepo setup and architecture](../../README.md)
+- [API package](../api/)
+- [Next.js documentation](https://nextjs.org/docs)

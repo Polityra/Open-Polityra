@@ -11,7 +11,14 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
-import { REPO_URL } from "@/lib/site";
+import { createPageMetadata, REPO_URL } from "@/lib/site";
+
+export const metadata = createPageMetadata({
+  title: "Research Methodology and Standards",
+  description:
+    "Explore Open Polityra's working principles for documenting public sources, explaining methods and assumptions, representing uncertainty, and communicating research limitations.",
+  path: "/methodology",
+});
 
 const steps = [
   {

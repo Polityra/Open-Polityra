@@ -18,9 +18,15 @@ import {
   GitBranch,
   Users,
 } from "lucide-react";
-import { REPO_URL } from "@/lib/site";
+import { createPageMetadata, REPO_URL } from "@/lib/site";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
+export const metadata = createPageMetadata({
+  title: "Open-Source Research on Public Issues",
+  description:
+    "Explore transparent, public-source analysis of economics, geopolitics, security, and resilience. Open Polityra makes sources, assumptions, and uncertainty easier to inspect.",
+  path: "/",
+});
 export const instant = false;
 
 const researchAreas = [
@@ -49,7 +55,7 @@ export default async function HomePage() {
           alt=""
           fill
           priority
-          sizes="100vw"
+          sizes="100svw"
           className="-z-20 object-cover object-top"
         />
         {/* Fade the lower half into the page background */}
@@ -58,52 +64,63 @@ export default async function HomePage() {
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-6 pt-32 text-center">
 
 
-          <h1 className="font-display text-5xl font-light tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] sm:text-6xl">
-            Open Polityra - OpenSource
+          <div aria-hidden className="landing-hero-orbit absolute right-[-15rem] top-24 -z-10 h-[34rem] w-[34rem] rounded-full border border-cyan-200/[0.08] sm:right-[-10rem] lg:right-[-4rem]" />
+          <div aria-hidden className="landing-hero-orbit landing-hero-orbit-delayed absolute right-[-11rem] top-40 -z-10 h-[26rem] w-[26rem] rounded-full border border-blue-300/[0.08] sm:right-[-6rem] lg:right-0" />
+
+     
+          <h1 className="landing-hero-enter-2 max-w-4xl font-display text-5xl font-light leading-[1.05] tracking-tight text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.55)] sm:text-7xl lg:text-8xl">
+            Complex questions.
+            <br />
+            <span className="bg-gradient-to-r from-white via-cyan-100 to-cyan-300 bg-clip-text text-transparent">
+              Clearer evidence.
+            </span>
           </h1>
-          <div className="mt-5 h-px w-full max-w-xl bg-gradient-to-r from-transparent via-[#41cbfd]/70 to-transparent" />
+          <div className="landing-hero-rule mt-7 h-px w-full max-w-xl bg-gradient-to-r from-transparent via-[#41cbfd]/70 to-transparent" />
 
-
-
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-[#c4cfe6] sm:text-lg">
-            An open-source, AI-based analysis platform built for government and public-sector
-            decision-makers. It turns geopolitical, economic, security and cyber data into
-            transparent, verifiable insight.
+          <p className="landing-hero-enter-3 mt-7 max-w-2xl text-base leading-relaxed text-[#c4cfe6] sm:text-lg">
+            Explore public issues with research that makes its sources, assumptions, and
+            uncertainty visible. Open Polityra brings economics, geopolitics, security, and
+            resilience into one open workspace.
           </p>
 
-          <ul className="mt-6 flex max-w-2xl flex-wrap justify-center gap-2 text-xs font-medium text-[#a3ecff] sm:text-sm">
+          <ul className="landing-hero-enter-3 mt-7 flex max-w-2xl flex-wrap justify-center gap-2 text-xs font-medium text-[#a3ecff] sm:text-sm">
             {[
-              "Geopolitical stats",
-              "Economic analysis",
-              "National crisis",
-              "Cyber threats",
-              "International security",
+              "Public sources",
+              "Transparent methods",
+              "Human-led decisions",
+              "Early-stage project",
             ].map((t) => (
               <li
                 key={t}
-                className="rounded-full border border-[#41cbfd]/25 bg-[#000610]/50 px-3 py-1 backdrop-blur"
+                className="rounded-full border border-[#41cbfd]/25 bg-[#000610]/50 px-3 py-1.5 backdrop-blur"
               >
                 {t}
               </li>
             ))}
           </ul>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="landing-hero-enter-3 mt-10 flex flex-wrap items-center justify-center gap-4">
             <a
               href={REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#000610] shadow-sm transition-all hover:bg-[#eef2fc] hover:shadow-[0_0_28px_rgba(65,203,253,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#41cbfd]"
             >
-              <GitBranch className="h-5 w-5" /> Repository Source
+              <GitBranch className="h-5 w-5" /> View the project
             </a>
             <Link
               href="/research"
               className="inline-flex items-center gap-2 rounded-lg border border-[#41cbfd]/40 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
             >
-              Explore research <ArrowRight className="h-4 w-4" />
+              Explore the research <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+          <a
+            href="#start-here"
+            className="landing-hero-enter-3 mt-12 inline-flex items-center gap-2 text-xs text-slate-400 transition-colors hover:text-cyan-100"
+          >
+            Discover the project <span aria-hidden className="landing-scroll-cue">↓</span>
+          </a>
         </div>
 
         {/* Logo, bottom-left */}
@@ -131,6 +148,60 @@ export default async function HomePage() {
               <h2 className="mt-3 font-display text-xl font-medium text-white">{title}</h2>
               <p className="mt-2 max-w-xs text-sm leading-6 text-slate-400">{text}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="start-here" className="scroll-mt-20 mx-auto max-w-7xl px-6 py-20 sm:py-24 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan-300">A place to begin</p>
+            <h2 className="mt-5 max-w-md font-display text-3xl font-light leading-tight text-white sm:text-4xl">
+              Follow a question from source to scenario.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
+            Whether you are exploring a research topic, reviewing a worked example, or checking
+            how an analysis is framed, start with the evidence and keep the limitations in view.
+          </p>
+        </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {[
+            {
+              number: "01",
+              title: "Explore a research area",
+              text: "See the questions the project is investigating and what is currently available.",
+              href: "/research",
+              action: "Browse research",
+            },
+            {
+              number: "02",
+              title: "Inspect a worked example",
+              text: "Follow a public-data fiscal prototype with explicit calculations and scenarios.",
+              href: "/dashboard/economy",
+              action: "Open the prototype",
+            },
+            {
+              number: "03",
+              title: "Review the methods",
+              text: "Understand how sources, assumptions, and uncertainty should be documented.",
+              href: "/methodology",
+              action: "Read the standards",
+            },
+          ].map((item) => (
+            <Link
+              key={item.number}
+              href={item.href}
+              className="group rounded-2xl border border-white/10 bg-[#07111e] p-6 transition duration-300 hover:-translate-y-1 hover:border-cyan-200/35 hover:bg-[#0a1726] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
+            >
+              <span className="font-mono text-xs text-cyan-300">{item.number} / Start here</span>
+              <h3 className="mt-5 font-display text-xl font-medium text-white">{item.title}</h3>
+              <p className="mt-3 min-h-12 text-sm leading-6 text-slate-400">{item.text}</p>
+              <span className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-cyan-200">
+                {item.action}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </span>
+            </Link>
           ))}
         </div>
       </section>
