@@ -447,7 +447,8 @@
 }
 
 @keyframes landing-orbit-drift {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate3d(0, 0, 0);
   }
   50% {
@@ -456,7 +457,8 @@
 }
 
 @keyframes landing-scroll-bob {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {

@@ -155,7 +155,10 @@ export default async function HomePage() {
             href="#start-here"
             className="landing-hero-enter-3 mt-12 inline-flex items-center gap-2 text-xs text-slate-400 transition-colors hover:text-cyan-100"
           >
-            Discover the project <span aria-hidden className="landing-scroll-cue">↓</span>
+            Discover the project{" "}
+            <span aria-hidden className="landing-scroll-cue">
+              ↓
+            </span>
           </a>
         </div>
 
