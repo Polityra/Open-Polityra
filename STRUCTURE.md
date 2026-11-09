@@ -1,8 +1,10 @@
 # Open Polityra — Repository Structure
 
-This document lists the main repository areas for reference; individual files and package contents change over time.
+This document lists the main repository areas for reference; individual files and package contents
+change over time.
 
 ## Root
+
 ```
 open-polityra/
 ├── apps/                    # Application packages

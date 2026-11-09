@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import request from 'supertest';
-import { createApp } from '../../src/app';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import request from "supertest";
+import { createApp } from "../../src/app";
 
-describe('GET /health', () => {
+describe("GET /health", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
-    vi.stubEnv('NODE_ENV', 'test');
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('JWT_SECRET', 'test_secret_at_least_32_characters_long!!');
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("DATABASE_URL", "postgresql://localhost:5432/test");
+    vi.stubEnv("JWT_SECRET", "test_secret_at_least_32_characters_long!!");
     app = createApp();
   });
 
@@ -16,21 +16,21 @@ describe('GET /health', () => {
     vi.unstubAllEnvs();
   });
 
-  it('returns healthy status', async () => {
-    const res = await request(app).get('/health');
+  it("returns healthy status", async () => {
+    const res = await request(app).get("/health");
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.data.status).toBe('healthy');
+    expect(res.body.data.status).toBe("healthy");
   });
 });
 
-describe('GET /api/v1/nonexistent', () => {
+describe("GET /api/v1/nonexistent", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
-    vi.stubEnv('NODE_ENV', 'test');
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('JWT_SECRET', 'test_secret_at_least_32_characters_long!!');
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("DATABASE_URL", "postgresql://localhost:5432/test");
+    vi.stubEnv("JWT_SECRET", "test_secret_at_least_32_characters_long!!");
     app = createApp();
   });
 
@@ -38,21 +38,21 @@ describe('GET /api/v1/nonexistent', () => {
     vi.unstubAllEnvs();
   });
 
-  it('returns 404', async () => {
-    const res = await request(app).get('/api/v1/nonexistent');
+  it("returns 404", async () => {
+    const res = await request(app).get("/api/v1/nonexistent");
     expect(res.status).toBe(404);
     expect(res.body.ok).toBe(false);
-    expect(res.body.error.code).toBe('not_found');
+    expect(res.body.error.code).toBe("not_found");
   });
 });
 
-describe('GET /api/v1/news/sync cron authorization', () => {
+describe("GET /api/v1/news/sync cron authorization", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
-    vi.stubEnv('NODE_ENV', 'test');
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('JWT_SECRET', 'test_secret_at_least_32_characters_long!!');
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("DATABASE_URL", "postgresql://localhost:5432/test");
+    vi.stubEnv("JWT_SECRET", "test_secret_at_least_32_characters_long!!");
     app = createApp();
   });
 
@@ -60,28 +60,30 @@ describe('GET /api/v1/news/sync cron authorization', () => {
     vi.unstubAllEnvs();
   });
 
-  it('requires a configured cron secret', async () => {
-    vi.stubEnv('CRON_SECRET', '');
-    const res = await request(app).get('/api/v1/news/sync');
+  it("requires a configured cron secret", async () => {
+    vi.stubEnv("CRON_SECRET", "");
+    const res = await request(app).get("/api/v1/news/sync");
     expect(res.status).toBe(503);
-    expect(res.body.error.code).toBe('cron_secret_missing');
+    expect(res.body.error.code).toBe("cron_secret_missing");
   });
 
-  it('rejects requests with an invalid cron secret', async () => {
-    vi.stubEnv('CRON_SECRET', 'a'.repeat(32));
-    const res = await request(app).get('/api/v1/news/sync').set('Authorization', `Bearer ${'b'.repeat(32)}`);
+  it("rejects requests with an invalid cron secret", async () => {
+    vi.stubEnv("CRON_SECRET", "a".repeat(32));
+    const res = await request(app)
+      .get("/api/v1/news/sync")
+      .set("Authorization", `Bearer ${"b".repeat(32)}`);
     expect(res.status).toBe(401);
-    expect(res.body.error.code).toBe('unauthorized');
+    expect(res.body.error.code).toBe("unauthorized");
   });
 });
 
-describe('Fiscal balance research API', () => {
+describe("Fiscal balance research API", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
-    vi.stubEnv('NODE_ENV', 'test');
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('JWT_SECRET', 'test_secret_at_least_32_characters_long!!');
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("DATABASE_URL", "postgresql://localhost:5432/test");
+    vi.stubEnv("JWT_SECRET", "test_secret_at_least_32_characters_long!!");
     app = createApp();
   });
 
@@ -89,27 +91,32 @@ describe('Fiscal balance research API', () => {
     vi.unstubAllEnvs();
   });
 
-  it('serves the attributed annual snapshot without querying the database', async () => {
-    const res = await request(app).get('/api/v1/research/fiscal-balance/data');
+  it("serves the attributed annual snapshot without querying the database", async () => {
+    const res = await request(app).get("/api/v1/research/fiscal-balance/data");
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.data.source.dataset_id).toBe('gov_10dd_edpt1');
+    expect(res.body.data.source.dataset_id).toBe("gov_10dd_edpt1");
     expect(res.body.data.observations).toHaveLength(26);
-    expect(res.body.data.observations.at(-1)).toMatchObject({ year: 2025, balance_pct_gdp: -3.8, debt_pct_gdp: 88.4 });
+    expect(res.body.data.observations.at(-1)).toMatchObject({
+      year: 2025,
+      balance_pct_gdp: -3.8,
+      debt_pct_gdp: 88.4,
+    });
   });
 
-  it('returns reproducible baseline, stress, and improvement scenarios', async () => {
-    const res = await request(app)
-      .post('/api/v1/research/fiscal-balance/analyze')
-      .send({ projectionYears: 2, stressAnnualBalanceChange: -0.5, stressNominalGdpGrowth: 1, stressEffectiveInterest: 5 });
+  it("returns reproducible baseline, stress, and improvement scenarios", async () => {
+    const res = await request(app).post("/api/v1/research/fiscal-balance/analyze").send({
+      projectionYears: 2,
+      stressAnnualBalanceChange: -0.5,
+      stressNominalGdpGrowth: 1,
+      stressEffectiveInterest: 5,
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.data.is_forecast).toBe(false);
-    expect(res.body.data.projection.scenarios.map((scenario: { id: string }) => scenario.id)).toEqual([
-      'baseline',
-      'stress',
-      'improvement',
-    ]);
+    expect(
+      res.body.data.projection.scenarios.map((scenario: { id: string }) => scenario.id),
+    ).toEqual(["baseline", "stress", "improvement"]);
     expect(res.body.data.projection.scenarios[0].values[0]).toMatchObject({
       year: 2026,
       balance_pct_gdp: -3.8,
@@ -119,13 +126,13 @@ describe('Fiscal balance research API', () => {
     expect(res.body.data.limitations.length).toBeGreaterThan(0);
   });
 
-  it('rejects scenario values outside documented bounds', async () => {
+  it("rejects scenario values outside documented bounds", async () => {
     const res = await request(app)
-      .post('/api/v1/research/fiscal-balance/analyze')
+      .post("/api/v1/research/fiscal-balance/analyze")
       .send({ projectionYears: 11 });
 
     expect(res.status).toBe(400);
     expect(res.body.ok).toBe(false);
-    expect(res.body.error.code).toBe('validation_error');
+    expect(res.body.error.code).toBe("validation_error");
   });
 });

@@ -10,15 +10,11 @@ interface AppHeaderProps {
   renderMobileMenu?: (closeMenu: () => void) => React.ReactNode;
 }
 
-const iconBtn =
-  "rounded-lg p-2 text-[#9aa8c7] transition hover:bg-white/5 hover:text-[#eef2fc]";
+const iconBtn = "rounded-lg p-2 text-[#9aa8c7] transition hover:bg-white/5 hover:text-[#eef2fc]";
 const searchInput =
   "h-10 w-full rounded-lg border border-[#12306a] bg-[#061230] pl-10 pr-4 text-sm text-[#eef2fc] outline-none transition placeholder:text-[#74829f] focus:border-[#1478fd] focus:ring-2 focus:ring-[#1478fd]/30";
 
-export function AppHeader({
-  renderUserMenu,
-  renderMobileMenu,
-}: AppHeaderProps = {}) {
+export function AppHeader({ renderUserMenu, renderMobileMenu }: AppHeaderProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
@@ -118,7 +114,9 @@ export function AppHeader({
       {mobileMenuOpen && renderMobileMenu && (
         <div className="max-h-[calc(100dvh-4rem)] w-full overflow-y-auto border-t border-[#12306a]/70 bg-[#000610] px-4 py-4 lg:hidden">
           {renderUserMenu && (
-            <div className="mb-4 border-b border-[#12306a]/70 pb-4 sm:hidden">{renderUserMenu()}</div>
+            <div className="mb-4 border-b border-[#12306a]/70 pb-4 sm:hidden">
+              {renderUserMenu()}
+            </div>
           )}
           {renderMobileMenu(closeMobilePanels)}
         </div>

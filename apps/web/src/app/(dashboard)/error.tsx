@@ -26,7 +26,9 @@ export default function DashboardError({
       <button type="button" onClick={() => reset()} className={btnPrimary}>
         Try again
       </button>
-      <Link href="/dashboard" className={btnGhost}>Back to dashboard</Link>
+      <Link href="/dashboard" className={btnGhost}>
+        Back to dashboard
+      </Link>
     </StatusPage>
   );
 }

@@ -3,10 +3,10 @@ module.exports = {
   singleQuote: false,
   tabWidth: 2,
   useTabs: false,
-  trailingComma: 'all',
+  trailingComma: "all",
   printWidth: 100,
   bracketSpacing: true,
   bracketSameLine: false,
-  arrowParens: 'always',
-  endOfLine: 'lf',
-}
+  arrowParens: "always",
+  endOfLine: "lf",
+};

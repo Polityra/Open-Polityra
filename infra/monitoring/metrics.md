@@ -1,16 +1,17 @@
 # Infrastructure Monitoring Configuration for Open Polityra
 
 ## Purpose
+
 Define the monitoring and alerting configuration for all Open Polityra services.
 
 ## Services to Monitor
 
-| Service | Port | Health Endpoint | Key Metrics |
-|---|---|---|---|
-| Frontend (Next.js) | 3000 | /api/health | Response time, error rate, active users |
-| Backend API | 4000 | /api/v1/health | Request latency, error rate, queue depth |
-| Analysis Worker | 8000 | /api/v1/health | Processing time, pipeline completion rate, AI provider health |
-| PostgreSQL | 5432 | pg_isready | Connection count, query latency, replication lag |
+| Service            | Port | Health Endpoint | Key Metrics                                                   |
+| ------------------ | ---- | --------------- | ------------------------------------------------------------- |
+| Frontend (Next.js) | 3000 | /api/health     | Response time, error rate, active users                       |
+| Backend API        | 4000 | /api/v1/health  | Request latency, error rate, queue depth                      |
+| Analysis Worker    | 8000 | /api/v1/health  | Processing time, pipeline completion rate, AI provider health |
+| PostgreSQL         | 5432 | pg_isready      | Connection count, query latency, replication lag              |
 
 ## Alert Thresholds
 

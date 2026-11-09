@@ -1,8 +1,10 @@
 # Changelog
 
-All notable project changes should be documented in this file. The project is currently in an early-stage scaffold phase and has not published a stable release.
+All notable project changes should be documented in this file. The project is currently in an
+early-stage scaffold phase and has not published a stable release.
 
-This changelog follows the spirit of Keep a Changelog. Version numbers should follow Semantic Versioning once releases begin.
+This changelog follows the spirit of Keep a Changelog. Version numbers should follow Semantic
+Versioning once releases begin.
 
 ## [Unreleased]
 
@@ -34,4 +36,5 @@ This changelog follows the spirit of Keep a Changelog. Version numbers should fo
 
 ## Release process
 
-For each release, add a dated section with user-visible changes, migration notes, compatibility information and relevant security notices. Link to the corresponding GitHub release where available.
+For each release, add a dated section with user-visible changes, migration notes, compatibility
+information and relevant security notices. Link to the corresponding GitHub release where available.

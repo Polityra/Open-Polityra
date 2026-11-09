@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 "use client";
 
 import { useRef, useEffect, useState, type ReactNode } from "react";
@@ -109,9 +110,7 @@ export function RevealOnScroll({
       className={`reveal-Elm ${revealed ? "revealed" : ""} ${className}`}
       style={{
         transitionDelay: `${delay}ms`,
-        animationName: revealed
-          ? undefined
-          : `polityra-fade-${direction}`,
+        animationName: revealed ? undefined : `polityra-fade-${direction}`,
         animationDuration: `${duration}ms`,
         animationFillMode: "both",
         transform: !revealed ? transformDir : undefined,

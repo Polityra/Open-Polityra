@@ -1,6 +1,14 @@
 "use client";
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export interface ChartDataPoint {
   label: string;
@@ -31,20 +39,14 @@ export function SummaryChart({
       </h3>
       <ResponsiveContainer width="100%" height={height}>
         <AreaChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-          {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          )}
+          {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />}
           <XAxis
             dataKey="label"
             tick={{ fontSize: 12, fill: "#64748b" }}
             axisLine={{ stroke: "#e2e8f0" }}
             tickLine={false}
           />
-          <YAxis
-            tick={{ fontSize: 12, fill: "#64748b" }}
-            axisLine={false}
-            tickLine={false}
-          />
+          <YAxis tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{
               borderRadius: "0.5rem",

@@ -1,7 +1,7 @@
-import { SourceRepository } from '../../repositories/source.repository';
-import type { SourceRow } from '../../repositories/source.repository';
-import { NotFoundError, ValidationError } from '../../errors/appError';
-import type { CreateSourceInput, UpdateSourceInput } from './schema';
+import { SourceRepository } from "../../repositories/source.repository";
+import type { SourceRow } from "../../repositories/source.repository";
+import { NotFoundError, ValidationError } from "../../errors/appError";
+import type { CreateSourceInput, UpdateSourceInput } from "./schema";
 
 let cachedRepo: SourceRepository | null = null;
 
@@ -26,9 +26,11 @@ export async function createSource(params: CreateSourceInput): Promise<SourceRow
     canonicalUrl: params.canonicalUrl,
     metadata: {
       ...params.metadata,
-      ...(params.feedUrl && params.topics ? {
-        news_scraper: { enabled: true, feedUrl: params.feedUrl, topics: params.topics },
-      } : {}),
+      ...(params.feedUrl && params.topics
+        ? {
+            news_scraper: { enabled: true, feedUrl: params.feedUrl, topics: params.topics },
+          }
+        : {}),
     },
   });
 }
@@ -41,16 +43,21 @@ export async function listSources(limit = 50, offset = 0, category?: string, top
 export async function getSourceById(id: string): Promise<SourceRow | null> {
   const repo = _getRepo();
   const source = await repo.findById(id);
-  if (!source) throw new NotFoundError('Source');
+  if (!source) throw new NotFoundError("Source");
   return source;
 }
 
-export async function updateSource(id: string, updates: UpdateSourceInput): Promise<SourceRow | null> {
+export async function updateSource(
+  id: string,
+  updates: UpdateSourceInput,
+): Promise<SourceRow | null> {
   const repo = _getRepo();
   const existing = await repo.findById(id);
-  if (!existing) throw new NotFoundError('Source');
+  if (!existing) throw new NotFoundError("Source");
 
-  const mapped: Partial<Pick<SourceRow, 'name' | 'publisher' | 'license' | 'canonical_url' | 'metadata'>> = {};
+  const mapped: Partial<
+    Pick<SourceRow, "name" | "publisher" | "license" | "canonical_url" | "metadata">
+  > = {};
   if (updates.name !== undefined) mapped.name = updates.name;
   if (updates.publisher !== undefined) mapped.publisher = updates.publisher;
   if (updates.license !== undefined) mapped.license = updates.license;
@@ -63,6 +70,6 @@ export async function updateSource(id: string, updates: UpdateSourceInput): Prom
 export async function deleteSource(id: string): Promise<boolean> {
   const repo = _getRepo();
   const exists = await repo.findById(id);
-  if (!exists) throw new NotFoundError('Source');
+  if (!exists) throw new NotFoundError("Source");
   return repo.delete(id);
 }
