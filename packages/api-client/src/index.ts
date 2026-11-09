@@ -45,6 +45,23 @@ export function resolveApiBaseUrl(
   return configured;
 }
 
+export function resolveApiBaseUrl(configuredUrl: string | undefined, isProduction: boolean): string {
+  const configured = configuredUrl?.trim()
+  if (!isProduction) return configured || 'http://localhost:4000'
+  if (!configured) return ''
+
+  try {
+    const hostname = new URL(configured).hostname.toLowerCase()
+    if (hostname === 'localhost' || hostname.endsWith('.localhost') || hostname === '127.0.0.1' || hostname === '[::1]') {
+      return ''
+    }
+  } catch {
+    return configured
+  }
+
+  return configured
+}
+
 const defaultOptions: ResolvedApiClientOptions = {
   baseUrl:
     typeof process !== "undefined"

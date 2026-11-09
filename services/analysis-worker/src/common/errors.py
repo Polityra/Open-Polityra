@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import http.HTTPStatus as HTTPStatus
+from http import HTTPStatus
 from typing import Any
 
 

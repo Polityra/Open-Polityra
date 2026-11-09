@@ -11,6 +11,15 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
+export const metadata = {
+  ...createPageMetadata({
+    title: "Sign In",
+    description: "Sign in to your Open Polityra research workspace.",
+    path: "/login",
+  }),
+  robots: { index: false, follow: false },
+};
+
 export default function LoginPage() {
   return (
     <Suspense
