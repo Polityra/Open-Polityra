@@ -1,11 +1,13 @@
 # Research Analysis Context Prompt Template
 
 ## Purpose
-Generate a structured analytical context for research topics by combining retrieved data, source metadata, and domain knowledge. This prompt is version-controlled and must not be edited without updating the changelog entry.
 
-**Version:** 1.0
-**Last updated:** 2025-01-01
-**Applicable domain:** All research domains (economic, geopolitical, security, resilience)
+Generate a structured analytical context for research topics by combining retrieved data, source
+metadata, and domain knowledge. This prompt is version-controlled and must not be edited without
+updating the changelog entry.
+
+**Version:** 1.0 **Last updated:** 2025-01-01 **Applicable domain:** All research domains (economic,
+geopolitical, security, resilience)
 
 ## Prompt Structure
 
@@ -47,6 +49,9 @@ Please provide your analysis in the following sections:
 ## Usage Notes
 
 - This prompt template must be used alongside retrieval systems that provide actual source data.
-- The `{data_sections}` and `{source_metadata}` variables are populated by the analysis pipeline before invocation.
-- Replace `{domain}` and `{analysis_type}` with appropriate domain and method labels from the schema.
-- All outputs from this prompt must pass through the platform's evaluation framework before inclusion in reports.
+- The `{data_sections}` and `{source_metadata}` variables are populated by the analysis pipeline
+  before invocation.
+- Replace `{domain}` and `{analysis_type}` with appropriate domain and method labels from the
+  schema.
+- All outputs from this prompt must pass through the platform's evaluation framework before
+  inclusion in reports.

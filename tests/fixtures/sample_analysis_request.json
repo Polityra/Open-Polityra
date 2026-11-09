@@ -13,8 +13,8 @@
   "expected_output": {
     "summary": "Narrative summary of projected impacts",
     "sources": [
-      {"source_id": "uuid-1", "relevance": "high"},
-      {"source_id": "uuid-2", "relevance": "medium"}
+      { "source_id": "uuid-1", "relevance": "high" },
+      { "source_id": "uuid-2", "relevance": "medium" }
     ],
     "confidence": 0.7,
     "method": "quantitative with expert review",

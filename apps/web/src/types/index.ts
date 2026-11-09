@@ -69,7 +69,8 @@ export interface SourceQueryParams {
 /* ── Analysis Types ─────────────────────────────────────── */
 
 export type AnalysisStatus = "draft" | "in_progress" | "under_review" | "published" | "archived";
-export type AnalysisDomain = "economics" | "geopolitics" | "security" | "resilience" | "public_services" | "trade";
+export type AnalysisDomain =
+  "economics" | "geopolitics" | "security" | "resilience" | "public_services" | "trade";
 
 export interface AnalysisRequest {
   sourceIds: string[];

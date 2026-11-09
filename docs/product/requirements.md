@@ -2,7 +2,9 @@
 
 ## Initial prototype
 
-The first research slice focuses on public annual Finland general-government fiscal observations and transparent, illustrative debt scenarios. See the [fiscal-balance research brief](../../research/domains/finnish-economy/fiscal-balance-brief.md).
+The first research slice focuses on public annual Finland general-government fiscal observations and
+transparent, illustrative debt scenarios. See the
+[fiscal-balance research brief](../../research/domains/finnish-economy/fiscal-balance-brief.md).
 
 The prototype should:
 
@@ -20,4 +22,5 @@ The prototype should:
 - It does not automate or make public decisions.
 - It does not support classified or individual-level sensitive data.
 
-The repository is an early prototype; these requirements do not imply independent review or production readiness.
+The repository is an early prototype; these requirements do not imply independent review or
+production readiness.

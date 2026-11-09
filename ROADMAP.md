@@ -2,27 +2,44 @@
 
 ## Status and planning assumptions
 
-This roadmap describes a proposed order of work for an early-stage volunteer initiative. It is not a delivery commitment, funding promise or statement that any feature is already implemented. Dates are intentionally omitted until contributor capacity, legal structure and technical feasibility are clearer.
+This roadmap describes a proposed order of work for an early-stage volunteer initiative. It is not a
+delivery commitment, funding promise or statement that any feature is already implemented. Dates are
+intentionally omitted until contributor capacity, legal structure and technical feasibility are
+clearer.
 
-The first objective is a narrow, reproducible prototype—not a general-purpose AI system for government use.
+The first objective is a narrow, reproducible prototype—not a general-purpose AI system for
+government use.
 
 ## Implementation status — 2026-11-04
 
-- **Phase 0 — repository-controlled work substantially complete:** baseline project policies, contributor instructions, ownership/template scaffolding, development guides, and an initial architecture decision are documented. Maintainer availability, repository permissions, policy review, and contribution/review capacity remain externally unverified, so the Phase 0 exit criteria are not fully confirmed.
-- **Phase 1 — prototype pipeline implemented; external review pending:** the project owner selected the Finland fiscal-balance question, a research brief and Eurostat snapshot/schema/importer are checked in, and validation tests cover the fixture and malformed data. Independent economics/statistics review is still required.
-- **Phase 2 — deterministic prototype implemented; independent reproduction pending:** tested API endpoints and an economy-dashboard view provide observed values plus baseline, stress, and improvement scenarios with assumptions and limitations. The scenarios are illustrative, not forecasts; no independent researcher has yet reproduced or reviewed the result.
+- **Phase 0 — repository-controlled work substantially complete:** baseline project policies,
+  contributor instructions, ownership/template scaffolding, development guides, and an initial
+  architecture decision are documented. Maintainer availability, repository permissions, policy
+  review, and contribution/review capacity remain externally unverified, so the Phase 0 exit
+  criteria are not fully confirmed.
+- **Phase 1 — prototype pipeline implemented; external review pending:** the project owner selected
+  the Finland fiscal-balance question, a research brief and Eurostat snapshot/schema/importer are
+  checked in, and validation tests cover the fixture and malformed data. Independent
+  economics/statistics review is still required.
+- **Phase 2 — deterministic prototype implemented; independent reproduction pending:** tested API
+  endpoints and an economy-dashboard view provide observed values plus baseline, stress, and
+  improvement scenarios with assumptions and limitations. The scenarios are illustrative, not
+  forecasts; no independent researcher has yet reproduced or reviewed the result.
 
-These are implementation-status notes, not a claim of independent approval or completion of external exit criteria.
+These are implementation-status notes, not a claim of independent approval or completion of external
+exit criteria.
 
 ## Guiding delivery principles
 
 - Start with public, well-documented data.
 - Deliver one end-to-end use case before adding more domains.
-- Prefer transparent calculations and established statistical methods over unsupported AI-generated conclusions.
+- Prefer transparent calculations and established statistical methods over unsupported AI-generated
+  conclusions.
 - Keep AI components replaceable and independently evaluated.
 - Include source provenance, uncertainty and human review from the first prototype.
 - Do not ingest classified or sensitive personal data.
-- Expand scope only after research and evaluation demonstrate that the current capability is useful and reliable.
+- Expand scope only after research and evaluation demonstrate that the current capability is useful
+  and reliable.
 
 ## Phase 0 — Project foundation
 
@@ -50,7 +67,11 @@ Exit criteria:
 
 **Goal:** select one useful and measurable research question and build a traceable data pipeline.
 
-Initial prototype question: “How have Finland's general-government deficit/surplus and gross debt changed, and how do transparent assumptions alter illustrative debt paths?” It was selected for the implementation prototype; review by contributors with relevant economics and statistics expertise remains outstanding. See the [research brief](research/domains/finnish-economy/fiscal-balance-brief.md).
+Initial prototype question: “How have Finland's general-government deficit/surplus and gross debt
+changed, and how do transparent assumptions alter illustrative debt paths?” It was selected for the
+implementation prototype; review by contributors with relevant economics and statistics expertise
+remains outstanding. See the
+[research brief](research/domains/finnish-economy/fiscal-balance-brief.md).
 
 Proposed work:
 
@@ -90,7 +111,8 @@ Exit criteria:
 
 ## Phase 3 — AI-assisted explanation and evaluation
 
-**Goal:** add AI only where it improves access to evidence or explanation without replacing validated calculations.
+**Goal:** add AI only where it improves access to evidence or explanation without replacing
+validated calculations.
 
 Proposed work:
 
@@ -98,7 +120,8 @@ Proposed work:
 - implement retrieval over approved public sources;
 - require claim-level source references where factual claims are made;
 - create model cards and configuration records;
-- evaluate factuality, citation correctness, Finnish-language performance and prompt-injection resistance;
+- evaluate factuality, citation correctness, Finnish-language performance and prompt-injection
+  resistance;
 - add human review and correction workflows.
 
 Exit criteria:
@@ -129,7 +152,8 @@ Exit criteria:
 
 ## Phase 5 — Carefully scoped domain expansion
 
-**Goal:** consider additional research domains only after the first use case is stable enough to evaluate.
+**Goal:** consider additional research domains only after the first use case is stable enough to
+evaluate.
 
 Possible domains:
 
@@ -139,7 +163,9 @@ Possible domains:
 - public-source geopolitical event analysis;
 - defensive cyber resilience and publicly reported threats.
 
-Each new domain needs its own research brief, source review, threat model, data policy assessment and evaluation plan. A domain should not be added merely to increase the apparent breadth of the project.
+Each new domain needs its own research brief, source review, threat model, data policy assessment
+and evaluation plan. A domain should not be added merely to increase the apparent breadth of the
+project.
 
 ## Phase 6 — Institutional and non-profit development
 
@@ -168,6 +194,9 @@ This phase does not imply that a foundation currently exists or will necessarily
 
 ## How progress is measured
 
-Progress should be measured by working, reviewed and reproducible outcomes—not repository size, number of AI models, number of contributors or the number of dashboard pages.
+Progress should be measured by working, reviewed and reproducible outcomes—not repository size,
+number of AI models, number of contributors or the number of dashboard pages.
 
-Useful measures include data-source traceability, reproducibility, test coverage, forecast backtesting quality, citation accuracy, documented uncertainty, independent review findings and the number of critical issues resolved.
+Useful measures include data-source traceability, reproducibility, test coverage, forecast
+backtesting quality, citation accuracy, documented uncertainty, independent review findings and the
+number of critical issues resolved.

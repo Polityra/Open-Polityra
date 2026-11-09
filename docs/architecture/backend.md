@@ -50,6 +50,7 @@ apps/api/src/
 ## API Response Convention
 
 All endpoints return:
+
 ```json
 {
   "ok": true,
@@ -65,19 +66,19 @@ All endpoints return:
 
 ## Route Registration (api/v1/)
 
-| Method | Path | Purpose | Auth Required |
-|---|---|---|---|
-| GET | /health | Service health check | No |
-| POST | /auth/login | User authentication | No |
-| POST | /auth/logout | Session invalidation | Yes |
-| GET | /users | List users | Yes (admin) |
-| GET | /users/:id | Get user by ID | Yes |
-| GET | /sources | List sources (paginated) | Yes |
-| POST | /sources | Register new source | Yes (editor+) |
-| GET | /datasets | List datasets | Yes |
-| GET | /indicators | List indicators by category | Yes |
-| POST | /analyses | Submit analysis request | Yes |
-| GET | /analyses/:id | Get analysis status/results | Yes (owner) |
-| GET/POST | /scenarios | Scenario CRUD | Yes |
-| GET | /forecasts | Forecast retrieval | Yes |
-| GET/POST | /reports | Report CRUD and export | Yes |
+| Method   | Path          | Purpose                     | Auth Required |
+| -------- | ------------- | --------------------------- | ------------- |
+| GET      | /health       | Service health check        | No            |
+| POST     | /auth/login   | User authentication         | No            |
+| POST     | /auth/logout  | Session invalidation        | Yes           |
+| GET      | /users        | List users                  | Yes (admin)   |
+| GET      | /users/:id    | Get user by ID              | Yes           |
+| GET      | /sources      | List sources (paginated)    | Yes           |
+| POST     | /sources      | Register new source         | Yes (editor+) |
+| GET      | /datasets     | List datasets               | Yes           |
+| GET      | /indicators   | List indicators by category | Yes           |
+| POST     | /analyses     | Submit analysis request     | Yes           |
+| GET      | /analyses/:id | Get analysis status/results | Yes (owner)   |
+| GET/POST | /scenarios    | Scenario CRUD               | Yes           |
+| GET      | /forecasts    | Forecast retrieval          | Yes           |
+| GET/POST | /reports      | Report CRUD and export      | Yes           |

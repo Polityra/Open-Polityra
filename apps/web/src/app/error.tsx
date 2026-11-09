@@ -26,7 +26,9 @@ export default function Error({
       <button type="button" onClick={() => reset()} className={btnPrimary}>
         Try again
       </button>
-      <Link href="/" className={btnGhost}>Back to home</Link>
+      <Link href="/" className={btnGhost}>
+        Back to home
+      </Link>
     </StatusPage>
   );
 }

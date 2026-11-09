@@ -12,12 +12,15 @@ function UserMenu() {
 
   return (
     <div className="flex items-center gap-3">
-      <Link href="/dashboard/settings" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-600 dark:bg-[#1a2d45]">
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+      <Link
+        href="/dashboard/settings"
+        className="flex items-center gap-2 rounded-lg border border-black/10 bg-white px-3 py-1.5 transition hover:bg-neutral-50"
+      >
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-950 text-xs font-bold text-white">
           {(user?.name ?? "U")[0].toUpperCase()}
         </div>
 
-        <span className="hidden text-sm font-medium text-slate-700 dark:text-slate-200 sm:inline">
+        <span className="hidden text-sm font-medium text-neutral-800 sm:inline">
           {user?.name || "Analyst"}
         </span>
       </Link>
@@ -26,7 +29,7 @@ function UserMenu() {
         type="button"
         aria-label="Log out"
         onClick={logout}
-        className="flex items-center rounded-lg border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:bg-[#1a2d45] dark:text-slate-400 dark:hover:bg-slate-800"
+        className="flex items-center rounded-lg border border-black/10 bg-white p-2 text-neutral-500 transition hover:bg-neutral-50 hover:text-neutral-950"
       >
         <LogOut className="h-4 w-4" />
       </button>
@@ -34,19 +37,13 @@ function UserMenu() {
   );
 }
 
-export default function DashboardShell({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen w-full min-w-0 overflow-x-clip bg-slate-50 dark:bg-[#0a1628]">
+      <div className="min-h-screen w-full min-w-0 overflow-x-clip bg-neutral-50 text-neutral-950">
         <DashboardHeader
           userMenu={<UserMenu />}
-          mobileMenu={(closeMenu) => (
-            <Sidebar mobile onNavigate={closeMenu} />
-          )}
+          mobileMenu={(closeMenu) => <Sidebar mobile onNavigate={closeMenu} />}
         />
         <div className="flex min-h-screen w-full min-w-0 pt-16">
           <Sidebar />

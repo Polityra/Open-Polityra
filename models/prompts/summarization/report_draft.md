@@ -1,10 +1,11 @@
 # Report Draft Generation Prompt Template
 
 ## Purpose
-Generate a structured draft report from analytical findings, to be reviewed and edited by human analysts.
 
-**Version:** 1.0
-**Last updated:** 2025-01-01
+Generate a structured draft report from analytical findings, to be reviewed and edited by human
+analysts.
+
+**Version:** 1.0 **Last updated:** 2025-01-01
 
 ## Prompt
 

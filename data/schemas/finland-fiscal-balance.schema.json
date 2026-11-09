@@ -9,7 +9,19 @@
     "title": { "type": "string", "minLength": 1 },
     "source": {
       "type": "object",
-      "required": ["publisher", "dataset_id", "url", "license", "license_url", "geography", "frequency", "unit", "sector", "retrieved_at", "last_updated"],
+      "required": [
+        "publisher",
+        "dataset_id",
+        "url",
+        "license",
+        "license_url",
+        "geography",
+        "frequency",
+        "unit",
+        "sector",
+        "retrieved_at",
+        "last_updated"
+      ],
       "properties": {
         "publisher": { "const": "Eurostat" },
         "dataset_id": { "const": "gov_10dd_edpt1" },

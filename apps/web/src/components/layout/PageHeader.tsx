@@ -1,4 +1,3 @@
-
 import type { ReactNode } from "react";
 
 type Props = {
@@ -8,11 +7,7 @@ type Props = {
 };
 
 /** Shared header for inner pages. Sits below the fixed Navbar. */
-export default function PageHeader({
-  eyebrow,
-  title,
-  description,
-}: Props) {
+export default function PageHeader({ eyebrow, title, description }: Props) {
   return (
     <section className="relative isolate mt-16 overflow-hidden border-b border-[#12306a]/70 bg-[#000610] pb-20 pt-20">
       <div
@@ -31,9 +26,7 @@ export default function PageHeader({
 
         <div className="mt-6 h-0.5 w-24 bg-gradient-to-r from-[#32b2f7] to-[#3468f5]" />
 
-        <p className="mt-6 text-lg leading-relaxed text-[#c4cfe6]">
-          {description}
-        </p>
+        <p className="mt-6 text-lg leading-relaxed text-[#c4cfe6]">{description}</p>
       </div>
     </section>
   );

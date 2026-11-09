@@ -1,37 +1,37 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { api, type AiWorkflowType, type OllamaHealthStatus } from '@open-polityra/api-client';
-import { Sparkles, Loader2, AlertCircle, Check } from 'lucide-react';
-import { WORKFLOW_TYPES, inputClass, labelClass, panelClass } from './workflow-config';
+import { useState, useEffect } from "react";
+import { api, type AiWorkflowType, type OllamaHealthStatus } from "@open-polityra/api-client";
+import { Sparkles, Loader2, AlertCircle, Check } from "lucide-react";
+import { WORKFLOW_TYPES, inputClass, labelClass, panelClass } from "./workflow-config";
 
 interface WorkflowFormProps {
   onSubmit: (result: { workflowId: string }) => void;
 }
 
 export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
-  const [title, setTitle] = useState('');
-  const [type, setType] = useState<AiWorkflowType>('economic-analysis');
-  const [context, setContext] = useState('');
-  const [data, setData] = useState('');
-  const [model, setModel] = useState('');
-  const [customPrompt, setCustomPrompt] = useState('');
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState<AiWorkflowType>("economic-analysis");
+  const [context, setContext] = useState("");
+  const [data, setData] = useState("");
+  const [model, setModel] = useState("");
+  const [customPrompt, setCustomPrompt] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Ollama status
-  const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'ok' | 'unavailable'>('checking');
-  const [ollamaProvider, setOllamaProvider] = useState<OllamaHealthStatus['provider']>(null);
+  const [ollamaStatus, setOllamaStatus] = useState<"checking" | "ok" | "unavailable">("checking");
+  const [ollamaProvider, setOllamaProvider] = useState<OllamaHealthStatus["provider"]>(null);
 
   useEffect(() => {
     api.aiHealth().then(
       (res) => {
         setOllamaProvider(res.provider);
-        setOllamaStatus(res.available ? 'ok' : 'unavailable');
+        setOllamaStatus(res.available ? "ok" : "unavailable");
       },
       () => {
         setOllamaProvider(null);
-        setOllamaStatus('unavailable');
+        setOllamaStatus("unavailable");
       },
     );
   }, []);
@@ -54,15 +54,17 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
         parameters: {
           context: context.trim(),
           data: data.trim(),
-          ...(type === 'custom' ? { custom_prompt: customPrompt.trim() } : {}),
+          ...(type === "custom" ? { custom_prompt: customPrompt.trim() } : {}),
         },
       });
 
       onSubmit({ workflowId: result.workflow.id });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('unavailable') || msg.includes('Ollama')) {
-        setError('No configured Ollama model is available. Start Ollama with its configured model or configure OLLAMA_API_KEY for Ollama Cloud.');
+      if (msg.includes("unavailable") || msg.includes("Ollama")) {
+        setError(
+          "No configured Ollama model is available. Start Ollama with its configured model or configure OLLAMA_API_KEY for Ollama Cloud.",
+        );
       } else {
         setError(`Failed to create workflow: ${msg}`);
       }
@@ -72,23 +74,33 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
   };
 
   const statusStyle =
-    ollamaStatus === 'ok'
-      ? 'border-[#22c55e]/30 bg-[#22c55e]/10 text-[#86efac]'
-      : ollamaStatus === 'checking'
-      ? 'border-[#74829f]/30 bg-[#74829f]/10 text-[#c4cfe6]'
-      : 'border-[#ef4444]/30 bg-[#ef4444]/10 text-[#fca5a5]';
+    ollamaStatus === "ok"
+      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+      : ollamaStatus === "checking"
+        ? "border-black/10 bg-neutral-100 text-neutral-700"
+        : "border-red-300 bg-red-50 text-red-700";
   const dotStyle =
-    ollamaStatus === 'ok' ? 'bg-[#22c55e] animate-pulse' : ollamaStatus === 'checking' ? 'bg-[#74829f]' : 'bg-[#ef4444]';
+    ollamaStatus === "ok"
+      ? "bg-[#22c55e] animate-pulse"
+      : ollamaStatus === "checking"
+        ? "bg-neutral-400"
+        : "bg-[#ef4444]";
 
   return (
     <div className={`${panelClass} p-6`}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-semibold text-white">New AI analysis</h2>
-        <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${statusStyle}`}>
+        <h2 className="font-display text-xl font-semibold text-neutral-950">New AI analysis</h2>
+        <span
+          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${statusStyle}`}
+        >
           <span className={`h-2 w-2 rounded-full ${dotStyle}`} />
-          {ollamaStatus === 'ok'
-            ? ollamaProvider === 'ollama-cloud' ? 'Ollama Cloud ready' : 'Local Ollama ready'
-            : ollamaStatus === 'checking' ? 'Checking…' : 'No model available'}
+          {ollamaStatus === "ok"
+            ? ollamaProvider === "ollama-cloud"
+              ? "Ollama Cloud ready"
+              : "Local Ollama ready"
+            : ollamaStatus === "checking"
+              ? "Checking…"
+              : "No model available"}
         </span>
       </div>
 
@@ -107,16 +119,22 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
                   onClick={() => setType(t.value)}
                   className={`relative rounded-lg border p-4 text-left transition ${
                     active
-                      ? 'border-[#1478fd] bg-[#1478fd]/15 shadow-[0_0_20px_rgba(20,120,253,0.2)]'
-                      : 'border-[#12306a] bg-[#061230] hover:border-[#324c80]'
+                      ? "border-neutral-950 bg-neutral-100 shadow-sm"
+                      : "border-black/10 bg-neutral-50 hover:border-black/30"
                   }`}
                 >
-                  {active && <Check className="absolute right-3 top-3 h-4 w-4 text-[#41cbfd]" />}
-                  <span className={`inline-flex rounded-md p-2 ${active ? 'bg-[#1478fd]/25 text-[#a3ecff]' : 'bg-[#12306a]/60 text-[#41cbfd]'}`}>
+                  {active && <Check className="absolute right-3 top-3 h-4 w-4 text-neutral-950" />}
+                  <span
+                    className={`inline-flex rounded-md p-2 ${active ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-900"}`}
+                  >
                     <t.icon className="h-5 w-5" />
                   </span>
-                  <p className={`mt-3 text-sm font-semibold ${active ? 'text-white' : 'text-[#eef2fc]'}`}>{t.label}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-[#9aa8c7]">{t.description}</p>
+                  <p
+                    className={`mt-3 text-sm font-semibold ${active ? "text-neutral-950" : "text-neutral-950"}`}
+                  >
+                    {t.label}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-neutral-600">{t.description}</p>
                 </button>
               );
             })}
@@ -125,7 +143,9 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
 
         {/* Title */}
         <div>
-          <label htmlFor="wf-title" className={labelClass}>Title</label>
+          <label htmlFor="wf-title" className={labelClass}>
+            Title
+          </label>
           <input
             id="wf-title"
             type="text"
@@ -139,7 +159,9 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
 
         {/* Context / Input */}
         <div>
-          <label htmlFor="wf-context" className={labelClass}>Context / input</label>
+          <label htmlFor="wf-context" className={labelClass}>
+            Context / input
+          </label>
           <textarea
             id="wf-context"
             value={context}
@@ -151,9 +173,11 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
         </div>
 
         {/* Custom prompt */}
-        {type === 'custom' && (
+        {type === "custom" && (
           <div>
-            <label htmlFor="wf-custom" className={labelClass}>Custom prompt</label>
+            <label htmlFor="wf-custom" className={labelClass}>
+              Custom prompt
+            </label>
             <textarea
               id="wf-custom"
               value={customPrompt}
@@ -168,7 +192,7 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
         {/* Additional data */}
         <div>
           <label htmlFor="wf-data" className={labelClass}>
-            Additional data <span className="font-normal text-[#74829f]">(optional)</span>
+            Additional data <span className="font-normal text-neutral-500">(optional)</span>
           </label>
           <textarea
             id="wf-data"
@@ -183,7 +207,7 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
         {/* Model selector */}
         <div>
           <label htmlFor="wf-model" className={labelClass}>
-            Model <span className="font-normal text-[#74829f]">(optional)</span>
+            Model <span className="font-normal text-neutral-500">(optional)</span>
           </label>
           <input
             id="wf-model"
@@ -197,9 +221,12 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
 
         {/* Error banner */}
         {error && (
-          <div role="alert" className="flex items-start gap-2 rounded-lg border border-[#ef4444]/30 bg-[#ef4444]/10 p-3">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#fca5a5]" />
-            <p className="text-sm text-[#fca5a5]">{error}</p>
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-red-300 bg-red-50 p-3"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-700" />
+            <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
@@ -207,7 +234,7 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
         <button
           type="submit"
           disabled={isRunning || !title.trim()}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1478fd] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#0b5fd9] hover:shadow-[0_0_24px_rgba(20,120,253,0.45)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-neutral-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none"
         >
           {isRunning ? (
             <>

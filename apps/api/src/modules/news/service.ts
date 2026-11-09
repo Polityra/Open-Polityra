@@ -1,9 +1,11 @@
-import { getPool } from '../../config/database';
+import { getPool } from "../../config/database";
 
 export class NewsSchemaMissingError extends Error {
   constructor() {
-    super('News storage is not initialized. Run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/database/migrations/004_news_items.sql');
-    this.name = 'NewsSchemaMissingError';
+    super(
+      'News storage is not initialized. Run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/database/migrations/004_news_items.sql',
+    );
+    this.name = "NewsSchemaMissingError";
   }
 }
 
@@ -14,7 +16,8 @@ export async function assertNewsSchema(): Promise<void> {
   if (!result.rows[0]?.available) throw new NewsSchemaMissingError();
 }
 
-export type NewsTopic = 'geopolitics' | 'conflict' | 'security' | 'cybersecurity' | 'terrorism' | 'sanctions';
+export type NewsTopic =
+  "geopolitics" | "conflict" | "security" | "cybersecurity" | "terrorism" | "sanctions";
 
 export interface NewsItem {
   id: string;
@@ -64,7 +67,7 @@ export async function listNews(params: {
     parameter += 1;
   }
 
-  const where = predicates.length ? `WHERE ${predicates.join(' AND ')}` : '';
+  const where = predicates.length ? `WHERE ${predicates.join(" AND ")}` : "";
   const count = await pool.query(
     `SELECT COUNT(*) FROM news_items n JOIN sources s ON s.id = n.source_id ${where}`,
     values,
@@ -79,13 +82,17 @@ export async function listNews(params: {
   return { rows: rows.rows as NewsItem[], total: Number(count.rows[0].count) };
 }
 
-export async function storeNewsItems(sourceId: string, topics: NewsTopic[], items: IngestedNewsItem[]) {
+export async function storeNewsItems(
+  sourceId: string,
+  topics: NewsTopic[],
+  items: IngestedNewsItem[],
+) {
   if (items.length === 0) return 0;
   const pool = getPool();
   const client = await pool.connect();
   let inserted = 0;
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
     for (const item of items) {
       const result = await client.query(
         `INSERT INTO news_items (source_id, external_id, title, summary, url, published_at, topics)
@@ -95,10 +102,10 @@ export async function storeNewsItems(sourceId: string, topics: NewsTopic[], item
       );
       inserted += result.rowCount ?? 0;
     }
-    await client.query('COMMIT');
+    await client.query("COMMIT");
     return inserted;
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();

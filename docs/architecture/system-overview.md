@@ -2,7 +2,8 @@
 
 ## Architecture Diagram (Text Description)
 
-The diagram shows the intended service layout; the Python worker integration is not currently wired into the fiscal-balance prototype.
+The diagram shows the intended service layout; the Python worker integration is not currently wired
+into the fiscal-balance prototype.
 
 ```
 +------------------+       +----------------------+       +------------------------+
@@ -29,24 +30,28 @@ The diagram shows the intended service layout; the Python worker integration is 
 ## Component Responsibilities
 
 ### Frontend (apps/web/)
+
 - User-facing dashboard, landing pages, and research tools
 - Client-side state management and API client integration
 - Data visualization using shared chart components
 - Responsive design for desktop and mobile
 
 ### Backend API (apps/api/)
+
 - Request validation, authentication, and authorization
 - Database queries and business logic for existing application modules
 - Public fiscal-balance data and deterministic scenario routes independent of the database
 - Consistent JSON API responses with standardized error handling
 
 ### Python Analysis Service (services/analysis-worker/)
+
 - Separate FastAPI service with analysis and health routes
 - Contains statistical, scenario, and provider scaffolding
 - Is not currently invoked by the fiscal-balance prototype
 - Its readiness response includes placeholders and does not verify external dependencies
 
 ### Shared Packages
+
 - **@open-polityra/contracts**: Common data schemas for frontend, backend, and Python service
 - **@open-polityra/api-client**: Typed client used by the frontend to call the backend API
 - **@open-polityra/ui**: Shared design system components and tokens
@@ -65,7 +70,9 @@ This flow does not use PostgreSQL or the Python worker.
 
 ### Existing database-backed application routes
 
-Authenticated routes validate requests and use the API's data-access modules for configured database operations. The Python worker is a separate service; a general end-to-end API-to-worker-to-database analytical flow is not yet demonstrated.
+Authenticated routes validate requests and use the API's data-access modules for configured database
+operations. The Python worker is a separate service; a general end-to-end API-to-worker-to-database
+analytical flow is not yet demonstrated.
 
 ## Security Model
 

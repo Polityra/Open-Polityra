@@ -1,8 +1,8 @@
-import rateLimit from 'express-rate-limit';
-import type { RequestHandler } from 'express';
-import { z } from 'zod';
-import { getEnv } from '../config/env';
-import type { Env } from '../config/env';
+import rateLimit from "express-rate-limit";
+import type { RequestHandler } from "express";
+import { z } from "zod";
+import { getEnv } from "../config/env";
+import type { Env } from "../config/env";
 
 const rateLimitEnvSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900_000),
@@ -20,8 +20,8 @@ export function rateLimiter(env?: Env): RequestHandler {
       res.status(429).json({
         ok: false,
         error: {
-          code: 'rate_limit_exceeded',
-          message: 'Too many requests. Please try again later.',
+          code: "rate_limit_exceeded",
+          message: "Too many requests. Please try again later.",
         },
         meta: { timestamp: new Date().toISOString() },
       });

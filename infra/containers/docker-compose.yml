@@ -1,12 +1,10 @@
-version: "3.9"
-
 services:
   api:
     build:
-      context: ../../apps/api
-      dockerfile: ../../infra/containers/Dockerfile.api
+      context: ../..
+      dockerfile: infra/containers/Dockerfile.api
     ports:
-      - "4000:4000"
+      - "${API_HOST_PORT:-4001}:4000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:${DATABASE_PASSWORD:-change_me}@postgres:5432/open_polityra
@@ -19,10 +17,10 @@ services:
 
   web:
     build:
-      context: ../../apps/web
-      dockerfile: ../../infra/containers/Dockerfile.web
+      context: ../..
+      dockerfile: infra/containers/Dockerfile.web
     ports:
-      - "3000:3000"
+      - "${WEB_HOST_PORT:-3001}:3000"
     environment:
       - NODE_ENV=production
       - API_URL=http://api:4000
@@ -32,8 +30,8 @@ services:
 
   analysis-worker:
     build:
-      context: ../../services/analysis-worker
-      dockerfile: ../../infra/containers/Dockerfile.worker
+      context: ../..
+      dockerfile: infra/containers/Dockerfile.worker
     ports:
       - "8000:8000"
     environment:

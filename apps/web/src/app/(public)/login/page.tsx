@@ -1,6 +1,6 @@
-import { Suspense } from 'react'
+import { Suspense } from "react";
 import { createPageMetadata } from "@/lib/site";
-import LoginForm from './login-form'
+import LoginForm from "./login-form";
 
 export const metadata = {
   ...createPageMetadata({
@@ -24,5 +24,5 @@ export default function LoginPage() {
     >
       <LoginForm />
     </Suspense>
-  )
+  );
 }

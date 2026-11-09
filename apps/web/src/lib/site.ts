@@ -17,11 +17,7 @@ type PageMetadataInput = {
   path: string;
 };
 
-export function createPageMetadata({
-  title,
-  description,
-  path,
-}: PageMetadataInput): Metadata {
+export function createPageMetadata({ title, description, path }: PageMetadataInput): Metadata {
   return {
     title,
     description,

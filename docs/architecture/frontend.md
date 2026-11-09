@@ -46,7 +46,10 @@ apps/web/src/
 
 ## Key Design Decisions
 
-1. **Shared UI via `@open-polityra/ui`**: All reusable components live in the shared UI package; pages compose them.
-2. **Typed API client via `@open-polityra/api-client`**: No raw fetch calls in page code — all API interactions use the typed client.
+1. **Shared UI via `@open-polityra/ui`**: All reusable components live in the shared UI package;
+   pages compose them.
+2. **Typed API client via `@open-polityra/api-client`**: No raw fetch calls in page code — all API
+   interactions use the typed client.
 3. **Dark navy/blue theme**: Professional visual identity matching Open Polityra's design tokens.
-4. **Server Components by default**: Pages are server components; only interactive elements use `'use client'`.
+4. **Server Components by default**: Pages are server components; only interactive elements use
+   `'use client'`.

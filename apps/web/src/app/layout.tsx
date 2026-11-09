@@ -1,15 +1,14 @@
-import type { Metadata, Viewport } from 'next'
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { DEFAULT_DESCRIPTION, OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/site";
 import { outfit, inter } from "./fonts";
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
-  width: 'device-width',
+  themeColor: "#000000",
+  width: "device-width",
   initialScale: 1,
-}
-
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -57,11 +56,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
-
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-[#0a1628] dark:text-slate-100">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

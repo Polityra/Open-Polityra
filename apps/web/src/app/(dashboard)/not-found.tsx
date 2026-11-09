@@ -11,8 +11,12 @@ export default function DashboardNotFound() {
       title="We couldn't find that record"
       description="It may have been removed, or you may not have access to it."
     >
-      <Link href="/dashboard" className={btnPrimary}>Back to dashboard</Link>
-      <Link href="/dashboard/reports" className={btnGhost}>Browse reports</Link>
+      <Link href="/dashboard" className={btnPrimary}>
+        Back to dashboard
+      </Link>
+      <Link href="/dashboard/reports" className={btnGhost}>
+        Browse reports
+      </Link>
     </StatusPage>
   );
 }

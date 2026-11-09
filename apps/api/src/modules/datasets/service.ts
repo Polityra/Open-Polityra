@@ -1,5 +1,5 @@
-import { Pool } from 'pg';
-import { getPool } from '../../config/database';
+import { Pool } from "pg";
+import { getPool } from "../../config/database";
 
 let cachedPool: Pool | null = null;
 
@@ -29,7 +29,7 @@ export async function listDatasets(sourceId?: string, limit = 50, offset = 0) {
     values.push(sourceId);
   }
 
-  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const result = await pool.query(
     `SELECT d.id, d.name, d.format, d.size_bytes, d.source_id, d.created_at FROM datasets d ${whereSql} ORDER BY d.created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`,
     [...values, limit, offset],
@@ -39,6 +39,9 @@ export async function listDatasets(sourceId?: string, limit = 50, offset = 0) {
 
 export async function getDatasetById(id: string): Promise<DatasetRow | null> {
   const pool = _getPool();
-  const result = await pool.query('SELECT id, name, format, size_bytes, source_id, created_at FROM datasets WHERE id = $1', [id]);
+  const result = await pool.query(
+    "SELECT id, name, format, size_bytes, source_id, created_at FROM datasets WHERE id = $1",
+    [id],
+  );
   return result.rows[0] ?? null;
 }
