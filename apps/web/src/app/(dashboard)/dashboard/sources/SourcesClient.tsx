@@ -58,15 +58,6 @@ function getSuggestedFeedUrl(sourceUrl: string): string {
   }
 }
 
-function getSuggestedFeedUrl(sourceUrl: string): string {
-  try {
-    const url = new URL(sourceUrl)
-    return url.protocol === 'https:' ? `${url.origin}/rss.xml` : ''
-  } catch {
-    return ''
-  }
-}
-
 export default function SourcesClient() {
   const [sources, setSources] = useState<SourceRow[]>([]);
   const [total, setTotal] = useState(0);
