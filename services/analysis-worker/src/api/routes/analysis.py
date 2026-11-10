@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any
 
@@ -48,12 +49,21 @@ def _retrieve_data(topic: str, scope: DataScope) -> list[float]:
     The default implementation generates synthetic data for demonstration.
     """
     try:
-        store = FileStore("/tmp/analysis-worker-data")
+        store_root = "/tmp/analysis-worker-data"
+        store = FileStore(store_root)
         snapshot_path = store.get(topic, scope)
         if snapshot_path:
             import csv
 
-            with open(snapshot_path, newline="") as fh:
+            safe_root = os.path.realpath(store_root)
+            candidate_path = os.path.realpath(snapshot_path)
+            if os.path.commonpath([safe_root, candidate_path]) != safe_root:
+                raise ValidationError(
+                    message="invalid snapshot path",
+                    details={"path": snapshot_path, "scope": scope.value},
+                )
+
+            with open(candidate_path, newline="") as fh:
                 reader = csv.reader(fh)
                 return [float(row[0]) for row in reader if row]
     except FileNotFoundError:
