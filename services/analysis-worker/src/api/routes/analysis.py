@@ -57,7 +57,16 @@ def _retrieve_data(topic: str, scope: DataScope) -> list[float]:
 
             safe_root = os.path.realpath(store_root)
             candidate_path = os.path.realpath(snapshot_path)
-            if os.path.commonpath([safe_root, candidate_path]) != safe_root:
+            if not os.path.isabs(candidate_path):
+                raise ValidationError(
+                    message="invalid snapshot path",
+                    details={"path": snapshot_path, "scope": scope.value},
+                )
+            try:
+                in_root = os.path.commonpath([safe_root, candidate_path]) == safe_root
+            except ValueError:
+                in_root = False
+            if not in_root or not os.path.isfile(candidate_path):
                 raise ValidationError(
                     message="invalid snapshot path",
                     details={"path": snapshot_path, "scope": scope.value},
