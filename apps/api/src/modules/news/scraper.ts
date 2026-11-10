@@ -71,11 +71,11 @@ function decodeXml(value: string): string {
     .replace(/&#([0-9]+);/g, (_match, decimal: string) =>
       String.fromCodePoint(parseInt(decimal, 10)),
     )
-    .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&")
     .replace(/\s+/g, " ")
     .trim();
 }
