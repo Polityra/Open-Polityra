@@ -15,7 +15,12 @@ describe("AiWorkflowRepository", () => {
     const repository = new AiWorkflowRepository();
 
     expect(
-      await repository.findAll("user", { status: "pending", type: "forecast", limit: 10, offset: 5 }),
+      await repository.findAll("user", {
+        status: "pending",
+        type: "forecast",
+        limit: 10,
+        offset: 5,
+      }),
     ).toEqual({ rows: [], total: 0 });
     expect(query).toHaveBeenCalledTimes(2);
     expect(query.mock.calls[0][0]).toContain(
