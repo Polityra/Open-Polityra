@@ -1,16 +1,11 @@
 import { z } from "zod";
-import { z } from "zod";
 
 export const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(3001),
   DATABASE_URL: z.string().url(),
   DATABASE_NAME: z.string().default("open_polityra"),
-  DATABASE_NAME: z.string().default("open_polityra"),
   JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN: z.string().default("7d"),
-  PYTHON_SERVICE_URL: z.string().url().default("http://localhost:8000"),
   JWT_EXPIRES_IN: z.string().default("7d"),
   PYTHON_SERVICE_URL: z.string().url().default("http://localhost:8000"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900_000),
@@ -29,7 +24,6 @@ export function getEnv(): Env {
   if (cached) return cached;
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
-    const errors = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     const errors = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Invalid environment variables: ${errors}`);
   }
