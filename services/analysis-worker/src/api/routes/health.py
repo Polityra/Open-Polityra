@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import time
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
+from src.ai.providers.local_provider import OllamaProvider
 
 router = APIRouter(tags=["health"])
 
@@ -34,32 +35,25 @@ async def health() -> dict:
         "service": "analysis-worker",
         "uptime_seconds": _uptime(),
         "components": {
-            "database": "ok",
-            "ai_providers": "ok",
-            "data_sources": "ok",
+            "analysis": "ok",
         },
     }
 
 
 @router.get("/api/v1/health/ready", summary="Readiness probe")
-async def health_ready(request: Request) -> dict:
+async def health_ready() -> dict:
     """Return whether the service is ready to accept requests.
 
-    In a production deployment this would check downstream dependencies
-    such as AI model availability and data source connectivity.  The
-    default implementation returns ``True`` unless a request header
-    *X-Disable-Readiness* is set to "true" (for testing).
+    Readiness requires the configured local Ollama model to be available.
     """
-    disable_header = request.headers.get("x-disable-readiness", "").lower()
-    force_ready = disable_header == "true"
-
+    provider = OllamaProvider()
+    provider_status = await provider.health_check()
     checks: dict[str, bool] = {
         "internal": True,
-        "ai_providers": False,  # placeholder until a real check is wired up
-        "storage": False,      # placeholder until file-based store is wired up
+        "ai_model": bool(provider_status["available"]),
     }
 
-    ready = force_ready or all(checks.values())
+    ready = all(checks.values())
 
     return {
         "ready": ready,

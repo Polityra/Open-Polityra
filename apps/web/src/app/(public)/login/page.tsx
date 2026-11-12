@@ -1,11 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { createPageMetadata } from "@/lib/site";
 import LoginForm from "./login-form";
 
-export const metadata = {
+export const metadata: Metadata = {
   ...createPageMetadata({
     title: "Sign In",
-    description: "Sign in to your Open Polityra research workspace.",
+    description: "Sign in to access your Open Polityra research workspace.",
     path: "/login",
   }),
   robots: { index: false, follow: false },

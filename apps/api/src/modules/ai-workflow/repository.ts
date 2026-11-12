@@ -1,6 +1,9 @@
 import { Pool } from "pg";
 import { getPool } from "../../config/database";
 import type { AiWorkflowType } from "./schema";
+import { Pool } from "pg";
+import { getPool } from "../../config/database";
+import type { AiWorkflowType } from "./schema";
 
 let cachedPool: Pool | null = null;
 
@@ -85,7 +88,7 @@ export class AiWorkflowRepository {
         params.title,
         params.description ?? null,
         params.type,
-        params.model ?? "qwen3:0.6b",
+        params.model ?? "olmo-3:7b",
         params.provider ?? "ollama",
         params.systemPrompt ?? null,
         JSON.stringify(params.parameters ?? {}),
@@ -97,11 +100,17 @@ export class AiWorkflowRepository {
   async findById(id: string): Promise<AiWorkflowRow | null> {
     const result = await this.pool.query(
       "SELECT id, user_id, title, description, type, status, model, provider, system_prompt, parameters, result, error_message, started_at, completed_at, created_at, updated_at FROM ai_workflows WHERE id = $1 LIMIT 1",
+      "SELECT id, user_id, title, description, type, status, model, provider, system_prompt, parameters, result, error_message, started_at, completed_at, created_at, updated_at FROM ai_workflows WHERE id = $1 LIMIT 1",
       [id],
     );
     return result.rows[0] ? formatWorkflowRow(result.rows[0]) : null;
   }
 
+  async findAll(
+    userId: string,
+    params?: { status?: string; type?: string; limit?: number; offset?: number },
+  ): Promise<{ rows: AiWorkflowRow[]; total: number }> {
+    const whereClauses: string[] = ["aw.user_id = $1"];
   async findAll(
     userId: string,
     params?: { status?: string; type?: string; limit?: number; offset?: number },
@@ -120,11 +129,26 @@ export class AiWorkflowRepository {
       values.push(params.type);
       idx++;
     }
+    if (params?.status) {
+      whereClauses.push("aw.status = $" + idx);
+      values.push(params.status);
+      idx++;
+    }
+    if (params?.type) {
+      whereClauses.push("aw.type = $" + idx);
+      values.push(params.type);
+      idx++;
+    }
 
+    const whereSql = "WHERE " + whereClauses.join(" AND ");
     const whereSql = "WHERE " + whereClauses.join(" AND ");
     const limit = params?.limit ?? 50;
     const offset = params?.offset ?? 0;
 
+    const countResult = await this.pool.query(
+      `SELECT COUNT(*) FROM ai_workflows aw ${whereSql}`,
+      values,
+    );
     const countResult = await this.pool.query(
       `SELECT COUNT(*) FROM ai_workflows aw ${whereSql}`,
       values,
@@ -142,6 +166,17 @@ export class AiWorkflowRepository {
     return { rows: result.rows.map(formatWorkflowRow), total };
   }
 
+  async updateStatus(
+    id: string,
+    status: string,
+    extras?: {
+      result?: Record<string, unknown>;
+      errorMessage?: string;
+      startedAt?: Date;
+      completedAt?: Date;
+    },
+  ): Promise<AiWorkflowRow | null> {
+    const fields: string[] = ["status = $1"];
   async updateStatus(
     id: string,
     status: string,
@@ -172,7 +207,24 @@ export class AiWorkflowRepository {
       fields.push(`error_message = $${idx++}`);
       values.push(extras.errorMessage);
     }
+    if (extras?.startedAt !== undefined) {
+      fields.push(`started_at = $${idx++}`);
+      values.push(extras.startedAt);
+    }
+    if (extras?.completedAt !== undefined) {
+      fields.push(`completed_at = $${idx++}`);
+      values.push(extras.completedAt);
+    }
+    if (extras?.result !== undefined) {
+      fields.push(`result = $${idx++}`);
+      values.push(JSON.stringify(extras.result));
+    }
+    if (extras?.errorMessage !== undefined) {
+      fields.push(`error_message = $${idx++}`);
+      values.push(extras.errorMessage);
+    }
 
+    const sql = `UPDATE ai_workflows SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, user_id, title, description, type, status, model, provider, system_prompt, parameters, result, error_message, started_at, completed_at, created_at, updated_at`;
     const sql = `UPDATE ai_workflows SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, user_id, title, description, type, status, model, provider, system_prompt, parameters, result, error_message, started_at, completed_at, created_at, updated_at`;
     values.push(id);
 
@@ -184,13 +236,22 @@ export class AiWorkflowRepository {
     id: string,
     resultData: Record<string, unknown>,
   ): Promise<AiWorkflowRow | null> {
+  async updateResult(
+    id: string,
+    resultData: Record<string, unknown>,
+  ): Promise<AiWorkflowRow | null> {
     const queryResult = await this.pool.query(
+      "UPDATE ai_workflows SET result = $1, updated_at = now() WHERE id = $2 RETURNING id, user_id, title, description, type, status, model, provider, system_prompt, parameters, result, error_message, started_at, completed_at, created_at, updated_at",
       "UPDATE ai_workflows SET result = $1, updated_at = now() WHERE id = $2 RETURNING id, user_id, title, description, type, status, model, provider, system_prompt, parameters, result, error_message, started_at, completed_at, created_at, updated_at",
       [JSON.stringify(resultData), id],
     );
     return queryResult.rows[0] ? formatWorkflowRow(queryResult.rows[0]) : null;
   }
 
+  async update(
+    id: string,
+    updates: Partial<Pick<AiWorkflowRow, "title" | "description" | "parameters">>,
+  ): Promise<AiWorkflowRow | null> {
   async update(
     id: string,
     updates: Partial<Pick<AiWorkflowRow, "title" | "description" | "parameters">>,
@@ -211,9 +272,23 @@ export class AiWorkflowRepository {
       fields.push(`parameters = $${idx++}`);
       values.push(JSON.stringify(updates.parameters));
     }
+    if (updates.title !== undefined) {
+      fields.push(`title = $${idx++}`);
+      values.push(updates.title);
+    }
+    if (updates.description !== undefined) {
+      fields.push(`description = $${idx++}`);
+      values.push(updates.description);
+    }
+    if (updates.parameters !== undefined) {
+      fields.push(`parameters = $${idx++}`);
+      values.push(JSON.stringify(updates.parameters));
+    }
 
     if (fields.length === 0) return null;
 
+    fields.push("updated_at = now()");
+    const sql = `UPDATE ai_workflows SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, user_id, title, description, type, status, model, provider, system_prompt, parameters, result, error_message, started_at, completed_at, created_at, updated_at`;
     fields.push("updated_at = now()");
     const sql = `UPDATE ai_workflows SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, user_id, title, description, type, status, model, provider, system_prompt, parameters, result, error_message, started_at, completed_at, created_at, updated_at`;
     values.push(id);
@@ -223,6 +298,9 @@ export class AiWorkflowRepository {
   }
 
   async delete(id: string): Promise<boolean> {
+    const result = await this.pool.query("DELETE FROM ai_workflows WHERE id = $1 RETURNING id", [
+      id,
+    ]);
     const result = await this.pool.query("DELETE FROM ai_workflows WHERE id = $1 RETURNING id", [
       id,
     ]);
@@ -267,6 +345,14 @@ export class WorkflowTaskRepository {
         params.prompt ?? null,
         JSON.stringify(params.metadata ?? {}),
       ],
+      [
+        params.workflowId,
+        params.title,
+        params.description ?? null,
+        params.stepOrder,
+        params.prompt ?? null,
+        JSON.stringify(params.metadata ?? {}),
+      ],
     );
     return formatTaskRow(result.rows[0]);
   }
@@ -274,11 +360,23 @@ export class WorkflowTaskRepository {
   async findByWorkflow(workflowId: string): Promise<WorkflowTaskRow[]> {
     const result = await this.pool.query(
       "SELECT id, workflow_id, title, description, step_order, status, prompt, response, metadata, error_message, started_at, completed_at, created_at, updated_at FROM workflow_tasks WHERE workflow_id = $1 ORDER BY step_order ASC",
+      "SELECT id, workflow_id, title, description, step_order, status, prompt, response, metadata, error_message, started_at, completed_at, created_at, updated_at FROM workflow_tasks WHERE workflow_id = $1 ORDER BY step_order ASC",
       [workflowId],
     );
     return result.rows.map(formatTaskRow);
   }
 
+  async update(
+    id: string,
+    status: string,
+    extras?: {
+      response?: string | Record<string, unknown>;
+      errorMessage?: string;
+      startedAt?: Date;
+      completedAt?: Date;
+    },
+  ): Promise<WorkflowTaskRow | null> {
+    const fields: string[] = ["status = $1"];
   async update(
     id: string,
     status: string,
@@ -309,7 +407,24 @@ export class WorkflowTaskRepository {
       fields.push(`error_message = $${idx++}`);
       values.push(extras.errorMessage);
     }
+    if (extras?.startedAt !== undefined) {
+      fields.push(`started_at = $${idx++}`);
+      values.push(extras.startedAt);
+    }
+    if (extras?.completedAt !== undefined) {
+      fields.push(`completed_at = $${idx++}`);
+      values.push(extras.completedAt);
+    }
+    if (extras?.response !== undefined) {
+      fields.push(`response = $${idx++}`);
+      values.push(JSON.stringify(extras.response));
+    }
+    if (extras?.errorMessage !== undefined) {
+      fields.push(`error_message = $${idx++}`);
+      values.push(extras.errorMessage);
+    }
 
+    const sql = `UPDATE workflow_tasks SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, workflow_id, title, description, step_order, status, prompt, response, metadata, error_message, started_at, completed_at, created_at, updated_at`;
     const sql = `UPDATE workflow_tasks SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, workflow_id, title, description, step_order, status, prompt, response, metadata, error_message, started_at, completed_at, created_at, updated_at`;
     values.push(id);
 
@@ -330,11 +445,16 @@ export class AiConversationRepository {
   async create(params: { workflowId?: string; title?: string }): Promise<AiConversationRow> {
     const result = await this.pool.query(
       "INSERT INTO ai_conversations (workflow_id, title, messages) VALUES ($1, $2, '[]') RETURNING id, workflow_id, title, messages, created_at, updated_at",
+      "INSERT INTO ai_conversations (workflow_id, title, messages) VALUES ($1, $2, '[]') RETURNING id, workflow_id, title, messages, created_at, updated_at",
       [params.workflowId ?? null, params.title ?? null],
     );
     return result.rows[0];
   }
 
+  async addMessage(
+    conversationId: string,
+    message: Record<string, unknown>,
+  ): Promise<AiConversationRow> {
   async addMessage(
     conversationId: string,
     message: Record<string, unknown>,
@@ -352,10 +472,18 @@ export class AiConversationRepository {
       "SELECT id, workflow_id, title, messages, created_at, updated_at FROM ai_conversations WHERE id = $1 LIMIT 1",
       [id],
     );
+    const result = await this.pool.query(
+      "SELECT id, workflow_id, title, messages, created_at, updated_at FROM ai_conversations WHERE id = $1 LIMIT 1",
+      [id],
+    );
     return result.rows[0] ?? null;
   }
 
   async findByWorkflow(workflowId: string): Promise<AiConversationRow[]> {
+    const result = await this.pool.query(
+      "SELECT id, workflow_id, title, messages, created_at, updated_at FROM ai_conversations WHERE workflow_id = $1 ORDER BY updated_at DESC",
+      [workflowId],
+    );
     const result = await this.pool.query(
       "SELECT id, workflow_id, title, messages, created_at, updated_at FROM ai_conversations WHERE workflow_id = $1 ORDER BY updated_at DESC",
       [workflowId],
@@ -367,6 +495,7 @@ export class AiConversationRepository {
 /* ── Helpers ───────────────────────────────────────────────── */
 
 function formatWorkflowRow(raw: Record<string, unknown>): AiWorkflowRow {
+  const p = (v: unknown) => (typeof v === "string" ? JSON.parse(v) : v);
   const p = (v: unknown) => (typeof v === "string" ? JSON.parse(v) : v);
   return {
     id: raw.id as string,
@@ -390,6 +519,7 @@ function formatWorkflowRow(raw: Record<string, unknown>): AiWorkflowRow {
 
 function formatTaskRow(raw: Record<string, unknown>): WorkflowTaskRow {
   const p = (v: unknown) => (typeof v === "string" ? JSON.parse(v) : v);
+  const p = (v: unknown) => (typeof v === "string" ? JSON.parse(v) : v);
   return {
     id: raw.id as string,
     workflow_id: raw.workflow_id as string,
@@ -398,6 +528,12 @@ function formatTaskRow(raw: Record<string, unknown>): WorkflowTaskRow {
     step_order: raw.step_order as number,
     status: raw.status as string,
     prompt: raw.prompt as string | null,
+    response:
+      raw.response == null
+        ? null
+        : typeof raw.response === "string"
+          ? raw.response
+          : (p(raw.response) as Record<string, unknown>),
     response:
       raw.response == null
         ? null

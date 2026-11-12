@@ -13,7 +13,7 @@ export type Preferences = {
 };
 
 export const DEFAULT_PREFERENCES: Preferences = {
-  defaultModel: "qwen3:14b",
+  defaultModel: "olmo-3:7b",
   timeDisplay: "local",
   density: "comfortable",
   notifyAnalysisDone: true,

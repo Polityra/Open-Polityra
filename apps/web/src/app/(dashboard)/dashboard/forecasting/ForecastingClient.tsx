@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, BarChart3, Clock, Activity, LineChart, Layers, Waves } from "lucide-react";
-import { api, type ForecastRow } from "@open-polityra/api-client";
+import { Plus, BarChart3, Clock, Activity, Loader2 } from "lucide-react";
+import { api, type ForecastRow, type IndicatorRow } from "@open-polityra/api-client";
 import {
   PageHeader,
   EmptyState,
@@ -13,48 +13,47 @@ import {
   panel,
   sectionTitle,
   btnPrimary,
+  inputClass,
   pick,
+  pickTotal,
   fmtDate,
 } from "@/components/dashboard/kit";
 
-const methods = [
-  {
-    name: "ARIMA",
-    icon: LineChart,
-    desc: "Auto-regressive integrated moving average for time series",
-  },
-  {
-    name: "VAR Models",
-    icon: Layers,
-    desc: "Vector auto-regression for multi-variable forecasting",
-  },
-  {
-    name: "Holt-Winters",
-    icon: Waves,
-    desc: "Triple exponential smoothing for trend + seasonality",
-  },
-];
-
-function Confidence({ lower, upper }: { lower?: number | null; upper?: number | null }) {
-  if (lower == null && upper == null) return <Badge tone="neutral">Unrated</Badge>;
-  const hi = upper ?? lower ?? 0;
-  const tone = hi > 80 ? "success" : hi > 50 ? "warning" : "danger";
-  return <Badge tone={tone}>{hi > 80 ? "High" : hi > 50 ? "Medium" : "Low"}</Badge>;
-}
-
 export default function ForecastingClient() {
   const [forecasts, setForecasts] = useState<ForecastRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [indicators, setIndicators] = useState<IndicatorRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [target, setTarget] = useState("");
+  const [indicatorId, setIndicatorId] = useState("");
+  const [observations, setObservations] = useState("");
+  const [horizon, setHorizon] = useState(30);
+  const [running, setRunning] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.forecasts.list({ limit: 50 });
-        if (!cancelled) setForecasts(pick<ForecastRow>(res, "forecasts"));
+        const [forecastResult, indicatorResult] = await Promise.all([
+          api.forecasts.list({ limit: 50 }),
+          api.indicators.list({ limit: 100 }),
+        ]);
+        if (cancelled) return;
+        const forecastRows = pick<ForecastRow>(forecastResult, "forecasts");
+        setForecasts(forecastRows);
+        setTotal(pickTotal(forecastResult, forecastRows.length));
+        setIndicators(pick<IndicatorRow>(indicatorResult, "indicators"));
+        setError(false);
       } catch {
-        if (!cancelled) setError(true);
+        if (!cancelled) {
+          setError(true);
+          setForecasts([]);
+          setIndicators([]);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -62,7 +61,37 @@ export default function ForecastingClient() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshKey]);
+
+  async function createForecast(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setRunning(true);
+    setFormError(null);
+    try {
+      const values = observations
+        .split(/[\s,;]+/)
+        .filter(Boolean)
+        .map(Number);
+      if (values.length < 2 || values.some((value) => !Number.isFinite(value))) {
+        throw new Error("Enter at least two finite numbers separated by commas or spaces.");
+      }
+      const selectedIndicator = indicators.find((indicator) => indicator.id === indicatorId);
+      if (!selectedIndicator) throw new Error("Choose an indicator from the database registry.");
+      await api.forecasts.create({
+        target: target.trim() || selectedIndicator.name,
+        observations: values,
+        horizon,
+        indicatorIds: [selectedIndicator.id],
+      });
+      setShowForm(false);
+      setObservations("");
+      setRefreshKey((key) => key + 1);
+    } catch (cause) {
+      setFormError(cause instanceof Error ? cause.message : "The forecast could not be completed.");
+    } finally {
+      setRunning(false);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -73,18 +102,91 @@ export default function ForecastingClient() {
         action={
           <button
             type="button"
-            disabled
-            title="Forecast creation isn't available yet"
+            onClick={() => setShowForm((value) => !value)}
             className={btnPrimary}
           >
-            <Plus className="h-4 w-4" /> New forecast
+            <Plus className="h-4 w-4" /> {showForm ? "Close form" : "New forecast"}
           </button>
         }
       />
 
+      {showForm && (
+        <form onSubmit={createForecast} className={`${panel} space-y-4 p-6`}>
+          <h2 className="font-display text-lg font-semibold text-neutral-950">
+            Forecast registered indicator
+          </h2>
+          <p className="text-sm text-neutral-600">
+            Supply observed historical values for an indicator in the database. The worker does not
+            generate or substitute missing observations.
+          </p>
+          {indicators.length === 0 ? (
+            <ErrorNote>Add an indicator in Economic Analysis before creating a forecast.</ErrorNote>
+          ) : (
+            <label className="block text-sm font-medium text-neutral-700">
+              Database indicator
+              <select
+                required
+                value={indicatorId}
+                onChange={(event) => {
+                  const id = event.target.value;
+                  setIndicatorId(id);
+                  const selected = indicators.find((indicator) => indicator.id === id);
+                  if (selected && !target) setTarget(selected.name);
+                }}
+                className={`${inputClass} mt-1.5`}
+              >
+                <option value="">Select an indicator</option>
+                {indicators.map((indicator) => (
+                  <option key={indicator.id} value={indicator.id}>
+                    {indicator.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="block text-sm font-medium text-neutral-700">
+            Forecast target (optional)
+            <input
+              maxLength={512}
+              value={target}
+              onChange={(event) => setTarget(event.target.value)}
+              className={`${inputClass} mt-1.5`}
+              placeholder="Defaults to the selected indicator"
+            />
+          </label>
+          <label className="block text-sm font-medium text-neutral-700">
+            Historical observed values
+            <textarea
+              required
+              rows={3}
+              value={observations}
+              onChange={(event) => setObservations(event.target.value)}
+              className={`${inputClass} mt-1.5 font-mono`}
+              placeholder="12.4, 12.8, 13.1, 13.0, 13.6"
+            />
+          </label>
+          <label className="block text-sm font-medium text-neutral-700">
+            Horizon (days)
+            <input
+              type="number"
+              min={1}
+              max={3650}
+              value={horizon}
+              onChange={(event) => setHorizon(Number(event.target.value))}
+              className={`${inputClass} mt-1.5 max-w-40`}
+            />
+          </label>
+          {formError && <ErrorNote>{formError}</ErrorNote>}
+          <button type="submit" className={btnPrimary} disabled={running || indicators.length === 0}>
+            {running && <Loader2 className="h-4 w-4 animate-spin" />}
+            {running ? "Forecasting…" : "Run forecast with olmo-3:7b"}
+          </button>
+        </form>
+      )}
+
       <div className={panel}>
         <div className="border-b border-black/10 px-6 py-4">
-          <h2 className={sectionTitle}>Stored forecasts</h2>
+          <h2 className={sectionTitle}>Stored forecasts ({total})</h2>
         </div>
         {loading ? (
           <LoadingBlock label="Loading forecasts…" />
@@ -103,6 +205,23 @@ export default function ForecastingClient() {
             {forecasts.map((f) => {
               const lo = f.confidence_lower,
                 hi = f.confidence_upper;
+              const trend =
+                f.values && typeof f.values.trend_direction === "string"
+                  ? f.values.trend_direction
+                  : "not recorded";
+              const points = Array.isArray(f.values?.projected_values)
+                ? f.values.projected_values
+                    .slice(0, 5)
+                    .map((point) =>
+                      typeof point === "object" &&
+                      point !== null &&
+                      "point_estimate" in point &&
+                      typeof point.point_estimate === "number"
+                        ? point.point_estimate.toFixed(2)
+                        : null,
+                    )
+                    .filter((point): point is string => point !== null)
+                : [];
               return (
                 <li key={f.id} className="px-6 py-4">
                   <div className="flex items-start justify-between gap-4">
@@ -112,7 +231,7 @@ export default function ForecastingClient() {
                         Analysis {f.analysis_id?.slice(0, 8)}
                       </p>
                     </div>
-                    <Confidence lower={lo} upper={hi} />
+                    <Badge tone="neutral">Modelled interval</Badge>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-neutral-600">
                     <span className="flex items-center gap-1.5">
@@ -124,20 +243,13 @@ export default function ForecastingClient() {
                       {fmtDate(f.created_at)}
                     </span>
                     <span className="font-mono">
-                      Interval [{lo?.toFixed(0) ?? "?"}, {hi?.toFixed(0) ?? "?"}]
+                      Range [{lo?.toFixed(2) ?? "?"}, {hi?.toFixed(2) ?? "?"}]
                     </span>
+                    <span className="capitalize">Trend: {trend}</span>
+                    {points.length > 0 && (
+                      <span className="font-mono">First values: {points.join(", ")}</span>
+                    )}
                   </div>
-                  {lo != null && hi != null && (
-                    <div className="mt-3 h-1.5 w-full max-w-md overflow-hidden rounded-full bg-neutral-200">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-neutral-500 to-neutral-950"
-                        style={{
-                          marginLeft: `${Math.min(100, Math.max(0, lo))}%`,
-                          width: `${Math.min(100, Math.max(2, hi - lo))}%`,
-                        }}
-                      />
-                    </div>
-                  )}
                 </li>
               );
             })}
@@ -145,20 +257,10 @@ export default function ForecastingClient() {
         )}
       </div>
 
-      <div>
-        <h2 className={`${sectionTitle} mb-3`}>Available forecasting methods</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {methods.map((m) => (
-            <div key={m.name} className={`${panel} p-5 transition-colors hover:border-black/40`}>
-              <span className="inline-flex rounded-lg border border-black/10 bg-neutral-100 p-2.5 text-neutral-900">
-                <m.icon className="h-5 w-5" />
-              </span>
-              <p className="mt-3 font-display text-base font-semibold text-neutral-950">{m.name}</p>
-              <p className="mt-1 text-sm text-neutral-600">{m.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      <InfoNote>
+        Forecasts use a simple moving average over the observed series. They do not model causal
+        effects and should be reviewed by a domain expert before use.
+      </InfoNote>
 
       <InfoNote tone="warning">
         <span className="font-semibold">Disclaimer:</span> Forecasts are probabilistic projections,

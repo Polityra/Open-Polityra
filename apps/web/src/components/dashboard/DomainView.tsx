@@ -29,6 +29,7 @@ import {
   fmtDate,
   type Tone,
 } from "./kit";
+import AnalysisRunner from "./AnalysisRunner";
 
 type Domain = "security" | "geopolitics" | "resilience";
 
@@ -163,6 +164,12 @@ export default function DomainView({ domain }: { domain: Domain }) {
           icon={Icon}
         />
       </div>
+
+      <AnalysisRunner
+        topic={`${cfg.title} ${cfg.noun} domain assessment`}
+        sourceIds={mSources.map((source) => source.id).slice(0, 40)}
+        reportIds={mReports.map((report) => report.id).slice(0, 40)}
+      />
 
       {/* Sources and reports */}
       <div className="grid gap-6 lg:grid-cols-2">

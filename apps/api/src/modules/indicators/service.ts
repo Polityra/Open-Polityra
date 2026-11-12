@@ -39,6 +39,17 @@ export async function listIndicators(category?: string, limit = 50, offset = 0) 
   return result.rows as IndicatorRow[];
 }
 
+export async function countIndicators(category?: string): Promise<number> {
+  const pool = _getPool();
+  const result = await pool.query(
+    category
+      ? "SELECT COUNT(*) FROM indicators WHERE category = $1"
+      : "SELECT COUNT(*) FROM indicators",
+    category ? [category] : [],
+  );
+  return Number(result.rows[0].count);
+}
+
 export async function getIndicatorById(id: string): Promise<IndicatorRow | null> {
   const pool = _getPool();
   const result = await pool.query(

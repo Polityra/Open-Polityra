@@ -255,9 +255,11 @@ export interface IndicatorRow {
 export type AnalysisStatus = "pending" | "running" | "completed" | "failed";
 export interface AnalysisRow {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  title: string;
   status: AnalysisStatus;
   parameters: Record<string, unknown> | null;
+  result: Record<string, unknown> | null;
   result_id: string | null;
   error_message: string | null;
   created_at: string;
@@ -270,14 +272,14 @@ export interface ScenarioRow {
   description: string | null;
   assumptions: Record<string, unknown> | null;
   parameters: Record<string, unknown> | null;
-  created_by: string;
+  created_by: string | null;
   created_at: string;
 }
 
 export type ReportStatus = "draft" | "reviewing" | "published";
 export interface ReportRow {
   id: string;
-  user_id: string;
+  user_id: string | null;
   title: string;
   status: ReportStatus;
   format: string;
@@ -287,7 +289,7 @@ export interface ReportRow {
 
 export interface ForecastRow {
   id: string;
-  analysis_id: string;
+  analysis_id: string | null;
   target: string;
   method: string;
   values: Record<string, unknown> | null;
@@ -433,7 +435,7 @@ export interface OllamaHealthStatus {
   available: boolean;
   models: string[];
   modelAvailable: boolean;
-  provider: "ollama" | "ollama-cloud" | null;
+  provider: "ollama" | null;
   selectedModel: string | null;
   available_models?: Array<{
     name: string;
@@ -511,6 +513,12 @@ export const api = {
 
   /* ── Sources ───────────────────────────────────────────── */
   sources: {
+    discoverFeed(canonicalUrl: string) {
+      return _buildClient().post<{ feedUrl: string }, { canonicalUrl: string }>(
+        "/api/v1/sources/discover-feed",
+        { canonicalUrl },
+      );
+    },
     list(params?: { limit?: number; offset?: number; category?: string; topic?: NewsTopic }) {
       const qs = new URLSearchParams();
       if (params?.limit) qs.set("limit", String(params.limit));
@@ -541,7 +549,10 @@ export const api = {
     update(
       id: string,
       updates: Partial<
-        Pick<SourceRow, "name" | "publisher" | "license" | "canonical_url" | "metadata">
+        Pick<
+          SourceRow,
+          "name" | "publisher" | "license" | "canonical_url" | "metadata" | "is_active"
+        >
       >,
     ) {
       return _buildClient().patch<{ source: SourceRow }, typeof updates>(
@@ -611,16 +622,31 @@ export const api = {
       const qs = new URLSearchParams();
       if (params?.limit) qs.set("limit", String(params.limit));
       if (params?.offset) qs.set("offset", String(params.offset));
-      return _buildClient().get<{ analyses: AnalysisRow[] }>(`/api/v1/analyses?${qs}`);
+      return _buildClient().get<{ analyses: AnalysisRow[]; meta: PaginatedMeta }>(
+        `/api/v1/analyses?${qs}`,
+      );
     },
-    create(payload: { type: string; parameters: Record<string, unknown>; sourceIds?: string[] }) {
+    create(payload: {
+      title?: string;
+      topic: string;
+      context?: string;
+      sourceIds?: string[];
+      indicatorIds?: string[];
+      reportIds?: string[];
+      scenarioIds?: string[];
+      observations?: number[];
+      scope?: "global" | "regional" | "national" | "subnational" | "organization" | "topic";
+      time_horizon?: number;
+      methodology?: "descriptive" | "timeseries" | "forecasting" | "simulation" | "comprehensive";
+      enable_ai_synthesis?: boolean;
+    }) {
       return _buildClient().post<{ analysis: AnalysisRow }, typeof payload>(
         "/api/v1/analyses",
         payload,
       );
     },
     status(id: string) {
-      return _buildClient().get<{ status: string; result: unknown }>(`/api/v1/analyses/${id}`);
+      return _buildClient().get<{ analysis: AnalysisRow }>(`/api/v1/analyses/${id}`);
     },
   },
 
@@ -630,7 +656,9 @@ export const api = {
       const qs = new URLSearchParams();
       if (params?.limit) qs.set("limit", String(params.limit));
       if (params?.offset) qs.set("offset", String(params.offset));
-      return _buildClient().get<{ scenarios: ScenarioRow[] }>(`/api/v1/scenarios?${qs}`);
+      return _buildClient().get<{ scenarios: ScenarioRow[]; meta: PaginatedMeta }>(
+        `/api/v1/scenarios?${qs}`,
+      );
     },
     create(payload: {
       name: string;
@@ -655,7 +683,9 @@ export const api = {
       if (params?.status) qs.set("status", params.status);
       if (params?.limit) qs.set("limit", String(params.limit));
       if (params?.offset) qs.set("offset", String(params.offset));
-      return _buildClient().get<{ reports: ReportRow[] }>(`/api/v1/reports?${qs}`);
+      return _buildClient().get<{ reports: ReportRow[]; meta: PaginatedMeta }>(
+        `/api/v1/reports?${qs}`,
+      );
     },
     create(payload: { title: string; content?: Record<string, unknown> }) {
       return _buildClient().post<{ report: ReportRow }, typeof payload>("/api/v1/reports", payload);
@@ -698,7 +728,24 @@ export const api = {
       if (params?.analysisId) qs.set("analysisId", params.analysisId);
       if (params?.limit) qs.set("limit", String(params.limit));
       if (params?.offset) qs.set("offset", String(params.offset));
-      return _buildClient().get<{ forecasts: ForecastRow[] }>(`/api/v1/forecasts?${qs}`);
+      return _buildClient().get<{ forecasts: ForecastRow[]; meta: PaginatedMeta }>(
+        `/api/v1/forecasts?${qs}`,
+      );
+    },
+    create(payload: {
+      target: string;
+      observations: number[];
+      horizon?: number;
+      context?: string;
+      sourceIds?: string[];
+      indicatorIds?: string[];
+      reportIds?: string[];
+      scenarioIds?: string[];
+    }) {
+      return _buildClient().post<{ forecast: ForecastRow; analysis: AnalysisRow }, typeof payload>(
+        "/api/v1/forecasts",
+        payload,
+      );
     },
   },
 
@@ -745,7 +792,6 @@ export const api = {
       title: string;
       description?: string;
       type: AiWorkflowType;
-      model?: string;
       systemPrompt?: string;
       parameters: Record<string, unknown>;
     }) {

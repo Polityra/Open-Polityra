@@ -7,12 +7,14 @@ Chains the following stages (each is a separate function)::
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any
 
 import numpy as np
 
 from src.ai.providers.base import AIProvider, ModelRegistry
+from src.ai.providers.local_provider import OllamaProvider
 from src.analytics.statistics.descriptive import describe as compute_descriptive
 from src.common.logger import get_logger, log_with_extra
 from src.forecasting.time_series.moving_average import (
@@ -55,7 +57,8 @@ def _stage_statistics(
 
 
 def _stage_forecast(
-    observations: list[float], horizon: int = 30,
+    observations: list[float],
+    horizon: int = 30,
 ) -> tuple[list[float] | None, dict[str, Any] | None]:
     """Stage 2b — optional time-series forecast.
 
@@ -75,11 +78,13 @@ def _stage_forecast(
 
     for i in range(horizon):
         factor = 1.0 + 0.15 * (i / max(horizon, 1))
-        uncertainty_bands.append({
-            "day": i,
-            "lower": last_ma - factor * 1.96 * std,
-            "upper": last_ma + factor * 1.96 * std,
-        })
+        uncertainty_bands.append(
+            {
+                "day": i,
+                "lower": last_ma - factor * 1.96 * std,
+                "upper": last_ma + factor * 1.96 * std,
+            }
+        )
 
     metadata = {
         "method": "exponential-moving-average",
@@ -90,13 +95,16 @@ def _stage_forecast(
     return forecast_vals, metadata
 
 
-def _stage_synthesis(
-    prompt: str, provider: AIProvider | None = None, *, registry: ModelRegistry | None = None,
+async def _stage_synthesis(
+    prompt: str,
+    provider: AIProvider | None = None,
+    *,
+    registry: ModelRegistry | None = None,
 ) -> str:
     """Stage 3 — optional AI-assisted synthesis.
 
     If *registry* is provided the pipeline will resolve and use it.
-    Otherwise falls back to a local OllamaProvider (sample implementation).
+    Otherwise falls back to the configured local Ollama model.
     """
     prov = provider
     if prov is None and registry is not None:
@@ -105,16 +113,9 @@ def _stage_synthesis(
             prov = registry.resolve(name)
 
     if prov is None:
-        return ""  # synthesis skipped – caller should handle gracefully
-
-    import asyncio
-
-    loop = asyncio.new_event_loop()
-    try:
-        result = loop.run_until_complete(prov.generate_text(prompt))
-        return result.strip() or ""
-    finally:
-        loop.close()
+        prov = OllamaProvider()
+    result = await prov.generate_text(prompt)
+    return result.strip()
 
 
 def _stage_format(
@@ -131,7 +132,7 @@ def _stage_format(
     """
     # Compute a simple confidence score from data quality indicators
     n = len(observations)
-    has_trend = stats.get("std", 0) > 0
+    has_trend = (stats.get("std") or 0) > 0
     trend_consistent = forecast_meta is not None
 
     base_confidence = min(0.95, 0.3 + 0.01 * n)
@@ -143,8 +144,12 @@ def _stage_format(
 
     summary_text = synthesis or (
         f"Analysis of '{topic}' on {n} observations yielded "
-        f"a mean of {stats.get('mean', 0):.2f} and std of {stats.get('std', 0):.2f}. "
-        + (f"Forecast trend is {'increasing' if forecast_meta else 'insufficient data'}." if forecast_meta else "Insufficient data for forecasting.")
+        f"a mean of {stats.get('mean', 0):.2f} and std of {stats.get('std') or 0:.2f}. "
+        + (
+            "The forecast is a constant moving-average baseline."
+            if forecast_meta
+            else "Insufficient data for forecasting."
+        )
     )
 
     return {
@@ -153,21 +158,23 @@ def _stage_format(
         "evidence": [
             {"source": "input-observations", "type": "data", "count": n},
             {"source": "descriptive-statistics", "type": "computed"},
-            *(
-                [{"source": "forecast", "type": "modelled"}] if forecast_meta else []
-            ),
+            *([{"source": "forecast", "type": "modelled"}] if forecast_meta else []),
         ],
         "confidence": confidence,
         "methodology": [
             "descriptive-statistics",
             *(["exponential-moving-average-forecast"] if forecast_meta else []),
-            *([f"ai-synthesis({synthesis[:20]}…)" if synthesis else "none"] if synthesis is not None else ["synthesis-skipped"]),
+            *(
+                [f"ai-synthesis({synthesis[:20]}…)" if synthesis else "none"]
+                if synthesis is not None
+                else ["synthesis-skipped"]
+            ),
         ],
         "uncertainty": {
             "level": "medium",
             "factors": [
                 f"sample_size={n}",
-                "synthetic-or-limited-data",
+                "limited sample size",
                 "forecast-uncertainty-grows-with-horizon",
             ],
         },
@@ -204,7 +211,7 @@ async def run_pipeline(
         A result dictionary containing summary, evidence, confidence, methodology, and uncertainty.
     """
     t0 = time.perf_counter()
-    log_with_extra(logger, "info", "pipeline started", {"topic": topic})
+    log_with_extra(logger, logging.INFO, "pipeline started", {"topic": topic})
 
     if observations is None:
         raise ValueError("observations must be provided")
@@ -225,15 +232,22 @@ async def run_pipeline(
             f"Provide a concise, evidence-based summary for the political analysis topic:\n\n"
             f"Topic: {topic}\n"
             f"Observations: {len(observations)}\n"
-            f"Mean: {stats.get('mean', 0):.2f} | Std: {stats.get('std', 0):.2f} | "
-            f"Trend: {'increasing' if forecast_meta else 'insufficient'}\n\n"
+            f"Mean: {stats.get('mean', 0):.2f} | Std: {stats.get('std') or 0:.2f} | "
+            f"Forecast: {'constant moving-average baseline' if forecast_meta else 'insufficient data'}\n\n"
         )
-        synthesis = _stage_synthesis(prompt, provider=provider, registry=registry)
+        synthesis = await _stage_synthesis(prompt, provider=provider, registry=registry)
 
     # Stage 4 – format result
     result = _stage_format(topic, observations, stats, forecast_meta, synthesis)
-    result["processing_info"]["pipeline_duration_ms"] = round((time.perf_counter() - t0) * 1000, 2)
+    result["processing_info"]["pipeline_duration_ms"] = round(
+        (time.perf_counter() - t0) * 1000, 2
+    )
 
-    log_with_extra(logger, "info", "pipeline completed", {"topic": topic, "confidence": result["confidence"]})
+    log_with_extra(
+        logger,
+        logging.INFO,
+        "pipeline completed",
+        {"topic": topic, "confidence": result["confidence"]},
+    )
 
     return result

@@ -20,6 +20,14 @@ import { analyzeFiscalBalance, getFiscalDataset } from "../modules/fiscal-balanc
 import * as newsService from "../modules/news/service";
 import type { NewsTopic } from "../modules/news/service";
 import { scrapeConfiguredSources } from "../modules/news/scraper";
+import { runAnalysisSchema } from "../modules/analyses/schema";
+import { createForecastSchema } from "../modules/forecasts/schema";
+import { createReportSchema } from "../modules/reports/schema";
+import { createScenarioSchema } from "../modules/scenarios/schema";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 export function registerRoutes(app: Express): void {
   // Apply rate limiter to all /api/v1 routes
@@ -58,10 +66,13 @@ export function registerRoutes(app: Express): void {
     return result;
   });
   app.get("/api/v1/users/:id", authMiddleware(), userController.getUser);
+  app.patch("/api/v1/users/me", authMiddleware(), userController.updateMe);
+  app.post("/api/v1/users/me/password", authMiddleware(), userController.changeMyPassword);
 
   // Protected: /sources
   app.get("/api/v1/sources", authMiddleware(), sourceController.listSources);
   app.post("/api/v1/sources", authMiddleware(), sourceController.createSource);
+  app.post("/api/v1/sources/discover-feed", authMiddleware(), sourceController.discoverSourceFeed);
   app.get("/api/v1/sources/:id", authMiddleware(), sourceController.getSource);
   app.patch("/api/v1/sources/:id", authMiddleware(), sourceController.updateSource);
   app.delete("/api/v1/sources/:id", authMiddleware(), sourceController.deleteSource);
@@ -153,17 +164,15 @@ export function registerRoutes(app: Express): void {
   app.get("/api/v1/news/sync", async (req, res) => {
     const cronSecret = process.env.CRON_SECRET;
     if (!cronSecret || cronSecret.length < 32) {
-      res
-        .status(503)
-        .json({
-          ok: false,
-          error: {
-            code: "cron_secret_missing",
-            message:
-              "CRON_SECRET must be configured with at least 32 characters to run scheduled news syncs",
-          },
-          meta: { timestamp: new Date().toISOString() },
-        });
+      res.status(503).json({
+        ok: false,
+        error: {
+          code: "cron_secret_missing",
+          message:
+            "CRON_SECRET must be configured with at least 32 characters to run scheduled news syncs",
+        },
+        meta: { timestamp: new Date().toISOString() },
+      });
       return;
     }
 
@@ -172,13 +181,11 @@ export function registerRoutes(app: Express): void {
     const expected = Buffer.from(cronSecret);
     const provided = Buffer.from(token);
     if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
-      res
-        .status(401)
-        .json({
-          ok: false,
-          error: { code: "unauthorized", message: "A valid cron authorization token is required" },
-          meta: { timestamp: new Date().toISOString() },
-        });
+      res.status(401).json({
+        ok: false,
+        error: { code: "unauthorized", message: "A valid cron authorization token is required" },
+        meta: { timestamp: new Date().toISOString() },
+      });
       return;
     }
 
@@ -210,19 +217,38 @@ export function registerRoutes(app: Express): void {
   app.get("/api/v1/indicators", authMiddleware(), async (req, res) => {
     const limit = parseInt((req.query.limit as string) ?? "50", 10);
     const offset = parseInt((req.query.offset as string) ?? "0", 10);
-    const rows = await indicatorService.listIndicators(
-      req.query.category as string | undefined,
-      limit,
-      offset,
-    );
+    const category = req.query.category as string | undefined;
+    const rows = await indicatorService.listIndicators(category, limit, offset);
+    const total = await indicatorService.countIndicators(category);
     res.json({
       ok: true,
-      data: { indicators: rows },
+      data: { indicators: rows, meta: { total, limit, offset } },
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
     });
   });
 
   // Protected: /analyses
+  app.get("/api/v1/analyses", authMiddleware(), async (req: AuthenticatedRequest, res) => {
+    if (!req.userId) {
+      res.status(401).json({
+        ok: false,
+        error: { code: "unauthorized", message: "User ID required" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const limit = Math.min(
+      200,
+      Math.max(1, Number.parseInt(String(req.query.limit ?? 50), 10) || 50),
+    );
+    const offset = Math.max(0, Number.parseInt(String(req.query.offset ?? 0), 10) || 0);
+    const result = await analysisService.listAnalyses(req.userId, limit, offset);
+    res.json({
+      ok: true,
+      data: { analyses: result.rows, meta: { total: result.total, limit, offset } },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
   app.post("/api/v1/analyses", authMiddleware(), async (req: AuthenticatedRequest, res) => {
     if (!req.userId) {
       res.status(401).json({
@@ -232,38 +258,70 @@ export function registerRoutes(app: Express): void {
       });
       return;
     }
-    const analysis = await analysisService.createAnalysis(req.userId, req.body);
+    const parsed = runAnalysisSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        ok: false,
+        error: { code: "validation_error", message: parsed.error.message },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const analysis = await analysisService.executeAnalysis(req.userId, parsed.data);
     res.status(201).json({
       ok: true,
       data: { analysis },
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
     });
   });
-  app.get("/api/v1/analyses/:id", authMiddleware(), async (req: Request<{ id: string }>, res) => {
-    try {
-      const result = await analysisService.getAnalysisStatus(req.params.id);
+  app.get(
+    "/api/v1/analyses/:id",
+    authMiddleware(),
+    async (req: Request<{ id: string }> & AuthenticatedRequest, res) => {
+      if (!req.userId) {
+        res.status(401).json({
+          ok: false,
+          error: { code: "unauthorized", message: "User ID required" },
+          meta: { timestamp: new Date().toISOString() },
+        });
+        return;
+      }
+      const analysis = await analysisService.getAnalysisStatus(req.params.id, req.userId);
+      if (!analysis) {
+        res.status(404).json({
+          ok: false,
+          error: { code: "not_found", message: "Analysis not found" },
+          meta: { timestamp: new Date().toISOString() },
+        });
+        return;
+      }
       res.json({
         ok: true,
-        data: result,
+        data: { analysis },
         meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
       });
-    } catch {
-      res.status(404).json({
-        ok: false,
-        error: { code: "not_found", message: "Analysis not found" },
-        meta: { timestamp: new Date().toISOString() },
-      });
-    }
-  });
+    },
+  );
 
   // Protected: /scenarios
-  app.get("/api/v1/scenarios", authMiddleware(), async (req, res) => {
-    const limit = parseInt((req.query.limit as string) ?? "50", 10);
-    const offset = parseInt((req.query.offset as string) ?? "0", 10);
-    const rows = await scenarioService.listScenarios(limit, offset);
+  app.get("/api/v1/scenarios", authMiddleware(), async (req: AuthenticatedRequest, res) => {
+    if (!req.userId) {
+      res.status(401).json({
+        ok: false,
+        error: { code: "unauthorized", message: "User ID required" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const limit = Math.min(
+      200,
+      Math.max(1, Number.parseInt(String(req.query.limit ?? 50), 10) || 50),
+    );
+    const offset = Math.max(0, Number.parseInt(String(req.query.offset ?? 0), 10) || 0);
+    const result = await scenarioService.listScenarios(req.userId, limit, offset);
     res.json({
       ok: true,
-      data: { scenarios: rows },
+      data: { scenarios: result.rows, meta: { total: result.total, limit, offset } },
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
     });
   });
@@ -276,7 +334,19 @@ export function registerRoutes(app: Express): void {
       });
       return;
     }
-    const scenario = await scenarioService.createScenario({ ...req.body, createdBy: req.userId });
+    const parsed = createScenarioSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        ok: false,
+        error: { code: "validation_error", message: parsed.error.message },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const scenario = await scenarioService.createScenario({
+      ...parsed.data,
+      createdBy: req.userId,
+    });
     res.status(201).json({
       ok: true,
       data: { scenario },
@@ -285,17 +355,29 @@ export function registerRoutes(app: Express): void {
   });
 
   // Protected: /reports
-  app.get("/api/v1/reports", authMiddleware(), async (req, res) => {
+  app.get("/api/v1/reports", authMiddleware(), async (req: AuthenticatedRequest, res) => {
+    if (!req.userId) {
+      res.status(401).json({
+        ok: false,
+        error: { code: "unauthorized", message: "User ID required" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
     const limit = parseInt((req.query.limit as string) ?? "50", 10);
     const offset = parseInt((req.query.offset as string) ?? "0", 10);
-    const rows = await reportService.listReports(
+    const result = await reportService.listReports(
+      req.userId,
       req.query.status as string | undefined,
       limit,
       offset,
     );
     res.json({
       ok: true,
-      data: { reports: rows },
+      data: {
+        reports: result.rows,
+        meta: { total: result.total, limit, offset },
+      },
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
     });
   });
@@ -308,10 +390,19 @@ export function registerRoutes(app: Express): void {
       });
       return;
     }
+    const parsed = createReportSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        ok: false,
+        error: { code: "validation_error", message: parsed.error.message },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
     const report = await reportService.createReport({
       userId: req.userId,
-      title: req.body.title ?? "Untitled",
-      content: req.body.content,
+      title: parsed.data.title,
+      content: parsed.data.content,
     });
     res.status(201).json({
       ok: true,
@@ -319,22 +410,34 @@ export function registerRoutes(app: Express): void {
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
     });
   });
-  app.get("/api/v1/reports/:id", authMiddleware(), async (req: Request<{ id: string }>, res) => {
-    const report = await reportService.getReportById(req.params.id);
-    if (!report) {
-      res.status(404).json({
-        ok: false,
-        error: { code: "not_found", message: "Report not found" },
-        meta: { timestamp: new Date().toISOString() },
+  app.get(
+    "/api/v1/reports/:id",
+    authMiddleware(),
+    async (req: Request<{ id: string }> & AuthenticatedRequest, res) => {
+      if (!req.userId) {
+        res.status(401).json({
+          ok: false,
+          error: { code: "unauthorized", message: "User ID required" },
+          meta: { timestamp: new Date().toISOString() },
+        });
+        return;
+      }
+      const report = await reportService.getReportById(req.params.id, req.userId);
+      if (!report) {
+        res.status(404).json({
+          ok: false,
+          error: { code: "not_found", message: "Report not found" },
+          meta: { timestamp: new Date().toISOString() },
+        });
+        return;
+      }
+      res.json({
+        ok: true,
+        data: { report },
+        meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
       });
-      return;
-    }
-    res.json({
-      ok: true,
-      data: { report },
-      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
-    });
-  });
+    },
+  );
 
   // ---- Protected: /notifications ----
   app.get("/api/v1/notifications", authMiddleware(), async (req: AuthenticatedRequest, res) => {
@@ -404,14 +507,93 @@ export function registerRoutes(app: Express): void {
   app.get("/api/v1/forecasts", authMiddleware(), async (req, res) => {
     const limit = parseInt((req.query.limit as string) ?? "50", 10);
     const offset = parseInt((req.query.offset as string) ?? "0", 10);
-    const rows = await forecastService.listForecasts(
+    const userId = (req as AuthenticatedRequest).userId;
+    if (!userId) {
+      res.status(401).json({
+        ok: false,
+        error: { code: "unauthorized", message: "User ID required" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const result = await forecastService.listForecasts(
       req.query.analysisId as string | undefined,
       limit,
       offset,
+      userId,
     );
     res.json({
       ok: true,
-      data: { forecasts: rows },
+      data: { forecasts: result.rows, meta: { total: result.total, limit, offset } },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
+  app.post("/api/v1/forecasts", authMiddleware(), async (req: AuthenticatedRequest, res) => {
+    if (!req.userId) {
+      res.status(401).json({
+        ok: false,
+        error: { code: "unauthorized", message: "User ID required" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const parsed = createForecastSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        ok: false,
+        error: { code: "validation_error", message: parsed.error.message },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+
+    const analysis = await analysisService.executeAnalysis(req.userId, {
+      title: `Forecast: ${parsed.data.target}`,
+      topic: parsed.data.target,
+      context: parsed.data.context,
+      sourceIds: parsed.data.sourceIds,
+      indicatorIds: parsed.data.indicatorIds,
+      reportIds: [],
+      scenarioIds: [],
+      observations: parsed.data.observations,
+      time_horizon: parsed.data.horizon,
+      methodology: "forecasting",
+      enable_ai_synthesis: true,
+      scope: "topic",
+    });
+    const result = isRecord(analysis.result) ? analysis.result : null;
+    const projection = result && isRecord(result.forecast) ? result.forecast : null;
+    const projectedValues = projection?.projected_values;
+    if (!projection || !Array.isArray(projectedValues) || projectedValues.length === 0) {
+      res.status(502).json({
+        ok: false,
+        error: { code: "forecast_missing", message: "The analysis worker returned no forecast." },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const forecastPoints = projectedValues.filter(isRecord);
+    const lowerBounds = forecastPoints
+      .map((point) => point.lower_bound)
+      .filter((value): value is number => typeof value === "number");
+    const upperBounds = forecastPoints
+      .map((point) => point.upper_bound)
+      .filter((value): value is number => typeof value === "number");
+    const forecast = await forecastService.createForecast({
+      analysisId: analysis.id,
+      target: parsed.data.target,
+      method: "moving-average",
+      values: {
+        period_days: projection.period_days,
+        trend_direction: projection.trend_direction,
+        projected_values: projectedValues,
+      },
+      confidenceLower: lowerBounds.length ? Math.min(...lowerBounds) : undefined,
+      confidenceUpper: upperBounds.length ? Math.max(...upperBounds) : undefined,
+    });
+    res.status(201).json({
+      ok: true,
+      data: { forecast, analysis },
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
     });
   });
@@ -503,7 +685,6 @@ export function registerRoutes(app: Express): void {
       parsed.data.title,
       parsed.data.type,
       parsed.data.parameters,
-      parsed.data.model,
       parsed.data.systemPrompt,
     );
 

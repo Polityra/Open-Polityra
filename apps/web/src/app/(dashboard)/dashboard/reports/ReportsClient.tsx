@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Calendar, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, Calendar, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { api, type ReportRow } from "@open-polityra/api-client";
 import {
   PageHeader,
@@ -14,6 +14,7 @@ import {
   chip,
   btnPrimary,
   btnGhost,
+  inputClass,
   pick,
   pickTotal,
   fmtDate,
@@ -31,6 +32,13 @@ export default function ReportsClient() {
   const [error, setError] = useState(false);
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,9 +68,28 @@ export default function ReportsClient() {
     return () => {
       cancelled = true;
     };
-  }, [status, page]);
+  }, [status, page, refreshKey]);
 
   const pages = Math.max(1, Math.ceil(total / PAGE));
+
+  async function createReport(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setFormError(null);
+    try {
+      await api.reports.create({ title: title.trim(), content: { body: content.trim() } });
+      setTitle("");
+      setContent("");
+      setPage(1);
+      setStatus("");
+      setShowForm(false);
+      setRefreshKey((key) => key + 1);
+    } catch (cause) {
+      setFormError(cause instanceof Error ? cause.message : "Could not create the report.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -73,14 +100,46 @@ export default function ReportsClient() {
         action={
           <button
             type="button"
-            disabled
-            title="Report authoring isn't available yet"
+            onClick={() => setShowForm((value) => !value)}
             className={btnPrimary}
           >
-            <Plus className="h-4 w-4" /> New report
+            <Plus className="h-4 w-4" /> {showForm ? "Close form" : "New report"}
           </button>
         }
       />
+
+      {showForm && (
+        <form onSubmit={createReport} className={`${panel} space-y-4 p-6`}>
+          <h2 className="font-display text-lg font-semibold text-neutral-950">Create a draft</h2>
+          <label className="block text-sm font-medium text-neutral-700">
+            Report title
+            <input
+              required
+              minLength={2}
+              maxLength={512}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className={`${inputClass} mt-1.5`}
+            />
+          </label>
+          <label className="block text-sm font-medium text-neutral-700">
+            Report content
+            <textarea
+              rows={7}
+              maxLength={30_000}
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              className={`${inputClass} mt-1.5`}
+              placeholder="Write the findings, evidence and limitations for this draft."
+            />
+          </label>
+          {formError && <ErrorNote>{formError}</ErrorNote>}
+          <button type="submit" className={btnPrimary} disabled={saving}>
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {saving ? "Saving…" : "Save draft"}
+          </button>
+        </form>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -127,26 +186,39 @@ export default function ReportsClient() {
         ) : (
           <ul className="divide-y divide-black/[0.08]">
             {reports.map((r) => (
-              <li
-                key={r.id}
-                className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-black/[0.03]"
-              >
-                <span className="rounded-lg border border-black/10 bg-neutral-100 p-2.5 text-neutral-900">
-                  <FileText className="h-5 w-5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-neutral-950">{r.title}</p>
-                  <p className="mt-0.5 flex items-center gap-3 text-xs text-neutral-500">
-                    <span className="font-mono">{r.id.slice(0, 8)}</span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {fmtDate(r.created_at)}
+              <li key={r.id} className="px-6 py-4 transition-colors hover:bg-black/[0.03]">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-4 text-left"
+                  aria-expanded={expanded === r.id}
+                  onClick={() => setExpanded(expanded === r.id ? null : r.id)}
+                >
+                  <span className="rounded-lg border border-black/10 bg-neutral-100 p-2.5 text-neutral-900">
+                    <FileText className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-neutral-950">
+                      {r.title}
                     </span>
-                  </p>
-                </div>
-                <Badge tone={TONE[r.status] ?? "neutral"}>
-                  <span className="capitalize">{r.status}</span>
-                </Badge>
+                    <span className="mt-0.5 flex items-center gap-3 text-xs text-neutral-500">
+                      <span className="font-mono">{r.id.slice(0, 8)}</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {fmtDate(r.created_at)}
+                      </span>
+                    </span>
+                  </span>
+                  <Badge tone={TONE[r.status] ?? "neutral"}>
+                    <span className="capitalize">{r.status}</span>
+                  </Badge>
+                </button>
+                {expanded === r.id && (
+                  <pre className="mt-4 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-neutral-50 p-4 text-sm leading-6 text-neutral-700">
+                    {typeof r.content?.body === "string"
+                      ? r.content.body
+                      : JSON.stringify(r.content ?? {}, null, 2)}
+                  </pre>
+                )}
               </li>
             ))}
           </ul>

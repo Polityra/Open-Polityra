@@ -3,17 +3,21 @@ import type { Env } from "../config/env";
 import { AppError } from "../errors/appError";
 
 export interface AnalysisRequest {
-  type: "economic-forecast" | "scenario-simulation" | "statistical-summary" | "text-analysis";
-  parameters: Record<string, unknown>;
-  sourceIds?: string[];
+  topic: string;
+  context?: string;
+  observations?: number[];
+  scope?: "global" | "regional" | "national" | "subnational" | "organization" | "topic";
+  time_horizon?: number;
+  methodology?: "descriptive" | "timeseries" | "forecasting" | "simulation" | "comprehensive";
+  enable_ai_synthesis?: boolean;
 }
 
 export interface AnalysisResult {
-  status: "completed" | "failed";
-  data: unknown;
+  topic: string;
+  summary: string;
   confidence?: number;
   methodology?: string;
-  error?: string;
+  [key: string]: unknown;
 }
 
 let cachedEnv: Env | null = null;
@@ -32,11 +36,21 @@ export class PythonServiceClient {
   }
 
   async submitAnalysis(request: AnalysisRequest): Promise<AnalysisResult> {
-    const res = await fetch(`${this.baseUrl}/api/v1/analyses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}/api/v1/analysis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(90_000),
+      });
+    } catch (error) {
+      throw new AppError(
+        503,
+        "analysis_service_unavailable",
+        `Analysis worker is unavailable; check PYTHON_SERVICE_URL and ensure it is running: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     if (!res.ok) {
       const body = await res.text();

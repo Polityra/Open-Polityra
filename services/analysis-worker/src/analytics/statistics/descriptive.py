@@ -12,7 +12,7 @@ import numpy as np
 from scipy import stats as sp_stats
 
 
-def describe(data: Sequence[float]) -> dict[str, float]:
+def describe(data: Sequence[float]) -> dict[str, float | None]:
     """Compute a full suite of descriptive statistics.
 
     Args:
@@ -35,13 +35,13 @@ def describe(data: Sequence[float]) -> dict[str, float]:
     return {
         "mean": float(np.mean(arr)),
         "median": float(np.median(arr)),
-        "std": float(np.std(arr, ddof=1)),          # sample standard deviation
-        "variance": float(np.var(arr, ddof=1)),      # sample variance
+        "std": float(np.std(arr, ddof=1)) if arr.size > 1 else None,
+        "variance": float(np.var(arr, ddof=1)) if arr.size > 1 else None,
         "min": float(np.min(arr)),
         "max": float(np.max(arr)),
         "range": float(np.max(arr) - np.min(arr)),
-        "skewness": float(sp_stats.skew(arr)),       # Fisher-Pearson
-        "kurtosis": float(sp_stats.kurtosis(arr)),   # excess kurtosis (Fisher)
+        "skewness": float(sp_stats.skew(arr)) if np.ptp(arr) > 0 else None,
+        "kurtosis": float(sp_stats.kurtosis(arr)) if np.ptp(arr) > 0 else None,
         "iqr": iqr,
     }
 

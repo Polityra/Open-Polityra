@@ -14,7 +14,6 @@ export const createWorkflowSchema = z.object({
   title: z.string().min(1).max(512),
   description: z.string().max(2048).optional(),
   type: z.enum(AI_WORKFLOW_TYPES),
-  model: z.string().optional(),
   systemPrompt: z.string().max(4096).optional(),
   parameters: z.record(z.string(), z.unknown()).default({}),
   metadata: z.record(z.string(), z.unknown()).default({}),

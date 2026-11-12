@@ -10,7 +10,6 @@ import {
   Download,
   Package,
   Play,
-  ToggleRight,
   Terminal,
 } from "lucide-react";
 import WorkflowForm from "./components/WorkflowForm";
@@ -21,13 +20,13 @@ import { panelClass } from "./components/workflow-config";
 const highlights = [
   {
     icon: Cpu,
-    title: "Local or cloud models",
-    text: "Prefers your configured local Ollama model and can fall back to Ollama Cloud.",
+    title: "Local Ollama model",
+    text: "Analysis runs locally with the configured olmo-3:7b model.",
   },
   {
     icon: ShieldCheck,
     title: "Choose your privacy level",
-    text: "Local inference keeps prompts on your machine. Cloud fallback sends prompts to Ollama and requires an API key.",
+    text: "Prompts are sent only to your configured local Ollama instance.",
   },
   {
     icon: Database,
@@ -39,38 +38,28 @@ const highlights = [
 const setupSteps = [
   {
     icon: Download,
-    title: "Install Ollama (optional)",
+    title: "Install Ollama",
     body: (
       <>
-        Install from <code>ollama.com</code> to use local inference.
+        Install Ollama from <code>ollama.com</code>.
       </>
     ),
   },
   {
     icon: Package,
-    title: "Pull a local model (optional)",
+    title: "Pull the required model",
     body: (
       <>
-        Set <code>AI_MODEL</code> and pull it with <code>ollama pull &lt;AI_MODEL&gt;</code>.
+        Run <code>ollama pull olmo-3:7b</code>.
       </>
     ),
   },
   {
     icon: Play,
-    title: "Enable cloud fallback (optional)",
-    body: (
-      <>
-        Set server-side <code>OLLAMA_API_KEY</code> and <code>OLLAMA_CLOUD_MODEL</code>.
-      </>
-    ),
-  },
-  {
-    icon: ToggleRight,
     title: "Start local Ollama",
     body: (
       <>
-        Run <code>ollama serve</code>. Cloud is selected when the configured local model is
-        unavailable.
+        Run <code>ollama serve</code> and configure <code>OLLAMA_BASE_URL</code>.
       </>
     ),
   },
@@ -96,8 +85,8 @@ export default function AiWorkflowPage() {
           </h1>
           <div className="mt-3 h-0.5 w-16 bg-gradient-to-r from-neutral-400 to-neutral-950" />
           <p className="mt-3 max-w-2xl text-sm text-neutral-600">
-            Run AI analysis with your configured local Ollama model, or use Ollama Cloud when the
-            local model is unavailable. Results are saved to the database for later review.
+            Run AI analysis with the configured local olmo-3:7b model. Results are saved to the
+            database for later review.
           </p>
         </div>
         <button

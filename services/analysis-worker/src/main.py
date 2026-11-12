@@ -7,10 +7,12 @@ import time
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from src.api.routes import analysis, health
+from src.common.errors import AnalysisError
 from src.common.logger import get_logger
 
 logger = get_logger("analysis-worker")
@@ -36,7 +38,10 @@ async def lifespan(app: FastAPI):
     loop_start = time.perf_counter()
     yield
     # shutdown
-    logger.info("analysis-worker shutting down (duration=%.1fs)", time.perf_counter() - loop_start)
+    logger.info(
+        "analysis-worker shutting down (duration=%.1fs)",
+        time.perf_counter() - loop_start,
+    )
 
 
 # ── Application factory ────────────────────────────────────────────────────────
@@ -54,6 +59,12 @@ def create_app() -> FastAPI:
         description="Analysis engine for political domain data",
         lifespan=lifespan,
     )
+
+    @app.exception_handler(AnalysisError)
+    async def handle_analysis_error(
+        _request: Request, error: AnalysisError
+    ) -> JSONResponse:
+        return JSONResponse(status_code=error.code, content=error.to_dict())
 
     # CORS – allow any origin in development; restrict in production via env-var
     app.add_middleware(

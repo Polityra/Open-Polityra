@@ -9,7 +9,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "turbo run dev --parallel",
+    "dev": "node --env-file-if-exists=.env scripts/dev.mjs",
     "start": "turbo run start",
     "build": "turbo run build",
     "lint": "turbo run lint",
