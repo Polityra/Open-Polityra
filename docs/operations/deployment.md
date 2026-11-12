@@ -32,5 +32,24 @@ project maintainers before use.
   procedures in a non-production environment.
 - Publish an alpha disclaimer, supported-use policy, and contact path for security reports.
 
+## Vercel build troubleshooting
+
+The root workspace uses the pnpm version pinned in `package.json` and the root `pnpm-lock.yaml`.
+Service directories also contain npm lockfiles; check the deployment logs and project build
+overrides if Vercel selects npm for one service but invokes pnpm or Turbo elsewhere. Do not assume
+the two lockfile sets describe identical dependencies.
+
+To select the pinned pnpm version on Vercel, set `ENABLE_EXPERIMENTAL_COREPACK=1` for the deployment
+environment and use a supported Node.js version, such as Node 22. Review any Install Command and
+Build Command overrides in the project settings: an override can change which package manager or
+workspace is used. Deploy a preview and confirm the logs show the expected install and successful
+build before promoting it.
+
+`ERR_INVALID_THIS` / `Value of "this" must be of type URLSearchParams` during a pnpm registry
+request can indicate an incompatible older pnpm version. Record the actual Node and pnpm versions in
+the build log before attributing the error to a particular version. A separate warning about a
+missing `microfrontends.json` means the project is in a microfrontends group; review the group's
+configuration independently rather than treating that warning as the package installation error.
+
 The fiscal-balance prototype serves a checked-in public-data snapshot. Refreshing it is a separate
 source-data operation and should be reviewed before publication.
