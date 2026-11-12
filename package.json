@@ -4,7 +4,7 @@
   "private": true,
   "description": "Independent open-source research and strategic intelligence platform.",
   "license": "Apache-2.0",
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@12.18.0",
   "engines": {
     "node": ">=22.0.0"
   },
