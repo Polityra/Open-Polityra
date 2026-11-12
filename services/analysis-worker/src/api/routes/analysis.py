@@ -57,31 +57,12 @@ def _retrieve_data(topic: str, scope: DataScope) -> list[float]:
             import csv
 
             safe_root = os.path.realpath(store_root)
-            if not isinstance(snapshot_path, str) or snapshot_path.strip() == "":
+            candidate_path = os.path.realpath(snapshot_path)
+            if not os.path.isabs(candidate_path):
                 raise ValidationError(
                     message="invalid snapshot path",
                     details={"path": snapshot_path, "scope": scope.value},
                 )
-
-            if os.path.isabs(snapshot_path):
-                raise ValidationError(
-                    message="invalid snapshot path",
-                    details={"path": snapshot_path, "scope": scope.value},
-                )
-
-            normalized_snapshot_path = snapshot_path.replace("\\", "/")
-            if ".." in normalized_snapshot_path.split("/"):
-                raise ValidationError(
-                    message="invalid snapshot path",
-                    details={"path": snapshot_path, "scope": scope.value},
-                )
-            if not re.fullmatch(r"[A-Za-z0-9._/-]+", normalized_snapshot_path):
-                raise ValidationError(
-                    message="invalid snapshot path",
-                    details={"path": snapshot_path, "scope": scope.value},
-                )
-
-            candidate_path = os.path.realpath(os.path.join(safe_root, normalized_snapshot_path))
             try:
                 in_root = os.path.commonpath([safe_root, candidate_path]) == safe_root
             except ValueError:
