@@ -10,7 +10,12 @@
 
 **Independent open-source research and strategic intelligence platform for transparent,
 source-grounded analysis using public data.**
+**Independent open-source research and strategic intelligence platform for transparent,
+source-grounded analysis using public data.**
 
+> This is an independent, early-stage project. It is not an official government system, public
+> authority, political party, or government commission. It does not make or automate public
+> decisions. Human institutions remain responsible for all decisions.
 > This is an independent, early-stage project. It is not an official government system, public
 > authority, political party, or government commission. It does not make or automate public
 > decisions. Human institutions remain responsible for all decisions.
@@ -20,9 +25,18 @@ source-grounded analysis using public data.**
 The repository is an evolving project scaffold. Features, datasets, models, research methods, and
 governance arrangements may be incomplete or experimental. Do not use prototype outputs as the sole
 basis for financial, public-policy, security, or operational decisions.
+The repository is an evolving project scaffold. Features, datasets, models, research methods, and
+governance arrangements may be incomplete or experimental. Do not use prototype outputs as the sole
+basis for financial, public-policy, security, or operational decisions.
 
 ## Goals
 
+- Bring together public, lawfully usable information from documented sources to study global
+  economics, geopolitics, security, resilience, energy, and governance.
+- Support analysis of economic indicators, geopolitical developments, national and international
+  security, cybersecurity, public services, and critical infrastructure.
+- Compare transparent scenarios and assumptions rather than present one predetermined political
+  answer.
 - Bring together public, lawfully usable information from documented sources to study global
   economics, geopolitics, security, resilience, energy, and governance.
 - Support analysis of economic indicators, geopolitical developments, national and international
@@ -44,6 +58,25 @@ basis for financial, public-policy, security, or operational decisions.
 
 ## Repository structure
 
+| Path                        | Purpose                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| `apps/web/`                 | Next.js frontend — research platform dashboard, landing pages, reports                        |
+| `apps/api/`                 | Express backend API — auth, sources, datasets, analyses, reports, and RSS/Atom news ingestion |
+| `services/analysis-worker/` | Python analysis engine — forecasting, scenario modeling, AI-assisted analysis                 |
+| `packages/contracts/`       | Shared schemas and API contracts across all services                                          |
+| `packages/api-client/`      | Typed frontend API client                                                                     |
+| `packages/ui/`              | Shared design system and reusable components                                                  |
+| `packages/database/`        | PostgreSQL migrations, seeds, and query library                                               |
+| `data/`                     | Data source catalogues, schemas, validation rules, sample fixtures                            |
+| `research/`                 | Research methods, domain studies, working papers, publications                                |
+| `models/`                   | AI model registry, prompts, adapters, and model cards                                         |
+| `evaluation/`               | Benchmarks, backtesting, calibration, bias evaluation, security testing                       |
+| `governance/`               | Project governance, community rules, ethics, foundation planning                              |
+| `docs/`                     | Architecture, product specs, developer guides, operations manuals                             |
+| `infra/`                    | Local and deployment infrastructure (PostgreSQL, Redis, containers)                           |
+| `scripts/`                  | Setup, database, data import, and release automation                                          |
+| `tests/`                    | Cross-application integration, e2e, performance, and security tests                           |
+| `.github/`                  | Issue templates, CI/CD workflows, repository automation                                       |
 | Path                        | Purpose                                                                                       |
 | --------------------------- | --------------------------------------------------------------------------------------------- |
 | `apps/web/`                 | Next.js frontend — research platform dashboard, landing pages, reports                        |
@@ -175,6 +208,8 @@ Discovery does not crawl the site and may require a manually supplied feed URL.
 4. **Express Backend** → validates requests, checks auth/permissions, accesses PostgreSQL
 5. **Python Analysis Service** → handles computational analysis (forecasting, scenario modeling,
    AI-assisted analysis)
+5. **Python Analysis Service** → handles computational analysis (forecasting, scenario modeling,
+   AI-assisted analysis)
 6. **Results** → returned through Express to the frontend for display with evidence and uncertainty
 
 ## Development principles
@@ -192,13 +227,20 @@ Discovery does not crawl the site and may require a manually supplied feed URL.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md), [GOVERNANCE.md](GOVERNANCE.md),
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and [SECURITY.md](SECURITY.md) before contributing.
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and [SECURITY.md](SECURITY.md) before contributing.
 
+For research contributions, include methodology, assumptions, sources, limitations, and
+reproducibility information. For code contributions, include tests and update relevant
+documentation.
 For research contributions, include methodology, assumptions, sources, limitations, and
 reproducibility information. For code contributions, include tests and update relevant
 documentation.
 
 ## Governance and foundation status
 
+The project may explore establishing a legal foundation in the future. No foundation should be
+represented as established until it has been legally founded and registered where required. Until
+then, governance documents are proposals for community discussion, not binding foundation rules.
 The project may explore establishing a legal foundation in the future. No foundation should be
 represented as established until it has been legally founded and registered where required. Until
 then, governance documents are proposals for community discussion, not binding foundation rules.
@@ -217,9 +259,15 @@ See [LICENSES.md](LICENSES.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.
 This project is provided for research, education, and decision-support development. It is provided
 without warranty. Outputs may be incomplete, incorrect, outdated, or misleading. Users must
 independently verify information and consult qualified experts before relying on it.
+This project is provided for research, education, and decision-support development. It is provided
+without warranty. Outputs may be incomplete, incorrect, outdated, or misleading. Users must
+independently verify information and consult qualified experts before relying on it.
 
 ## Contact
 
+Until official project contact channels are published, use GitHub Discussions or Issues for
+non-sensitive questions. Never disclose vulnerabilities, personal data, credentials, or confidential
+information in public issues.
 Until official project contact channels are published, use GitHub Discussions or Issues for
 non-sensitive questions. Never disclose vulnerabilities, personal data, credentials, or confidential
 information in public issues.

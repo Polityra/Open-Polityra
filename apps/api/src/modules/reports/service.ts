@@ -1,5 +1,7 @@
 import { Pool } from "pg";
 import { getPool } from "../../config/database";
+import { Pool } from "pg";
+import { getPool } from "../../config/database";
 
 let cachedPool: Pool | null = null;
 
@@ -13,6 +15,7 @@ export interface ReportRow {
   id: string;
   user_id: string | null;
   title: string;
+  status: "draft" | "reviewing" | "published";
   status: "draft" | "reviewing" | "published";
   format: string;
   content: Record<string, unknown> | null;
@@ -48,9 +51,16 @@ export async function createReport(params: {
   format?: string;
   content?: Record<string, unknown>;
 }): Promise<ReportRow> {
+export async function createReport(params: {
+  userId: string;
+  title: string;
+  format?: string;
+  content?: Record<string, unknown>;
+}): Promise<ReportRow> {
   const pool = _getPool();
   const result = await pool.query(
     `INSERT INTO reports (user_id, title, status, format, content) VALUES ($1, $2, 'draft', $3, $4) RETURNING id, user_id, title, status, format, content, created_at`,
+    [params.userId, params.title, params.format ?? "json", JSON.stringify(params.content)],
     [params.userId, params.title, params.format ?? "json", JSON.stringify(params.content)],
   );
   return result.rows[0] as ReportRow;
