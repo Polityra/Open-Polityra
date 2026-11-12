@@ -92,7 +92,6 @@ export async function createWorkflow(req: AuthenticatedRequest, res: Response): 
     parsed.data.title,
     parsed.data.type as AiWorkflowType,
     parsed.data.parameters,
-    parsed.data.model,
     parsed.data.systemPrompt,
   );
 

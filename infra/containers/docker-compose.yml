@@ -7,13 +7,18 @@ services:
       - "${API_HOST_PORT:-4001}:4000"
     environment:
       - NODE_ENV=production
+      - PORT=4000
       - DATABASE_URL=postgresql://postgres:${DATABASE_PASSWORD:-change_me}@postgres:5432/open_polityra
-      - ANALYSIS_SERVICE_URL=http://analysis-worker:8000
+      - PYTHON_SERVICE_URL=http://analysis-worker:8000
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - AI_MODEL=olmo-3:7b
     depends_on:
       postgres:
         condition: service_healthy
       analysis-worker:
         condition: service_started
+      ollama:
+        condition: service_healthy
 
   web:
     build:
@@ -36,6 +41,23 @@ services:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=olmo-3:7b
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "${OLLAMA_HOST_PORT:-11434}:11434"
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
   postgres:
     image: postgres:16-alpine
@@ -45,7 +67,7 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-change_me}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../../packages/database/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+      - ../../packages/database/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -54,3 +76,4 @@ services:
 
 volumes:
   pgdata:
+  ollama:

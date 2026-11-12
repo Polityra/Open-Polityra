@@ -32,6 +32,7 @@ const sourceObjectSchema = z
     feedUrl: httpsUrl.optional(),
     topics: z.array(z.enum(newsTopics)).min(1).max(newsTopics.length).optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
+    is_active: z.boolean().optional(),
   })
   .strict();
 

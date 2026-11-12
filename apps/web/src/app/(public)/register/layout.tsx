@@ -4,7 +4,7 @@ import { createPageMetadata } from "@/lib/site";
 export const metadata: Metadata = {
   ...createPageMetadata({
     title: "Create an Account",
-    description: "Create an account to access the Open Polityra research workspace.",
+    description: "Create an account to use the Open Polityra research workspace.",
     path: "/register",
   }),
   robots: { index: false, follow: false },

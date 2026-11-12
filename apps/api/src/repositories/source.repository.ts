@@ -28,7 +28,7 @@ export class SourceRepository {
     categoryFilter?: string,
     topicFilter?: string,
   ): Promise<{ rows: SourceRow[]; total: number }> {
-    const whereClauses: string[] = ["is_active = true"];
+    const whereClauses: string[] = [];
     const values: unknown[] = [];
     let idx = 1;
 

@@ -94,10 +94,38 @@ pipx install poetry
 poetry install --with dev
 ```
 
+Install and start local Ollama, then pull the configured model:
+
+```bash
+ollama pull olmo-3:7b
+ollama serve
+```
+
+Set `AI_MODEL=olmo-3:7b` for the Express API and `OLLAMA_MODEL=olmo-3:7b` for the Python worker.
+Both services use `OLLAMA_BASE_URL` to reach the local Ollama instance. In `infra/containers`,
+Docker Compose starts an Ollama service; run
+`docker compose -f infra/containers/docker-compose.yml exec ollama ollama pull olmo-3:7b` before
+running analyses.
+
+The Compose database applies every migration when creating a new volume. The following script
+reapplies every migration and is intended only for a fresh database:
+
+```bash
+DATABASE_URL=postgresql://postgres:change_me@localhost:5432/open_polityra ./scripts/database/migrate.sh
+```
+
+For an existing database with migrations through `005` already applied, export `DATABASE_URL` and
+apply the analysis migrations individually before starting the API:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/database/migrations/006_analysis_results.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/database/migrations/007_automatic_news_analyses.sql
+```
+
 ### Development commands (root)
 
 ```bash
-pnpm dev          # Start the web app and API in parallel
+pnpm dev          # Start the web app, API, and analysis worker in parallel
 pnpm build        # Build all apps and packages
 pnpm start        # Start the built web app and API in parallel
 pnpm lint         # Lint all code
@@ -123,8 +151,21 @@ cd apps/api && pnpm dev   # http://localhost:4000
 cd services/analysis-worker && poetry run dev   # http://localhost:8000
 ```
 
-The Python worker is managed separately from the pnpm workspace. The fiscal-balance prototype
-currently uses a deterministic calculation in the Express API and does not depend on the worker.
+The Python worker dependencies are managed separately from the pnpm workspace, but `pnpm dev` starts
+the worker automatically after setup. Analysis requests use only database-derived context and/or
+caller-supplied observed values; the worker does not invent fallback observations. The
+fiscal-balance prototype uses a deterministic calculation in the Express API.
+
+When the API ingests a new news item, it also queues a shared analysis in the same database
+transaction. The API processes queued items in the background, and failed jobs are retried after 15
+minutes. Results and failures appear on the dashboard for signed-in users. The worker and configured
+Ollama model must both be available; generated summaries require human review. Apply all pending
+database migrations, including `006_analysis_results.sql` and `007_automatic_news_analyses.sql`,
+before starting the API.
+
+For news sources, the API checks the supplied feed and discovers advertised same-domain RSS/Atom
+feeds or common paths when necessary. Only public HTTPS hosts within the source domain are accepted.
+Discovery does not crawl the site and may require a manually supplied feed URL.
 
 ## Architecture overview
 

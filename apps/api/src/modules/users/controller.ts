@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../middleware/auth";
 import * as userService from "./service";
 import {
   changePasswordSchema,
@@ -78,8 +79,7 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
 
 /** Id of the authenticated user. Adjust to match what your auth middleware puts on `req`. */
 function currentUserId(req: Request): string | undefined {
-  const u = (req as unknown as { user?: { id?: string; sub?: string } }).user;
-  return u?.id ?? u?.sub;
+  return (req as AuthenticatedRequest).userId;
 }
 
 function unauthorized(res: Response): void {

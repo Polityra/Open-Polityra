@@ -85,7 +85,7 @@ export class AiWorkflowRepository {
         params.title,
         params.description ?? null,
         params.type,
-        params.model ?? "qwen3:0.6b",
+        params.model ?? "olmo-3:7b",
         params.provider ?? "ollama",
         params.systemPrompt ?? null,
         JSON.stringify(params.parameters ?? {}),

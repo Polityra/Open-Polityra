@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { api, type AiWorkflowType, type OllamaHealthStatus } from "@open-polityra/api-client";
+import { api, type AiWorkflowType } from "@open-polityra/api-client";
 import { Sparkles, Loader2, AlertCircle, Check } from "lucide-react";
 import { WORKFLOW_TYPES, inputClass, labelClass, panelClass } from "./workflow-config";
 
@@ -14,23 +14,18 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
   const [type, setType] = useState<AiWorkflowType>("economic-analysis");
   const [context, setContext] = useState("");
   const [data, setData] = useState("");
-  const [model, setModel] = useState("");
   const [customPrompt, setCustomPrompt] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Ollama status
   const [ollamaStatus, setOllamaStatus] = useState<"checking" | "ok" | "unavailable">("checking");
-  const [ollamaProvider, setOllamaProvider] = useState<OllamaHealthStatus["provider"]>(null);
-
   useEffect(() => {
     api.aiHealth().then(
       (res) => {
-        setOllamaProvider(res.provider);
         setOllamaStatus(res.available ? "ok" : "unavailable");
       },
       () => {
-        setOllamaProvider(null);
         setOllamaStatus("unavailable");
       },
     );
@@ -49,7 +44,6 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
         title: title.trim(),
         description: context.trim() || undefined,
         type,
-        model: model.trim() || undefined,
         systemPrompt: undefined,
         parameters: {
           context: context.trim(),
@@ -63,7 +57,7 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("unavailable") || msg.includes("Ollama")) {
         setError(
-          "No configured Ollama model is available. Start Ollama with its configured model or configure OLLAMA_API_KEY for Ollama Cloud.",
+          "Local Ollama model olmo-3:7b is unavailable. Start Ollama and pull it with `ollama pull olmo-3:7b`.",
         );
       } else {
         setError(`Failed to create workflow: ${msg}`);
@@ -95,9 +89,7 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
         >
           <span className={`h-2 w-2 rounded-full ${dotStyle}`} />
           {ollamaStatus === "ok"
-            ? ollamaProvider === "ollama-cloud"
-              ? "Ollama Cloud ready"
-              : "Local Ollama ready"
+            ? "Local olmo-3:7b ready"
             : ollamaStatus === "checking"
               ? "Checking…"
               : "No model available"}
@@ -201,21 +193,6 @@ export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
             placeholder="Paste structured data, tables, or supplementary information…"
             rows={3}
             className={inputClass}
-          />
-        </div>
-
-        {/* Model selector */}
-        <div>
-          <label htmlFor="wf-model" className={labelClass}>
-            Model <span className="font-normal text-neutral-500">(optional)</span>
-          </label>
-          <input
-            id="wf-model"
-            type="text"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            placeholder="Use configured local/cloud model"
-            className={`${inputClass} font-mono`}
           />
         </div>
 

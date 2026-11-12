@@ -11,12 +11,8 @@ export const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900_000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
-  AI_PROVIDER: z.string().default("ollama"),
   OLLAMA_BASE_URL: z.string().url().default("http://localhost:11434"),
-  OLLAMA_API_KEY: z.string().default(""),
-  AI_API_KEY: z.string().default(""),
-  AI_MODEL: z.string().default("qwen3:14b"),
-  OLLAMA_CLOUD_MODEL: z.string().default("gemma4:31b"),
+  AI_MODEL: z.string().default("olmo-3:7b"),
   AI_ENABLED: z.coerce.boolean().default(true),
 });
 

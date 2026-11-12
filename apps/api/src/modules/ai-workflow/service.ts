@@ -251,18 +251,17 @@ export async function executeWorkflow(
   title: string,
   type: AiWorkflowType,
   parameters: Record<string, unknown>,
-  model?: string,
   systemPrompt?: string,
 ): Promise<WorkflowRunResult> {
   const repo = _getRepo();
   const taskRepo = _getTaskRepo();
-  // Select an available local model or the configured Ollama Cloud model.
-  const ollamaStatus = await checkOllamaStatus(model?.trim() || undefined);
+  // Select the configured local Ollama model.
+  const ollamaStatus = await checkOllamaStatus();
   if (!ollamaStatus.available || !ollamaStatus.provider || !ollamaStatus.selectedModel) {
     throw new AppError(
       503,
       "ollama_unavailable",
-      "No configured Ollama model is available. Start Ollama with the configured model or configure OLLAMA_API_KEY and OLLAMA_CLOUD_MODEL for cloud fallback.",
+      `Local Ollama model ${ollamaStatus.selectedModel || "olmo-3:7b"} is unavailable. Start Ollama and pull the configured model.`,
     );
   }
 
@@ -467,7 +466,6 @@ export async function resumeWorkflow(
     workflow.title,
     workflow.type as AiWorkflowType,
     workflow.parameters ?? {},
-    workflow.model,
     workflow.system_prompt ?? undefined,
   );
 }

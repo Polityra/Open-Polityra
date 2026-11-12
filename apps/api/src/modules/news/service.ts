@@ -97,10 +97,29 @@ export async function storeNewsItems(
       const result = await client.query(
         `INSERT INTO news_items (source_id, external_id, title, summary, url, published_at, topics)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
-         ON CONFLICT (source_id, external_id) DO NOTHING`,
+         ON CONFLICT (source_id, external_id) DO NOTHING RETURNING id`,
         [sourceId, item.externalId, item.title, item.summary, item.url, item.publishedAt, topics],
       );
       inserted += result.rowCount ?? 0;
+      if (result.rows[0]) {
+        await client.query(
+          `INSERT INTO analyses (user_id, title, status, parameters)
+           VALUES (NULL, $1, 'pending', $2)`,
+          [
+            item.title.slice(0, 512),
+            JSON.stringify({
+              kind: "automatic-news",
+              newsId: result.rows[0].id,
+              sourceId,
+              title: item.title,
+              summary: item.summary,
+              url: item.url,
+              publishedAt: item.publishedAt,
+              topics,
+            }),
+          ],
+        );
+      }
     }
     await client.query("COMMIT");
     return inserted;

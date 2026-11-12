@@ -56,13 +56,14 @@ export async function updateSource(
   if (!existing) throw new NotFoundError("Source");
 
   const mapped: Partial<
-    Pick<SourceRow, "name" | "publisher" | "license" | "canonical_url" | "metadata">
+    Pick<SourceRow, "name" | "publisher" | "license" | "canonical_url" | "metadata" | "is_active">
   > = {};
   if (updates.name !== undefined) mapped.name = updates.name;
   if (updates.publisher !== undefined) mapped.publisher = updates.publisher;
   if (updates.license !== undefined) mapped.license = updates.license;
   if (updates.canonicalUrl !== undefined) mapped.canonical_url = updates.canonicalUrl;
   if (updates.metadata !== undefined) mapped.metadata = updates.metadata;
+  if (updates.is_active !== undefined) mapped.is_active = updates.is_active;
 
   return repo.update(id, mapped);
 }

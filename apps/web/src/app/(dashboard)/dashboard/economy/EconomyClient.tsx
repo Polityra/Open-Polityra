@@ -18,6 +18,7 @@ import {
 } from "@/components/dashboard/kit";
 import { pick, pickTotal } from "@/components/dashboard/kit";
 import FiscalBalanceExplorer from "./FiscalBalanceExplorer";
+import AnalysisRunner from "@/components/dashboard/AnalysisRunner";
 
 export default function EconomyClient() {
   const [indicators, setIndicators] = useState<IndicatorRow[]>([]);
@@ -61,6 +62,10 @@ export default function EconomyClient() {
         description="Macroeconomic indicators tracked in the platform registry."
       />
       <FiscalBalanceExplorer />
+      <AnalysisRunner
+        topic="Economic indicator assessment"
+        indicatorIds={indicators.map((indicator) => indicator.id).slice(0, 40)}
+      />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatCard

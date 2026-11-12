@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -14,7 +13,13 @@ import {
   Clock,
 } from "lucide-react";
 import { SummaryChart } from "@/components/charts/SummaryChart";
-import { api } from "@open-polityra/api-client";
+import {
+  api,
+  type AiWorkflowRow,
+  type AnalysisRow,
+  type ReportRow,
+  type SourceRow,
+} from "@open-polityra/api-client";
 import {
   PageHeader,
   StatCard,
@@ -37,15 +42,15 @@ type Item = {
   at: string;
 };
 type Data = {
-  sources: any[];
+  sources: SourceRow[];
   sourcesTotal: number;
-  analyses: any[];
-  reports: any[];
+  analyses: AnalysisRow[];
+  reports: ReportRow[];
   reportsTotal: number;
   indicatorsTotal: number;
   forecasts: number;
   scenarios: number;
-  workflows: any[];
+  workflows: AiWorkflowRow[];
   workflowsTotal: number;
 };
 
@@ -55,10 +60,10 @@ const KIND = {
   workflow: { icon: Sparkles, label: "AI workflow" },
 } as const;
 
-const count = (rows: any[], key: string) => {
+const count = (values: string[]) => {
   const m = new Map<string, number>();
-  rows.forEach((r) => {
-    const k = String(r?.[key] ?? "unknown");
+  values.forEach((value) => {
+    const k = value || "unknown";
     m.set(k, (m.get(k) ?? 0) + 1);
   });
   return [...m].map(([label, value]) => ({
@@ -82,32 +87,63 @@ export default function DashboardClient() {
         api.forecasts.list(),
         api.scenarios.list(),
         api.aiWorkflows.list({ limit: 50, offset: 0 }),
-      ] as any);
+      ]);
       if (cancelled) return;
       if (r.every((x) => x.status === "rejected")) {
         setError(true);
         return;
       }
-      const v = (i: number) =>
-        r[i].status === "fulfilled" ? (r[i] as PromiseFulfilledResult<any>).value : null;
-      const sources = pick<any>(v(0), "sources"),
-        reports = pick<any>(v(2), "reports"),
-        workflows = pick<any>(v(6), "workflows");
+      setError(r.some((x) => x.status === "rejected"));
+      const sourceResult = r[0].status === "fulfilled" ? r[0].value : null;
+      const analysisResult = r[1].status === "fulfilled" ? r[1].value : null;
+      const reportResult = r[2].status === "fulfilled" ? r[2].value : null;
+      const indicatorResult = r[3].status === "fulfilled" ? r[3].value : null;
+      const forecastResult = r[4].status === "fulfilled" ? r[4].value : null;
+      const scenarioResult = r[5].status === "fulfilled" ? r[5].value : null;
+      const workflowResult = r[6].status === "fulfilled" ? r[6].value : null;
+      const sources = pick<SourceRow>(sourceResult, "sources");
+      const reports = pick<ReportRow>(reportResult, "reports");
+      const workflows = pick<AiWorkflowRow>(workflowResult, "workflows");
       setData({
         sources,
-        sourcesTotal: pickTotal(v(0), sources.length),
-        analyses: pick<any>(v(1), "analyses"),
+        sourcesTotal: pickTotal(sourceResult, sources.length),
+        analyses: pick<AnalysisRow>(analysisResult, "analyses"),
         reports,
-        reportsTotal: pickTotal(v(2), reports.length),
-        indicatorsTotal: pickTotal(v(3), pick<any>(v(3), "indicators").length),
-        forecasts: pick<any>(v(4), "forecasts").length,
-        scenarios: pick<any>(v(5), "scenarios").length,
+        reportsTotal: pickTotal(reportResult, reports.length),
+        indicatorsTotal: pickTotal(
+          indicatorResult,
+          pick<unknown>(indicatorResult, "indicators").length,
+        ),
+        forecasts: pickTotal(forecastResult, pick<unknown>(forecastResult, "forecasts").length),
+        scenarios: pickTotal(scenarioResult, pick<unknown>(scenarioResult, "scenarios").length),
         workflows,
-        workflowsTotal: pickTotal(v(6), workflows.length),
+        workflowsTotal: pickTotal(workflowResult, workflows.length),
       });
     })();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setInterval(() => {
+      void api.analyses.list().then(
+        (result) => {
+          if (!cancelled) {
+            setData((current) =>
+              current ? { ...current, analyses: pick<AnalysisRow>(result, "analyses") } : current,
+            );
+          }
+        },
+        () => {
+          if (!cancelled) setError(true);
+        },
+      );
+    }, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
     };
   }, []);
 
@@ -131,7 +167,7 @@ export default function DashboardClient() {
         kind: "report" as const,
         title: x.title,
         status: x.status,
-        at: x.updated_at ?? x.created_at,
+        at: x.created_at,
       })),
       ...data.workflows.map((w) => ({
         id: `w${w.id}`,
@@ -149,8 +185,8 @@ export default function DashboardClient() {
       published,
       activeSources,
       feed,
-      analysesByStatus: count(data.analyses, "status"),
-      sourcesByType: count(data.sources, "data_type"),
+      analysesByStatus: count(data.analyses.map((analysis) => analysis.status)),
+      sourcesByType: count(data.sources.map((source) => source.data_type)),
     };
   }, [data]);
 
@@ -164,7 +200,7 @@ export default function DashboardClient() {
 
       {error && (
         <ErrorNote>
-          Couldn&apos;t reach the backend. Check that the API is running, then refresh.
+          Some dashboard data could not be loaded. Check the API connection and refresh.
         </ErrorNote>
       )}
       {!data && !error && (
@@ -175,6 +211,51 @@ export default function DashboardClient() {
 
       {data && derived && (
         <>
+          <section className={`${panel} space-y-4 p-5`}>
+            <h2 className={sectionTitle}>Automatic news analyses</h2>
+            <p className="text-sm text-neutral-600">
+              New feed items are analyzed automatically. AI summaries require human review.
+            </p>
+            {data.analyses.filter((analysis) => analysis.parameters?.kind === "automatic-news")
+              .length === 0 ? (
+              <p className="text-sm text-neutral-500">
+                No automatic analyses in the recent activity.
+              </p>
+            ) : (
+              data.analyses
+                .filter((analysis) => analysis.parameters?.kind === "automatic-news")
+                .slice(0, 5)
+                .map((analysis) => (
+                  <article key={analysis.id} className="border-t border-neutral-200 pt-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold">{analysis.title}</h3>
+                      <Badge>{analysis.status}</Badge>
+                    </div>
+                    {typeof analysis.result?.summary === "string" && (
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">
+                        {analysis.result.summary}
+                      </p>
+                    )}
+                    {analysis.status === "failed" && (
+                      <p className="mt-2 text-sm text-red-700">
+                        {analysis.error_message ?? "Analysis failed."} The job will be retried.
+                      </p>
+                    )}
+                    {typeof analysis.parameters?.url === "string" &&
+                      analysis.parameters.url.startsWith("https://") && (
+                        <a
+                          href={analysis.parameters.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-block text-sm underline"
+                        >
+                          View source
+                        </a>
+                      )}
+                  </article>
+                ))
+            )}
+          </section>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard
               label="Total Sources"

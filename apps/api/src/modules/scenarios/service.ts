@@ -15,17 +15,21 @@ export interface ScenarioRow {
   description: string | null;
   assumptions: Record<string, unknown> | null;
   parameters: Record<string, unknown> | null;
-  created_by: string;
+  created_by: string | null;
   created_at: Date;
 }
 
-export async function listScenarios(limit = 50, offset = 0) {
+export async function listScenarios(userId: string, limit = 50, offset = 0) {
   const pool = _getPool();
-  const result = await pool.query(
-    "SELECT id, name, description, assumptions, parameters, created_by, created_at FROM scenarios ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-    [limit, offset],
+  const count = await pool.query(
+    "SELECT COUNT(*) FROM scenarios WHERE created_by = $1 OR created_by IS NULL",
+    [userId],
   );
-  return result.rows as ScenarioRow[];
+  const result = await pool.query(
+    "SELECT id, name, description, assumptions, parameters, created_by, created_at FROM scenarios WHERE created_by = $1 OR created_by IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+    [userId, limit, offset],
+  );
+  return { rows: result.rows as ScenarioRow[], total: Number(count.rows[0].count) };
 }
 
 export async function createScenario(params: {

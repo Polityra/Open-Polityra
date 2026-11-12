@@ -132,13 +132,21 @@ export function parseFeed(xml: string, allowedHost: string): IngestedNewsItem[] 
   return items;
 }
 
+export class InvalidFeedDocumentError extends Error {}
+
+class FeedHttpError extends Error {
+  constructor(public readonly status: number | undefined) {
+    super(`Feed returned HTTP ${status ?? "unknown"}`);
+  }
+}
+
 export function assertFeedDocument(xml: string, contentType: string | undefined): void {
   const document = xml.replace(/^\uFEFF/, "").trimStart();
   const isFeedXml = /^(?:<\?xml\b[^>]*>\s*)?(?:<!--[\s\S]*?-->\s*)*<(?:rss|feed|rdf:RDF)\b/i.test(
     document,
   );
   if (!isFeedXml || contentType?.toLowerCase().includes("text/html")) {
-    throw new Error(
+    throw new InvalidFeedDocumentError(
       `URL did not return an RSS/Atom XML feed${contentType ? ` (content type: ${contentType})` : ""}`,
     );
   }
@@ -213,22 +221,38 @@ async function fetchFeed(
 ): Promise<{ parsed: number; inserted: number }> {
   if (!source.canonical_url) return { parsed: 0, inserted: 0 };
   const domain = new URL(source.canonical_url).hostname.replace(/^www\./, "");
-  const { url, address, family } = await resolveFeed(feed.feedUrl, domain);
-  const xml = await new Promise<string>((resolve, reject) => {
+  const { body: xml, contentType } = await fetchPublicDocument(feed.feedUrl, domain);
+  assertFeedDocument(xml, contentType);
+  const parsed = parseFeed(xml, domain);
+  return { parsed: parsed.length, inserted: await storeNewsItems(source.id, feed.topics, parsed) };
+}
+
+export async function fetchPublicDocument(
+  documentUrl: string,
+  domain: string,
+  timeoutMs = 10_000,
+  redirects = 0,
+  deadline = Date.now() + timeoutMs,
+): Promise<{ body: string; contentType: string | undefined; finalUrl: string }> {
+  const { url, address, family } = await resolveFeed(documentUrl, domain);
+  const remainingMs = deadline - Date.now();
+  if (remainingMs <= 0) throw new Error("Feed request timed out");
+  return new Promise((resolve, reject) => {
     let settled = false;
     const fail = (error: Error) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       reject(error);
     };
     const request = httpsRequest(
       url,
       {
         headers: {
-          Accept: "application/atom+xml, application/rss+xml, application/xml, text/xml",
+          Accept: "application/atom+xml, application/rss+xml, application/xml, text/xml, text/html",
           "User-Agent": "OpenPolityraNewsBot/1.0 (+public RSS feed reader)",
         },
-        timeout: 10_000,
+        timeout: remainingMs,
         lookup: (_hostname, options, callback) => {
           if (typeof options === "object" && options.all) {
             callback(null, [{ address, family }]);
@@ -238,6 +262,33 @@ async function fetchFeed(
         },
       },
       (response) => {
+        if (
+          response.statusCode &&
+          [301, 302, 303, 307, 308].includes(response.statusCode) &&
+          response.headers.location
+        ) {
+          if (redirects >= 3) {
+            fail(new Error("Too many feed redirects"));
+            response.resume();
+            return;
+          }
+          let target: string;
+          try {
+            target = new URL(response.headers.location, url).href;
+          } catch {
+            fail(new Error("Invalid feed redirect URL"));
+            response.resume();
+            return;
+          }
+          settled = true;
+          clearTimeout(timer);
+          response.resume();
+          void fetchPublicDocument(target, domain, timeoutMs, redirects + 1, deadline).then(
+            resolve,
+            reject,
+          );
+          return;
+        }
         const declaredLength = Number(response.headers["content-length"] ?? 0);
         if (declaredLength > MAX_FEED_BYTES) {
           fail(new Error("Feed exceeds the 2 MB response limit"));
@@ -245,7 +296,7 @@ async function fetchFeed(
           return;
         }
         if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
-          fail(new Error(`Feed returned HTTP ${response.statusCode ?? "unknown"}`));
+          fail(new FeedHttpError(response.statusCode));
           response.resume();
           return;
         }
@@ -264,23 +315,25 @@ async function fetchFeed(
         response.on("end", () => {
           if (settled) return;
           settled = true;
-          const body = Buffer.concat(chunks).toString("utf8");
-          try {
-            assertFeedDocument(body, response.headers["content-type"]);
-            resolve(body);
-          } catch (error) {
-            reject(error);
-          }
+          clearTimeout(timer);
+          resolve({
+            body: Buffer.concat(chunks).toString("utf8"),
+            contentType: response.headers["content-type"],
+            finalUrl: url.href,
+          });
         });
         response.on("error", fail);
       },
     );
+    const timer = setTimeout(
+      () => request.destroy(new Error("Feed request timed out")),
+      remainingMs,
+    );
+    timer.unref();
     request.on("timeout", () => request.destroy(new Error("Feed request timed out")));
     request.on("error", fail);
     request.end();
   });
-  const parsed = parseFeed(xml, domain);
-  return { parsed: parsed.length, inserted: await storeNewsItems(source.id, feed.topics, parsed) };
 }
 
 export async function scrapeConfiguredSources(): Promise<{
@@ -303,7 +356,35 @@ export async function scrapeConfiguredSources(): Promise<{
     if (!feed) continue;
     sources += 1;
     try {
-      const result = await fetchFeed(source, feed);
+      let result: { parsed: number; inserted: number };
+      try {
+        result = await fetchFeed(source, feed);
+      } catch (originalError) {
+        if (
+          !(originalError instanceof InvalidFeedDocumentError) &&
+          !(
+            originalError instanceof FeedHttpError && [404, 410].includes(originalError.status ?? 0)
+          )
+        )
+          throw originalError;
+        if (!source.canonical_url) throw originalError;
+        const { discoverFeed } = await import("./discovery");
+        let replacement: string;
+        try {
+          replacement = await discoverFeed(source.canonical_url);
+        } catch (discoveryError) {
+          throw new Error(
+            `Configured feed failed: ${originalError instanceof Error ? originalError.message : String(originalError)}; discovery failed: ${discoveryError instanceof Error ? discoveryError.message : String(discoveryError)}`,
+          );
+        }
+        result = await fetchFeed(source, { ...feed, feedUrl: replacement });
+        await pool.query(
+          `UPDATE sources SET metadata = jsonb_set(metadata, '{news_scraper,feedUrl}', to_jsonb($2::text))
+           WHERE id = $1 AND metadata->'news_scraper'->>'feedUrl' = $3`,
+          [source.id, replacement, feed.feedUrl],
+        );
+        console.info(`News feed for source "${source.name}" repaired: ${replacement}`);
+      }
       itemsParsed += result.parsed;
       inserted += result.inserted;
     } catch (error) {

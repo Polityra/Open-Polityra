@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS ai_workflows (
     description TEXT,
     type VARCHAR(64) NOT NULL CHECK (type IN ('economic-analysis', 'geopolitical-assessment', 'scenario-generation', 'text-summary', 'forecast', 'custom')),
     status VARCHAR(32) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
-    model VARCHAR(128) NOT NULL DEFAULT 'qwen3:14b',
+    model VARCHAR(128) NOT NULL DEFAULT 'olmo-3:7b',
     provider VARCHAR(64) NOT NULL DEFAULT 'ollama',
     system_prompt TEXT,
     parameters JSONB DEFAULT '{}',

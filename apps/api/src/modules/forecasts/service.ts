@@ -11,7 +11,7 @@ function _getPool(): Pool {
 
 export interface ForecastRow {
   id: string;
-  analysis_id: string;
+  analysis_id: string | null;
   target: string;
   method: string;
   values: Record<string, unknown> | null;
@@ -24,23 +24,32 @@ export async function listForecasts(
   analysisId?: string,
   limit = 50,
   offset = 0,
-): Promise<ForecastRow[]> {
+  userId?: string,
+): Promise<{ rows: ForecastRow[]; total: number }> {
   const pool = _getPool();
   const whereClauses: string[] = [];
   const values: unknown[] = [];
   let idx = 1;
 
+  if (userId) {
+    whereClauses.push(`a.user_id = $${idx++}`);
+    values.push(userId);
+  }
   if (analysisId) {
     whereClauses.push(`f.analysis_id = $${idx++}`);
     values.push(analysisId);
   }
 
   const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+  const countResult = await pool.query(
+    `SELECT COUNT(*) FROM forecasts f LEFT JOIN analyses a ON a.id = f.analysis_id ${whereSql}`,
+    values,
+  );
   const result = await pool.query(
-    `SELECT f.id, f.analysis_id, f.target, f.method, f.values, f.confidence_lower, f.confidence_upper, f.created_at FROM forecasts f ${whereSql} ORDER BY f.created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+    `SELECT f.id, f.analysis_id, f.target, f.method, f.values, f.confidence_lower, f.confidence_upper, f.created_at FROM forecasts f LEFT JOIN analyses a ON a.id = f.analysis_id ${whereSql} ORDER BY f.created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`,
     [...values, limit, offset],
   );
-  return result.rows as ForecastRow[];
+  return { rows: result.rows as ForecastRow[], total: Number(countResult.rows[0].count) };
 }
 
 export async function createForecast(params: {
