@@ -3,12 +3,7 @@ import { isIP } from "node:net";
 import { request as httpsRequest } from "node:https";
 import { getPool } from "../../config/database";
 import type { NewsTopic, IngestedNewsItem } from "./service";
-import {
-  assertNewsSchema,
-  NewsSchemaMissingError,
-  pruneExpiredNewsItems,
-  storeNewsItems,
-} from "./service";
+import { assertNewsSchema, NewsSchemaMissingError, storeNewsItems } from "./service";
 
 const MAX_FEED_BYTES = 2 * 1024 * 1024;
 const MAX_ITEMS_PER_FEED = 20;
@@ -393,7 +388,6 @@ export async function scrapeConfiguredSources(): Promise<{
       console.error(`News feed sync failed for source "${source.name}":`, error);
     }
   }
-  await pruneExpiredNewsItems();
   return { sources, itemsParsed, inserted, failures };
 }
 

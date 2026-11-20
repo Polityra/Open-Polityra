@@ -9,223 +9,240 @@ interface WorkflowFormProps {
   onSubmit: (result: { workflowId: string }) => void;
 }
 
+type FormType = Extract<AiWorkflowType, "fiscal-explanation" | "source-summary">;
+
+const num = (v: string, fallback: number) =>
+  v.trim() === "" || Number.isNaN(Number(v)) ? fallback : Number(v);
+
 export default function WorkflowForm({ onSubmit }: WorkflowFormProps) {
+  const [type, setType] = useState<FormType>("fiscal-explanation");
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<AiWorkflowType>("economic-analysis");
-  const [context, setContext] = useState("");
-  const [data, setData] = useState("");
-  const [customPrompt, setCustomPrompt] = useState("");
+  const [question, setQuestion] = useState("");
+  const [years, setYears] = useState("5");
+  const [balance, setBalance] = useState("-0.5");
+  const [growth, setGrowth] = useState("1");
+  const [interest, setInterest] = useState("5");
+  const [sourceTitle, setSourceTitle] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [text, setText] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ollama, setOllama] = useState<"checking" | "ok" | "unavailable">("checking");
 
-  // Ollama status
-  const [ollamaStatus, setOllamaStatus] = useState<"checking" | "ok" | "unavailable">("checking");
   useEffect(() => {
     api.aiHealth().then(
-      (res) => {
-        setOllamaStatus(res.available ? "ok" : "unavailable");
-      },
-      () => {
-        setOllamaStatus("unavailable");
-      },
+      (res) => setOllama(res.available ? "ok" : "unavailable"),
+      () => setOllama("unavailable"),
     );
   }, []);
 
-  const selectedType = WORKFLOW_TYPES.find((t) => t.value === type)!;
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || isRunning) return;
-    setIsRunning(true);
     setError(null);
-
+    setIsRunning(true);
     try {
-      const result = await api.aiWorkflows.create({
-        title: title.trim(),
-        description: context.trim() || undefined,
-        type,
-        systemPrompt: undefined,
-        parameters: {
-          context: context.trim(),
-          data: data.trim(),
-          ...(type === "custom" ? { custom_prompt: customPrompt.trim() } : {}),
-        },
-      });
-
-      onSubmit({ workflowId: result.workflow.id });
+      const q = question.trim() || undefined;
+      const parameters =
+        type === "fiscal-explanation"
+          ? {
+              question: q,
+              scenario: {
+                projectionYears: Math.round(num(years, 5)),
+                stressAnnualBalanceChange: num(balance, -0.5),
+                stressNominalGdpGrowth: num(growth, 1),
+                stressEffectiveInterest: num(interest, 5),
+              },
+            }
+          : {
+              sourceTitle: sourceTitle.trim(),
+              sourceUrl: sourceUrl.trim() || undefined,
+              text,
+              question: q,
+            };
+      const res = await api.aiWorkflows.create({ type, title: title.trim(), parameters });
+      onSubmit({ workflowId: res.result.workflowId });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("unavailable") || msg.includes("Ollama")) {
-        setError(
-          "Local Ollama model olmo-3:7b is unavailable. Start Ollama and pull it with `ollama pull olmo-3:7b`.",
-        );
-      } else {
-        setError(`Failed to create workflow: ${msg}`);
-      }
+      setError(err instanceof Error ? err.message : "The analysis could not be run.");
     } finally {
       setIsRunning(false);
     }
-  };
+  }
 
-  const statusStyle =
-    ollamaStatus === "ok"
-      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-      : ollamaStatus === "checking"
-        ? "border-black/10 bg-neutral-100 text-neutral-700"
-        : "border-red-300 bg-red-50 text-red-700";
-  const dotStyle =
-    ollamaStatus === "ok"
-      ? "bg-[#22c55e] animate-pulse"
-      : ollamaStatus === "checking"
-        ? "bg-neutral-400"
-        : "bg-[#ef4444]";
+  const canSubmit =
+    ollama === "ok" &&
+    title.trim().length > 0 &&
+    (type === "fiscal-explanation" || (sourceTitle.trim().length > 0 && text.trim().length >= 40));
 
   return (
-    <div className={`${panelClass} p-6`}>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-semibold text-neutral-950">New AI analysis</h2>
-        <span
-          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${statusStyle}`}
-        >
-          <span className={`h-2 w-2 rounded-full ${dotStyle}`} />
-          {ollamaStatus === "ok"
-            ? "Local olmo-3:7b ready"
-            : ollamaStatus === "checking"
-              ? "Checking…"
-              : "No model available"}
-        </span>
+    <form onSubmit={handleSubmit} className={`${panelClass} space-y-6 p-6`}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {WORKFLOW_TYPES.map((t) => {
+          const active = type === t.value;
+          return (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => setType(t.value as FormType)}
+              aria-pressed={active}
+              className={`rounded-lg border p-4 text-left transition ${
+                active
+                  ? "border-neutral-950 bg-neutral-950 text-white"
+                  : "border-black/10 bg-white hover:border-black/40"
+              }`}
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold">
+                <t.icon className="h-4 w-4" /> {t.label}
+                {active && <Check className="ml-auto h-4 w-4" />}
+              </span>
+              <span
+                className={`mt-1 block text-xs ${active ? "text-neutral-300" : "text-neutral-600"}`}
+              >
+                {t.description}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Workflow type selector */}
-        <fieldset>
-          <legend className={labelClass}>Analysis type</legend>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {WORKFLOW_TYPES.map((t) => {
-              const active = type === t.value;
-              return (
-                <button
-                  key={t.value}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setType(t.value)}
-                  className={`relative rounded-lg border p-4 text-left transition ${
-                    active
-                      ? "border-neutral-950 bg-neutral-100 shadow-sm"
-                      : "border-black/10 bg-neutral-50 hover:border-black/30"
-                  }`}
-                >
-                  {active && <Check className="absolute right-3 top-3 h-4 w-4 text-neutral-950" />}
-                  <span
-                    className={`inline-flex rounded-md p-2 ${active ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-900"}`}
-                  >
-                    <t.icon className="h-5 w-5" />
-                  </span>
-                  <p
-                    className={`mt-3 text-sm font-semibold ${active ? "text-neutral-950" : "text-neutral-950"}`}
-                  >
-                    {t.label}
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-neutral-600">{t.description}</p>
-                </button>
-              );
-            })}
+      <div>
+        <label htmlFor="wf-title" className={labelClass}>
+          Title
+        </label>
+        <input
+          id="wf-title"
+          className={inputClass}
+          value={title}
+          maxLength={200}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Finland deficit trend"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="wf-question" className={labelClass}>
+          Question (optional)
+        </label>
+        <input
+          id="wf-question"
+          className={inputClass}
+          value={question}
+          maxLength={500}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="What does the evidence show about…?"
+        />
+        <p className="mt-1 text-xs text-neutral-500">
+          Asks for an explanation of the evidence only. Recommendations and forecasts are not
+          produced.
+        </p>
+      </div>
+
+      {type === "fiscal-explanation" ? (
+        <fieldset className="space-y-3 rounded-lg border border-black/10 bg-neutral-50 p-4">
+          <legend className="px-1 text-sm font-medium text-neutral-700">
+            Illustrative scenario (calculated in code, not by the model)
+          </legend>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ["Years (1–10)", years, setYears, "wf-years"],
+              ["Annual balance change (pp of GDP)", balance, setBalance, "wf-balance"],
+              ["Nominal GDP growth (%)", growth, setGrowth, "wf-growth"],
+              ["Effective interest rate (%)", interest, setInterest, "wf-interest"],
+            ].map(([label, value, set, id]) => (
+              <div key={id as string}>
+                <label htmlFor={id as string} className={labelClass}>
+                  {label as string}
+                </label>
+                <input
+                  id={id as string}
+                  type="number"
+                  step="any"
+                  className={inputClass}
+                  value={value as string}
+                  onChange={(e) => (set as (v: string) => void)(e.target.value)}
+                />
+              </div>
+            ))}
           </div>
         </fieldset>
-
-        {/* Title */}
-        <div>
-          <label htmlFor="wf-title" className={labelClass}>
-            Title
-          </label>
-          <input
-            id="wf-title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Give this analysis a name…"
-            className={inputClass}
-            required
-          />
-        </div>
-
-        {/* Context / Input */}
-        <div>
-          <label htmlFor="wf-context" className={labelClass}>
-            Context / input
-          </label>
-          <textarea
-            id="wf-context"
-            value={context}
-            onChange={(e) => setContext(e.target.value)}
-            placeholder="Describe the situation, question, or data to analyze…"
-            rows={4}
-            className={inputClass}
-          />
-        </div>
-
-        {/* Custom prompt */}
-        {type === "custom" && (
+      ) : (
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="wf-src-title" className={labelClass}>
+                Source title
+              </label>
+              <input
+                id="wf-src-title"
+                className={inputClass}
+                value={sourceTitle}
+                maxLength={200}
+                onChange={(e) => setSourceTitle(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="wf-src-url" className={labelClass}>
+                Source URL (optional)
+              </label>
+              <input
+                id="wf-src-url"
+                type="url"
+                className={inputClass}
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+                placeholder="https://"
+              />
+            </div>
+          </div>
           <div>
-            <label htmlFor="wf-custom" className={labelClass}>
-              Custom prompt
+            <label htmlFor="wf-text" className={labelClass}>
+              Source text (40–20,000 characters)
             </label>
             <textarea
-              id="wf-custom"
-              value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
-              placeholder="Write the instructions the model should follow…"
-              rows={4}
-              className={`${inputClass} font-mono`}
+              id="wf-text"
+              rows={9}
+              className={inputClass}
+              value={text}
+              maxLength={20000}
+              onChange={(e) => setText(e.target.value)}
             />
+            <p className="mt-1 text-xs text-neutral-500">
+              The text is split into numbered passages that the summary must cite.
+            </p>
           </div>
-        )}
-
-        {/* Additional data */}
-        <div>
-          <label htmlFor="wf-data" className={labelClass}>
-            Additional data <span className="font-normal text-neutral-500">(optional)</span>
-          </label>
-          <textarea
-            id="wf-data"
-            value={data}
-            onChange={(e) => setData(e.target.value)}
-            placeholder="Paste structured data, tables, or supplementary information…"
-            rows={3}
-            className={inputClass}
-          />
         </div>
+      )}
 
-        {/* Error banner */}
-        {error && (
-          <div
-            role="alert"
-            className="flex items-start gap-2 rounded-lg border border-red-300 bg-red-50 p-3"
-          >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-700" />
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={isRunning || !title.trim()}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-neutral-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none"
+      {ollama === "unavailable" && (
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800"
         >
-          {isRunning ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Running analysis…
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              Run {selectedType.label}
-            </>
-          )}
-        </button>
-      </form>
-    </div>
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          The local Ollama model is not reachable. Start Ollama and pull the configured model to run
+          analyses.
+        </div>
+      )}
+      {error && (
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={!canSubmit || isRunning}
+        className="inline-flex items-center gap-2 rounded-lg bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {isRunning ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Sparkles className="h-4 w-4" />
+        )}
+        {isRunning ? "Running pipeline…" : "Run analysis"}
+      </button>
+    </form>
   );
 }
