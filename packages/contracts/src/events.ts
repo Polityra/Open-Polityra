@@ -33,6 +33,20 @@ export const DataSourceUpdatedEventSchema = z.object({
   }),
 });
 
+export const PipelineJobStateChangedEventSchema = z.object({
+  type: z.literal("pipeline.job.state_changed"),
+  payload: z.object({
+    jobId: z.string().uuid(),
+    jobType: z.string(),
+    status: z.enum(["pending", "running", "completed", "failed", "dead_letter", "cancelled"]),
+    attempt: z.number().int().nonnegative(),
+    correlationId: z.string().uuid(),
+    occurredAt: z.string().datetime(),
+    error: z.string().optional(),
+  }),
+});
+
 export type AnalysisTaskCreated = z.infer<typeof AnalysisTaskCreatedEventSchema>;
 export type AnalysisTaskCompleted = z.infer<typeof AnalysisTaskCompletedEventSchema>;
 export type DataSourceUpdated = z.infer<typeof DataSourceUpdatedEventSchema>;
+export type PipelineJobStateChanged = z.infer<typeof PipelineJobStateChangedEventSchema>;
