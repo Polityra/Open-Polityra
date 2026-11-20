@@ -12,8 +12,9 @@ import {
   CheckCircle2,
   Radar,
   ArrowRight,
+  History,
 } from "lucide-react";
-import { api, type SourceRow, type ReportRow } from "@open-polityra/api-client";
+import { api, type AnalysisRow, type SourceRow, type ReportRow } from "@open-polityra/api-client";
 import {
   PageHeader,
   StatCard,
@@ -84,6 +85,7 @@ export default function DomainView({ domain }: { domain: Domain }) {
   const cfg = DOMAINS[domain];
   const [sources, setSources] = useState<SourceRow[]>([]);
   const [reports, setReports] = useState<ReportRow[]>([]);
+  const [analyses, setAnalyses] = useState<AnalysisRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -91,9 +93,10 @@ export default function DomainView({ domain }: { domain: Domain }) {
     let cancelled = false;
 
     (async () => {
-      const [s, r] = await Promise.allSettled([
+      const [s, r, a] = await Promise.allSettled([
         api.sources.list({ limit: 100 }),
         api.reports.list({ limit: 100 }),
+        api.analyses.list({ limit: 100 }),
       ] as any);
 
       if (cancelled) return;
@@ -108,6 +111,10 @@ export default function DomainView({ domain }: { domain: Domain }) {
 
       if (r.status === "fulfilled") {
         setReports(pick<ReportRow>(r.value, "reports"));
+      }
+
+      if (a.status === "fulfilled") {
+        setAnalyses(pick<AnalysisRow>(a.value, "analyses"));
       }
 
       setLoading(false);
@@ -129,11 +136,36 @@ export default function DomainView({ domain }: { domain: Domain }) {
     [reports, cfg],
   );
 
+  const mAnalyses = useMemo(
+    () =>
+      analyses.filter((item) =>
+        cfg.match.test(
+          `${item.title} ${typeof item.parameters?.topic === "string" ? item.parameters.topic : ""}`,
+        ),
+      ),
+    [analyses, cfg],
+  );
+
   const Icon = cfg.icon;
 
   return (
     <div className="space-y-8">
-      <PageHeader title={cfg.title} accent={cfg.accent} description={cfg.description} />
+      <PageHeader
+        title={cfg.title}
+        accent={cfg.accent}
+        description={cfg.description}
+        action={
+          <Link href="/dashboard/analyses" className="text-sm font-medium underline">
+            View analysis history
+          </Link>
+        }
+      />
+
+      <InfoNote>
+        <span className="font-semibold">Workflow:</span> select a focused question, queue the
+        analysis, then follow it in Analysis History. Review evidence in Human Reviews before
+        turning an AI result into a report.
+      </InfoNote>
 
       {error && (
         <ErrorNote>
@@ -156,7 +188,11 @@ export default function DomainView({ domain }: { domain: Domain }) {
           icon={CheckCircle2}
         />
 
-        <StatCard label="Related reports" value={loading ? "—" : mReports.length} icon={FileText} />
+        <StatCard
+          label="Related analyses"
+          value={loading ? "—" : mAnalyses.length}
+          icon={History}
+        />
 
         <StatCard
           label="Published"
@@ -235,22 +271,38 @@ export default function DomainView({ domain }: { domain: Domain }) {
           )}
         </div>
 
-        {/* Related reports */}
+        {/* Related analyses and reports */}
         <div className={panel}>
           <div className="border-b border-black/10 px-6 py-4">
-            <h2 className={sectionTitle}>Related reports</h2>
+            <h2 className={sectionTitle}>Related work</h2>
           </div>
 
           {loading ? (
             <LoadingBlock />
-          ) : mReports.length === 0 ? (
+          ) : mAnalyses.length === 0 && mReports.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title={`No ${cfg.noun} reports yet`}
-              text="Reports whose titles mention this domain will appear here."
+              title={`No ${cfg.noun} work saved yet`}
+              text="Queue the first analysis above. It will remain visible in history while the worker completes it."
             />
           ) : (
             <ul className="divide-y divide-black/5">
+              {mAnalyses.slice(0, 5).map((analysis) => (
+                <li key={analysis.id}>
+                  <Link
+                    href={`/dashboard/analyses/${analysis.id}`}
+                    className="flex items-center justify-between gap-3 px-6 py-3.5 transition-colors hover:bg-neutral-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-black">{analysis.title}</p>
+                      <p className="text-xs text-neutral-500">{fmtDate(analysis.updated_at)}</p>
+                    </div>
+                    <Badge tone={analysis.status === "completed" ? "success" : "neutral"}>
+                      Analysis · {analysis.status}
+                    </Badge>
+                  </Link>
+                </li>
+              ))}
               {mReports.slice(0, 8).map((x) => (
                 <li
                   key={x.id}

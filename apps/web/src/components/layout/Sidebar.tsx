@@ -15,6 +15,8 @@ import {
   Settings,
   Sparkles,
   Newspaper,
+  History,
+  ClipboardCheck,
 } from "lucide-react";
 
 const navItems = [
@@ -27,6 +29,8 @@ const navItems = [
   { href: "/dashboard/scenarios", label: "Scenarios", icon: GitBranch },
   { href: "/dashboard/forecasting", label: "Forecasting", icon: Brain },
   { href: "/dashboard/reports", label: "Reports", icon: FileText },
+  { href: "/dashboard/analyses", label: "Analysis history", icon: History },
+  { href: "/dashboard/reviews", label: "Human reviews", icon: ClipboardCheck },
   { href: "/dashboard/sources", label: "Sources", icon: Bookmark },
   { href: "/ai-workflow", label: "AI Workflows", icon: Sparkles, separator: false },
 ];

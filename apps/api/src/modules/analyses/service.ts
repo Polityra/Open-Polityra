@@ -58,6 +58,44 @@ export async function createAnalysis(
   return result.rows[0] as AnalysisRow;
 }
 
+export async function queueAnalysis(
+  userId: string,
+  request: RunAnalysisInput,
+): Promise<AnalysisRow> {
+  const pool = _getPool();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const created = await client.query(
+      `INSERT INTO analyses (user_id, title, status, parameters)
+       VALUES ($1, $2, 'pending', $3)
+       RETURNING id, user_id, title, status, parameters, result_id, result,
+         error_message, created_at, updated_at`,
+      [userId, request.title ?? request.topic, JSON.stringify(request)],
+    );
+    const analysis = created.rows[0] as AnalysisRow;
+    await client.query(
+      `INSERT INTO pipeline_jobs (
+         job_type, payload, idempotency_key, priority, max_attempts
+       ) VALUES (
+         'analysis.create',
+         $1::jsonb,
+         $2,
+         25,
+         5
+       )`,
+      [JSON.stringify({ contractVersion: 1, analysisId: analysis.id }), `analysis:${analysis.id}`],
+    );
+    await client.query("COMMIT");
+    return analysis;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function submitAnalysis(request: AnalysisRequest): Promise<AnalysisResult> {
   const client = new PythonServiceClient();
   return client.submitAnalysis(request);
