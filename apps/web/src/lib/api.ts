@@ -27,9 +27,7 @@ export async function fetchSources(params?: {
   return api.get<{
     sources: { id: string; name: string; category: string; canonical_url?: string }[];
     meta: { total: number; limit: number; offset: number };
-  }>(`/api/v1/sources?
-
-     ${query}`);
+  }>(`/api/v1/sources?${query}`);
 }
 
 /**

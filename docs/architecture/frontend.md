@@ -23,6 +23,9 @@ apps/web/src/
 │   │   ├── layout.tsx            # Sidebar + header layout
 │   │   ├── dashboard/page.tsx    # Strategic overview
 │   │   ├── economy/geopolitics/security/resilience/...
+│   │   ├── analyses/            # History + durable analysis detail routes
+│   │   ├── reviews/             # Human claim review queue
+│   │   ├── claims/[id]/          # Claim provenance and verification history
 │   │   ├── scenarios/page.tsx    # Scenario modeling tools
 │   │   ├── forecasting/page.tsx  # Forecast visualization
 │   │   ├── reports/page.tsx      # Research report registry
@@ -53,3 +56,17 @@ apps/web/src/
 3. **Dark navy/blue theme**: Professional visual identity matching Open Polityra's design tokens.
 4. **Server Components by default**: Pages are server components; only interactive elements use
    `'use client'`.
+5. **Durable async workflow**: `AnalysisRunner` queues a request and polls its saved analysis ID. It
+   never treats an HTTP timeout as a failed analysis. Users can continue through Analysis History,
+   the detail page and Human Review without losing the running job.
+
+## Dashboard workflow
+
+1. A domain page explains the selected evidence scope and queues a focused research question.
+2. The API returns a `pending` analysis immediately.
+3. The analysis runner tracks `pending`, `running`, `completed` and `failed` states.
+4. `/dashboard/analyses` provides searchable history and `/dashboard/analyses/:id` shows the saved
+   result, evidence, uncertainty, parameters and error details.
+5. `/dashboard/reviews` presents claims that require human decisions. Reviews preserve the reviewer,
+   decision and note; `/dashboard/claims/:id` exposes the supporting and contradictory evidence
+   chain.

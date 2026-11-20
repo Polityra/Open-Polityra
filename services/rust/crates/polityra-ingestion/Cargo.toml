@@ -1,0 +1,25 @@
+[package]
+name = "polityra-ingestion"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+feed-rs.workspace = true
+futures-util.workspace = true
+polityra-core = { path = "../polityra-core" }
+polityra-dedup = { path = "../polityra-dedup" }
+polityra-normalizer = { path = "../polityra-normalizer" }
+polityra-queue = { path = "../polityra-queue" }
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+url.workspace = true
+uuid.workspace = true
+
