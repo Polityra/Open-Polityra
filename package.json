@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "node --env-file-if-exists=.env scripts/dev.mjs",
-    "start": "turbo run start",
+    "start": "node --env-file-if-exists=.env scripts/dev.mjs start",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
@@ -24,10 +24,5 @@
     "prettier": "^3.0.0",
     "turbo": "^2.0.0",
     "typescript": "^5.0.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "@typescript-eslint/typescript-estree>minimatch": "11.0.4"
-    }
   }
 }

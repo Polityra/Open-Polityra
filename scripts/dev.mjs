@@ -2,6 +2,8 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
+// `node scripts/dev.mjs start` runs the built apps instead of the dev servers; the worker runs in both modes.
+const turboArgs = process.argv[2] === "start" ? ["run", "start"] : ["run", "dev", "--parallel"];
 const workerDir = resolve("services/analysis-worker");
 const python = resolve(
   workerDir,
@@ -10,7 +12,7 @@ const python = resolve(
 const workerCommand = existsSync(python) ? python : "poetry";
 const workerArgs = existsSync(python) ? ["-m", "src.main"] : ["run", "dev"];
 const children = [
-  spawn("turbo", ["run", "dev", "--parallel"], {
+  spawn("turbo", turboArgs, {
     stdio: "inherit",
     shell: process.platform === "win32",
   }),
