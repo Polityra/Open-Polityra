@@ -83,6 +83,7 @@ export default function ClaimDetail({ id }: { id: string }) {
             </ul>
           )}
         </section>
+
         <section className={panel}>
           <div className="border-b border-neutral-200 px-6 py-4">
             <h2 className={sectionTitle}>Verification history</h2>

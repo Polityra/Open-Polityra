@@ -18,12 +18,17 @@ project maintainers before use.
     `db.<project-ref>.supabase.co:5432` endpoint unless the project has IPv4 connectivity enabled;
     direct endpoints may resolve to IPv6 addresses that the Vercel function cannot reach.
   - `JWT_SECRET`: a randomly generated secret of at least 32 characters.
+  - `CRON_SECRET`: a randomly generated secret of at least 32 characters. Vercel cron requests send
+    it as a bearer token to `/api/v1/pipeline/schedule`.
 - The API connects with `pg` directly, so it does not need `SUPABASE_URL` or a Supabase API key. Do
   not expose either required value through a `NEXT_PUBLIC_` variable.
 - Provision and secure PostgreSQL for database-backed API functionality.
 - For Vercel Services, leave `NEXT_PUBLIC_API_URL` unset so the browser uses the same-origin
   `/api/v1` route to the API service. If the variable is set to a localhost URL in production, the
   frontend ignores it and uses the same-origin route.
+- The Express API automatically trusts one proxy hop when `VERCEL=1`, allowing `express-rate-limit`
+  to identify the client correctly from Vercel forwarding headers. For other reverse proxies, set
+  `TRUST_PROXY_HOPS` to the exact number of trusted hops.
 - For deployments where the API is hosted separately, set `NEXT_PUBLIC_API_URL` to its HTTPS origin
   (without an `/api` path), and configure CORS and authentication appropriately.
 - Configure the separate Python and Rust worker processes on durable infrastructure. Vercel
