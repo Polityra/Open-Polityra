@@ -28,10 +28,12 @@
 
 - **Input Validation**: Zod schemas on Express, Pydantic on Python — all external input validated at
   trust boundaries
-- **Authentication**: JWT tokens stored in http-only cookies; token rotation on each refresh
+- **Authentication**: JWT bearer tokens issued by Express and kept by the authenticated web client
 - **Authorization**: Role-based access control (RBAC) with admin/editor/analyst/viewer roles
-- **Audit Logging**: All state-changing operations logged to `audit_log` table with user, action,
-  timestamp, and IP
+- **Internal authentication**: Rust-to-Python intelligence routes require `INTERNAL_SERVICE_TOKEN`
+  when configured; production requires a token of at least 32 characters
+- **Audit Logging**: Sensitive review decisions and administrative operations are logged to
+  `audit_log` with the acting user and resource reference
 
 ### Data Layer
 
@@ -39,6 +41,9 @@
 - Passwords hashed with bcrypt (minimum 10 rounds)
 - Query parameters passed as parameterized queries (no string concatenation for SQL)
 - Sensitive fields in error messages are never logged or exposed
+- The Rust fetcher validates HTTPS hosts, pins resolved addresses, validates redirects and bounds
+  response size to reduce SSRF and resource-exhaustion risk
+- Retrieved documents are untrusted data and cannot change worker configuration or instructions
 
 ## Incident Response
 

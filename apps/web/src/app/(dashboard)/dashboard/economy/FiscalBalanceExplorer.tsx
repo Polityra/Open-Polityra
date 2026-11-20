@@ -168,12 +168,10 @@ export default function FiscalBalanceExplorer() {
                 min={1}
                 max={10}
                 value={scenario.projectionYears}
-                onChange={(event) =>
-                  setScenario((current) => ({
-                    ...current,
-                    projectionYears: event.currentTarget.valueAsNumber,
-                  }))
-                }
+                onChange={(event) => {
+                  const value = event.currentTarget.valueAsNumber;
+                  setScenario((current) => ({ ...current, projectionYears: value }));
+                }}
               />
             </label>
             <label className="text-xs text-neutral-600">
@@ -186,12 +184,10 @@ export default function FiscalBalanceExplorer() {
                 min={-10}
                 max={10}
                 value={scenario.stressAnnualBalanceChange}
-                onChange={(event) =>
-                  setScenario((current) => ({
-                    ...current,
-                    stressAnnualBalanceChange: event.currentTarget.valueAsNumber,
-                  }))
-                }
+                onChange={(event) => {
+                  const value = event.currentTarget.valueAsNumber;
+                  setScenario((current) => ({ ...current, stressAnnualBalanceChange: value }));
+                }}
               />
             </label>
             <label className="text-xs text-neutral-600">
@@ -204,12 +200,10 @@ export default function FiscalBalanceExplorer() {
                 min={-5}
                 max={15}
                 value={scenario.stressNominalGdpGrowth}
-                onChange={(event) =>
-                  setScenario((current) => ({
-                    ...current,
-                    stressNominalGdpGrowth: event.currentTarget.valueAsNumber,
-                  }))
-                }
+                onChange={(event) => {
+                  const value = event.currentTarget.valueAsNumber;
+                  setScenario((current) => ({ ...current, stressNominalGdpGrowth: value }));
+                }}
               />
             </label>
             <label className="text-xs text-neutral-600">
@@ -222,12 +216,10 @@ export default function FiscalBalanceExplorer() {
                 min={-5}
                 max={20}
                 value={scenario.stressEffectiveInterest}
-                onChange={(event) =>
-                  setScenario((current) => ({
-                    ...current,
-                    stressEffectiveInterest: event.currentTarget.valueAsNumber,
-                  }))
-                }
+                onChange={(event) => {
+                  const value = event.currentTarget.valueAsNumber;
+                  setScenario((current) => ({ ...current, stressEffectiveInterest: value }));
+                }}
               />
             </label>
             <button
