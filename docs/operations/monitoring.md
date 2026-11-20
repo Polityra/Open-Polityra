@@ -8,5 +8,7 @@ error rates for the web app, API, database, and worker separately; distinguish a
 from external provider and data-source availability.
 
 Do not put credentials, authorization headers, personal data, or sensitive request bodies in logs.
-The worker's current health route contains placeholder dependency statuses and must not be used as a
-production-readiness signal without implementation and review.
+The FastAPI readiness route reports internal service state and the configured model check. The Rust
+worker writes a heartbeat to `pipeline_workers` and exposes it through
+`GET /api/v1/pipeline/workers`; a worker is considered stale after 45 seconds. Alert on stale
+heartbeats, dead-letter jobs, repeated fetch failures, lease expiry and growing pending queues.

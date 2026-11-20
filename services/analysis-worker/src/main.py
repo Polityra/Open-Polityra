@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import signal
+import os
 import time
 from contextlib import asynccontextmanager
 
-import uvicorn
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+import uvicorn # pyright: ignore[reportMissingImports]
+from fastapi import FastAPI, Request # pyright: ignore[reportMissingImports]
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
+from fastapi.responses import JSONResponse # pyright: ignore[reportMissingImports]
 
-from src.api.routes import analysis, health
+from src.api.routes import analysis, health, intelligence
 from src.common.errors import AnalysisError
 from src.common.logger import get_logger
 
@@ -27,13 +27,6 @@ async def lifespan(app: FastAPI):
     # startup
     logger.info("analysis-worker starting up")
     health.set_bootstrap_timestamp(time.time())
-
-    # Signal handler for graceful shutdown
-    _signal_stop: signal.Signals | None = None
-
-    def _handle_signal(signum: int, frame):  # type: ignore[type-arg]
-        nonlocal _signal_stop
-        _signal_stop = signum
 
     loop_start = time.perf_counter()
     yield
@@ -66,17 +59,24 @@ def create_app() -> FastAPI:
     ) -> JSONResponse:
         return JSONResponse(status_code=error.code, content=error.to_dict())
 
-    # CORS – allow any origin in development; restrict in production via env-var
+    allowed_origins = [
+        origin.strip()
+        for origin in os.getenv(
+            "ANALYSIS_ALLOWED_ORIGINS", "http://localhost:4000"
+        ).split(",")
+        if origin.strip()
+    ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # TODO: tighten for production
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=allowed_origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["authorization", "content-type"],
     )
 
     app.include_router(health.router)
     app.include_router(analysis.router)
+    app.include_router(intelligence.router)
 
     return app
 
@@ -93,7 +93,8 @@ def main():
         "src.main:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,
+        reload=os.getenv("NODE_ENV", os.getenv("ENVIRONMENT", "development"))
+        == "development",
         log_level="info",
     )
 

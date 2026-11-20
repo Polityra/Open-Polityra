@@ -7,18 +7,12 @@ async function startServer(): Promise<void> {
 
   const app = createApp();
   const cfg = getEnv();
-  const { startNewsScraper } = await import("./modules/news/scraper");
-  const { startAutomaticAnalyses } = await import("./modules/analyses/automatic");
-  const stopNewsScraper = startNewsScraper();
-  const stopAutomaticAnalyses = startAutomaticAnalyses();
   const server = app.listen(cfg.PORT, () => {
     console.log(`Open Polityra API listening on port ${cfg.PORT}`);
   });
 
   function gracefulShutdown(signal: string) {
     console.log(`\n${signal} received. Shutting down...`);
-    stopNewsScraper();
-    stopAutomaticAnalyses();
     server.close(async () => {
       await closePool();
       console.log("Database connection pool closed.");

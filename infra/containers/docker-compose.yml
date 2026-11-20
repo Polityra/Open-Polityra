@@ -43,9 +43,26 @@ services:
       - PYTHONUNBUFFERED=1
       - OLLAMA_BASE_URL=http://ollama:11434
       - OLLAMA_MODEL=olmo-3:7b
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN is required}
+      - ANALYSIS_ALLOWED_ORIGINS=http://api:4000
     depends_on:
       ollama:
         condition: service_healthy
+
+  rust-worker:
+    build:
+      context: ../..
+      dockerfile: infra/containers/Dockerfile.rust-worker
+    environment:
+      - DATABASE_URL=postgresql://postgres:${DATABASE_PASSWORD:-change_me}@postgres:5432/open_polityra
+      - PYTHON_SERVICE_URL=http://analysis-worker:8000
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN is required}
+      - PIPELINE_POLL_INTERVAL_MS=1000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      analysis-worker:
+        condition: service_started
 
   ollama:
     image: ollama/ollama:latest
