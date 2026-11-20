@@ -10,6 +10,15 @@ import { registerRoutes } from "./routes/index";
 export function createApp(): express.Express {
   const app = express();
 
+  // Vercel places one trusted proxy hop in front of the API. Outside Vercel,
+  // opt in explicitly for environments that use a known reverse proxy.
+  const configuredProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS ?? "0", 10);
+  if (process.env.VERCEL === "1") {
+    app.set("trust proxy", 1);
+  } else if (Number.isInteger(configuredProxyHops) && configuredProxyHops > 0) {
+    app.set("trust proxy", configuredProxyHops);
+  }
+
   // Security and CORS middleware
   app.use(helmet());
   app.use(cors({ origin: process.env.FRONTEND_URL ?? "http://localhost:3000", credentials: true }));

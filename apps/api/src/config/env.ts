@@ -12,7 +12,7 @@ export const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().default(9_999_999_999),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   OLLAMA_BASE_URL: z.string().url().default("http://localhost:11434"),
-  AI_MODEL: z.string().default("olmo-3:7b"),
+  AI_MODEL: z.string().default("beam"),
   AI_ENABLED: z.coerce.boolean().default(true),
 });
 
