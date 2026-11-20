@@ -177,7 +177,11 @@ export default function ForecastingClient() {
             />
           </label>
           {formError && <ErrorNote>{formError}</ErrorNote>}
-          <button type="submit" className={btnPrimary} disabled={running || indicators.length === 0}>
+          <button
+            type="submit"
+            className={btnPrimary}
+            disabled={running || indicators.length === 0}
+          >
             {running && <Loader2 className="h-4 w-4 animate-spin" />}
             {running ? "Forecasting…" : "Run forecast with olmo-3:7b"}
           </button>

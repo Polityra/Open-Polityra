@@ -20,6 +20,8 @@ import { analyzeFiscalBalance, getFiscalDataset } from "../modules/fiscal-balanc
 import * as newsService from "../modules/news/service";
 import type { NewsTopic } from "../modules/news/service";
 import { scrapeConfiguredSources } from "../modules/news/scraper";
+import * as pipelineService from "../modules/pipeline/service";
+import * as intelligenceService from "../modules/intelligence/service";
 import { runAnalysisSchema } from "../modules/analyses/schema";
 import { createForecastSchema } from "../modules/forecasts/schema";
 import { createReportSchema } from "../modules/reports/schema";
@@ -27,6 +29,16 @@ import { createScenarioSchema } from "../modules/scenarios/schema";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function validCronToken(req: Request): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || secret.length < 32) return false;
+  const authorization = req.get("authorization") ?? "";
+  if (!authorization.startsWith("Bearer ")) return false;
+  const provided = Buffer.from(authorization.slice(7));
+  const expected = Buffer.from(secret);
+  return provided.length === expected.length && timingSafeEqual(provided, expected);
 }
 
 export function registerRoutes(app: Express): void {
@@ -77,62 +89,237 @@ export function registerRoutes(app: Express): void {
   app.patch("/api/v1/sources/:id", authMiddleware(), sourceController.updateSource);
   app.delete("/api/v1/sources/:id", authMiddleware(), sourceController.deleteSource);
 
-  // Protected: /news
-  app.get("/api/v1/news", authMiddleware(), async (req, res) => {
-    const requestedLimit = Number.parseInt((req.query.limit as string) ?? "50", 10);
-    const requestedOffset = Number.parseInt((req.query.offset as string) ?? "0", 10);
-    const limit = Number.isFinite(requestedLimit) ? Math.min(200, Math.max(1, requestedLimit)) : 50;
-    const offset = Number.isFinite(requestedOffset) ? Math.max(0, requestedOffset) : 0;
-    const category = req.query.category as string | undefined;
-    const topic = req.query.topic as NewsTopic | undefined;
-    const search = req.query.search as string | undefined;
-    const result = await newsService.listNews({ limit, offset, category, topic, search });
+  app.get("/api/v1/pipeline/jobs", authMiddleware(), async (req, res) => {
+    const limit = Number.parseInt(String(req.query.limit ?? "50"), 10);
+    const jobs = await pipelineService.listPipelineJobs(
+      Number.isFinite(limit) ? limit : 50,
+      typeof req.query.status === "string" ? req.query.status : undefined,
+    );
     res.json({
       ok: true,
-      data: { items: result.rows, meta: { total: result.total, limit, offset } },
+      data: { jobs },
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
     });
   });
-  app.post("/api/v1/news/sync", authMiddleware(), async (req, res) => {
-    const result = await scrapeConfiguredSources();
+
+  app.get("/api/v1/pipeline/workers", authMiddleware(), async (req, res) => {
+    const workers = await pipelineService.listPipelineWorkers();
     res.json({
       ok: true,
-      data: result,
+      data: { workers },
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
     });
   });
-  app.get("/api/v1/news/sync", async (req, res) => {
-    const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret || cronSecret.length < 32) {
-      res.status(503).json({
+
+  app.post("/api/v1/pipeline/sources/:id/enqueue", authMiddleware(), async (req, res) => {
+    if (!["admin", "editor", "analyst"].includes((req as AuthenticatedRequest).userRole ?? "")) {
+      res.status(403).json({
         ok: false,
-        error: {
-          code: "cron_secret_missing",
-          message:
-            "CRON_SECRET must be configured with at least 32 characters to run scheduled news syncs",
-        },
+        error: { code: "forbidden", message: "Insufficient permissions" },
         meta: { timestamp: new Date().toISOString() },
       });
       return;
     }
+    const job = await pipelineService.enqueueSourceFetch(String(req.params.id));
+    res.status(202).json({
+      ok: true,
+      data: { job },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
 
-    const authorization = req.get("authorization") ?? "";
-    const token = /^Bearer ([^\s]+)$/i.exec(authorization)?.[1] ?? "";
-    const expected = Buffer.from(cronSecret);
-    const provided = Buffer.from(token);
-    if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
+  app.post("/api/v1/pipeline/jobs/:id/retry", authMiddleware(), async (req, res) => {
+    if (!["admin", "editor"].includes((req as AuthenticatedRequest).userRole ?? "")) {
+      res.status(403).json({
+        ok: false,
+        error: { code: "forbidden", message: "Insufficient permissions" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const job = await pipelineService.retryPipelineJob(String(req.params.id));
+    if (!job) {
+      res.status(404).json({
+        ok: false,
+        error: { code: "not_found", message: "Retryable pipeline job not found" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    res.status(202).json({
+      ok: true,
+      data: { job },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
+
+  app.get("/api/v1/pipeline/schedule", async (req, res) => {
+    if (!process.env.CRON_SECRET || process.env.CRON_SECRET.length < 32) {
+      res.status(503).json({
+        ok: false,
+        error: { code: "cron_secret_missing", message: "CRON_SECRET is not configured" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    if (!validCronToken(req)) {
       res.status(401).json({
         ok: false,
-        error: { code: "unauthorized", message: "A valid cron authorization token is required" },
+        error: { code: "unauthorized", message: "A valid cron token is required" },
         meta: { timestamp: new Date().toISOString() },
       });
       return;
     }
+    const scheduled = await pipelineService.scheduleEnabledSources();
+    res.status(202).json({
+      ok: true,
+      data: { scheduled },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
 
-    const result = await scrapeConfiguredSources();
+  app.get("/api/v1/intelligence/documents", authMiddleware(), async (req, res) => {
+    const limit = Number.parseInt(String(req.query.limit ?? "50"), 10);
+    const offset = Number.parseInt(String(req.query.offset ?? "0"), 10);
+    const result = await intelligenceService.listDocuments(
+      Number.isFinite(limit) ? limit : 50,
+      Number.isFinite(offset) ? offset : 0,
+      typeof req.query.sourceId === "string" ? req.query.sourceId : undefined,
+    );
     res.json({
       ok: true,
-      data: result,
+      data: { documents: result.items, meta: { total: result.total, limit, offset } },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
+
+  app.get("/api/v1/intelligence/documents/:id", authMiddleware(), async (req, res) => {
+    const document = await intelligenceService.getDocument(String(req.params.id));
+    if (!document) {
+      res.status(404).json({
+        ok: false,
+        error: { code: "not_found", message: "Document not found" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    res.json({
+      ok: true,
+      data: { document },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
+
+  app.get("/api/v1/intelligence/claims", authMiddleware(), async (req, res) => {
+    const limit = Number.parseInt(String(req.query.limit ?? "50"), 10);
+    const offset = Number.parseInt(String(req.query.offset ?? "0"), 10);
+    const claims = await intelligenceService.listClaims(
+      Number.isFinite(limit) ? limit : 50,
+      Number.isFinite(offset) ? offset : 0,
+      typeof req.query.status === "string" ? req.query.status : undefined,
+    );
+    res.json({
+      ok: true,
+      data: { claims },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
+
+  app.get("/api/v1/intelligence/claims/:id", authMiddleware(), async (req, res) => {
+    const claim = await intelligenceService.getClaim(String(req.params.id));
+    if (!claim) {
+      res.status(404).json({
+        ok: false,
+        error: { code: "not_found", message: "Claim not found" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    res.json({
+      ok: true,
+      data: { claim },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
+
+  app.post("/api/v1/intelligence/claims/:id/review", authMiddleware(), async (req, res) => {
+    const request = req as AuthenticatedRequest;
+    if (!["admin", "editor", "analyst"].includes(request.userRole ?? "")) {
+      res.status(403).json({
+        ok: false,
+        error: { code: "forbidden", message: "Insufficient permissions" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const allowed = [
+      "unverified",
+      "supported",
+      "corroborated",
+      "contradicted",
+      "disputed",
+      "insufficient_evidence",
+      "under_review",
+    ];
+    if (
+      !isRecord(req.body) ||
+      typeof req.body.status !== "string" ||
+      !allowed.includes(req.body.status) ||
+      typeof req.body.note !== "string" ||
+      req.body.note.length > 4000
+    ) {
+      res.status(400).json({
+        ok: false,
+        error: { code: "validation_error", message: "A valid status and review note are required" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    const verification = await intelligenceService.reviewClaim(
+      String(req.params.id),
+      request.userId ?? "",
+      req.body.status,
+      req.body.note,
+    );
+    if (!verification) {
+      res.status(404).json({
+        ok: false,
+        error: { code: "not_found", message: "Claim not found" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+      return;
+    }
+    res.json({
+      ok: true,
+      data: { verification },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
+
+  app.get("/api/v1/intelligence/events", authMiddleware(), async (req, res) => {
+    const limit = Number.parseInt(String(req.query.limit ?? "50"), 10);
+    const offset = Number.parseInt(String(req.query.offset ?? "0"), 10);
+    const events = await intelligenceService.listEvents(
+      Number.isFinite(limit) ? limit : 50,
+      Number.isFinite(offset) ? offset : 0,
+      typeof req.query.eventType === "string" ? req.query.eventType : undefined,
+    );
+    res.json({
+      ok: true,
+      data: { events },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  });
+
+  app.get("/api/v1/intelligence/sources/:id/fetch-runs", authMiddleware(), async (req, res) => {
+    const limit = Number.parseInt(String(req.query.limit ?? "50"), 10);
+    const fetchRuns = await intelligenceService.listFetchRuns(
+      String(req.params.id),
+      Number.isFinite(limit) ? limit : 50,
+    );
+    res.json({
+      ok: true,
+      data: { fetchRuns },
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
     });
   });
@@ -176,11 +363,7 @@ export function registerRoutes(app: Express): void {
       return;
     }
 
-    const authorization = req.get("authorization") ?? "";
-    const token = /^Bearer ([^\s]+)$/i.exec(authorization)?.[1] ?? "";
-    const expected = Buffer.from(cronSecret);
-    const provided = Buffer.from(token);
-    if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
+    if (!validCronToken(req)) {
       res.status(401).json({
         ok: false,
         error: { code: "unauthorized", message: "A valid cron authorization token is required" },
@@ -267,8 +450,8 @@ export function registerRoutes(app: Express): void {
       });
       return;
     }
-    const analysis = await analysisService.executeAnalysis(req.userId, parsed.data);
-    res.status(201).json({
+    const analysis = await analysisService.queueAnalysis(req.userId, parsed.data);
+    res.status(202).json({
       ok: true,
       data: { analysis },
       meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
@@ -680,13 +863,7 @@ export function registerRoutes(app: Express): void {
     }
 
     const aiWorkflowService = await import("../modules/ai-workflow/service");
-    const result = await aiWorkflowService.executeWorkflow(
-      req.userId,
-      parsed.data.title,
-      parsed.data.type,
-      parsed.data.parameters,
-      parsed.data.systemPrompt,
-    );
+    const result = await aiWorkflowService.executeWorkflow(req.userId, parsed.data);
 
     const { AiWorkflowRepository, WorkflowTaskRepository } =
       await import("../modules/ai-workflow/repository");
@@ -736,6 +913,42 @@ export function registerRoutes(app: Express): void {
       res.json({
         ok: true,
         data: { workflow, tasks },
+        meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+      });
+    },
+  );
+
+  app.post(
+    "/api/v1/ai-workflows/:id/review",
+    authMiddleware(),
+    async (req: Request<{ id: string }>, res) => {
+      const userId = (req as AuthenticatedRequest).userId;
+      if (!userId) {
+        res.status(401).json({
+          ok: false,
+          error: { code: "unauthorized", message: "User ID required" },
+          meta: { timestamp: new Date().toISOString() },
+        });
+        return;
+      }
+
+      const { reviewWorkflowSchema } = await import("../modules/ai-workflow/schema");
+      const parsed = reviewWorkflowSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({
+          ok: false,
+          error: { code: "validation_error", message: parsed.error.message },
+          meta: { timestamp: new Date().toISOString() },
+        });
+        return;
+      }
+
+      const aiWorkflowService = await import("../modules/ai-workflow/service");
+      const workflow = await aiWorkflowService.reviewWorkflow(req.params.id, userId, parsed.data);
+
+      res.json({
+        ok: true,
+        data: { workflow },
         meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
       });
     },
