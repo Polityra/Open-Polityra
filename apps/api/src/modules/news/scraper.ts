@@ -230,6 +230,7 @@ export async function fetchPublicDocument(
   deadline = Date.now() + timeoutMs,
 ): Promise<{ body: string; contentType: string | undefined; finalUrl: string }> {
   const { url, address, family } = await resolveFeed(documentUrl, domain);
+  const requestUrl = `${url.origin}${url.pathname}${url.search}`;
   const remainingMs = deadline - Date.now();
   if (remainingMs <= 0) throw new Error("Feed request timed out");
   return new Promise((resolve, reject) => {
@@ -241,7 +242,7 @@ export async function fetchPublicDocument(
       reject(error);
     };
     const request = httpsRequest(
-      url,
+      requestUrl,
       {
         headers: {
           Accept: "application/atom+xml, application/rss+xml, application/xml, text/xml, text/html",
