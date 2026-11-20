@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   Database,
@@ -40,6 +41,7 @@ type Item = {
   title: string;
   status: string;
   at: string;
+  href: string;
 };
 type Data = {
   sources: SourceRow[];
@@ -158,9 +160,10 @@ export default function DashboardClient() {
       ...data.analyses.map((a) => ({
         id: `a${a.id}`,
         kind: "analysis" as const,
-        title: `Analysis ${a.status}`,
+        title: a.title || "Untitled analysis",
         status: a.status,
         at: a.updated_at ?? a.created_at,
+        href: `/dashboard/analyses/${a.id}`,
       })),
       ...data.reports.map((x) => ({
         id: `r${x.id}`,
@@ -168,6 +171,7 @@ export default function DashboardClient() {
         title: x.title,
         status: x.status,
         at: x.created_at,
+        href: "/dashboard/reports",
       })),
       ...data.workflows.map((w) => ({
         id: `w${w.id}`,
@@ -175,6 +179,7 @@ export default function DashboardClient() {
         title: w.title,
         status: w.status,
         at: w.updated_at ?? w.created_at,
+        href: "/ai-workflow",
       })),
     ]
       .filter((i) => i.at)
@@ -195,7 +200,17 @@ export default function DashboardClient() {
       <PageHeader
         title="Strategic"
         accent="Dashboard"
-        description="Live overview of sources, analyses, reports and AI workflows, read directly from the platform database."
+        description="Start focused research, follow durable analysis jobs, and move evidence through human review."
+        action={
+          <div className="flex gap-2">
+            <Link href="/dashboard/analyses" className="text-sm font-medium underline">
+              View history
+            </Link>
+            <Link href="/dashboard/reviews" className="text-sm font-medium underline">
+              Review queue
+            </Link>
+          </div>
+        }
       />
 
       {error && (
@@ -212,7 +227,12 @@ export default function DashboardClient() {
       {data && derived && (
         <>
           <section className={`${panel} space-y-4 p-5`}>
-            <h2 className={sectionTitle}>Automatic news analyses</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className={sectionTitle}>Automatic news analyses</h2>
+              <Link href="/dashboard/analyses" className="text-xs font-medium underline">
+                Open all
+              </Link>
+            </div>
             <p className="text-sm text-neutral-600">
               New feed items are analyzed automatically. AI summaries require human review.
             </p>
@@ -228,14 +248,23 @@ export default function DashboardClient() {
                 .map((analysis) => (
                   <article key={analysis.id} className="border-t border-neutral-200 pt-4">
                     <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-semibold">{analysis.title}</h3>
+                      <Link
+                        href={`/dashboard/analyses/${analysis.id}`}
+                        className="font-semibold underline decoration-neutral-300 underline-offset-4"
+                      >
+                        {analysis.title}
+                      </Link>
                       <Badge>{analysis.status}</Badge>
                     </div>
-                    {typeof analysis.result?.summary === "string" && (
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">
-                        {analysis.result.summary}
-                      </p>
-                    )}
+                    <p className="mt-2 text-sm text-neutral-500">
+                      {analysis.status === "pending"
+                        ? "Queued and waiting for a worker."
+                        : analysis.status === "running"
+                          ? "The worker is still processing this analysis."
+                          : analysis.status === "failed"
+                            ? "Open details to inspect the saved error."
+                            : "Completed. Open the detail page for findings and evidence."}
+                    </p>
                     {analysis.status === "failed" && (
                       <p className="mt-2 text-sm text-red-700">
                         {analysis.error_message ?? "Analysis failed."} The job will be retried.
@@ -353,31 +382,36 @@ export default function DashboardClient() {
                 {derived.feed.map((i) => {
                   const K = KIND[i.kind];
                   return (
-                    <li key={i.id} className="flex items-center justify-between gap-4 px-6 py-3.5">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="rounded-lg bg-white p-2 text-black">
-                          <K.icon className="h-4 w-4" />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-black">{i.title}</p>
-                          <p className="text-xs text-black]">
-                            {K.label} · {timeAgo(i.at)}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge
-                        tone={
-                          i.status === "completed" || i.status === "published"
-                            ? "success"
-                            : i.status === "failed"
-                              ? "danger"
-                              : i.status === "running"
-                                ? "info"
-                                : "neutral"
-                        }
+                    <li key={i.id}>
+                      <Link
+                        href={i.href}
+                        className="flex items-center justify-between gap-4 px-6 py-3.5 hover:bg-neutral-50"
                       >
-                        {i.status}
-                      </Badge>
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="rounded-lg bg-white p-2 text-black">
+                            <K.icon className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-black">{i.title}</p>
+                            <p className="text-xs text-black]">
+                              {K.label} · {timeAgo(i.at)}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge
+                          tone={
+                            i.status === "completed" || i.status === "published"
+                              ? "success"
+                              : i.status === "failed"
+                                ? "danger"
+                                : i.status === "running"
+                                  ? "info"
+                                  : "neutral"
+                          }
+                        >
+                          {i.status}
+                        </Badge>
+                      </Link>
                     </li>
                   );
                 })}

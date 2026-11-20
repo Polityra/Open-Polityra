@@ -33,10 +33,7 @@ describe("local Ollama provider", () => {
       provider: "ollama",
       selectedModel: "olmo-3:7b",
     });
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:11434/api/tags",
-      expect.any(Object),
-    );
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:11434/api/tags", expect.any(Object));
   });
 
   it("does not fall back to a hosted model when the local model is missing", async () => {
@@ -53,10 +50,7 @@ describe("local Ollama provider", () => {
       selectedModel: null,
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:11434/api/tags",
-      expect.any(Object),
-    );
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:11434/api/tags", expect.any(Object));
   });
 
   it("returns free-form chat text without requesting JSON format", async () => {

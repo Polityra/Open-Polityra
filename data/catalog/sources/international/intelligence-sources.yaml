@@ -1,0 +1,102 @@
+schema_version: 1
+policy: "Entries are discovery metadata, not an endorsement or reliability score."
+sources:
+  - stable_id: un-press
+    name: United Nations Press
+    publisher: United Nations
+    canonical_url: https://press.un.org/
+    source_type: organization
+    geographic_scope: global
+    language: en
+    category: geopolitical
+    access_method: public_web
+    terms: Review the current website terms and attribution requirements before enabling ingestion.
+    enabled_by_default: false
+  - stable_id: nato-news
+    name: NATO News
+    publisher: North Atlantic Treaty Organization
+    canonical_url: https://www.nato.int/
+    source_type: organization
+    geographic_scope: transatlantic
+    language: en
+    category: security
+    access_method: public_web
+    terms: Review the current website terms and redistribution restrictions before enabling ingestion.
+    enabled_by_default: false
+  - stable_id: eu-news
+    name: European Union News
+    publisher: European Union
+    canonical_url: https://european-union.europa.eu/news-events/news_en
+    source_type: organization
+    geographic_scope: europe
+    language: en
+    category: geopolitical
+    access_method: public_web
+    terms: Review the EU legal notice and source-specific reuse policy before enabling ingestion.
+    enabled_by_default: false
+  - stable_id: world-bank
+    name: World Bank Data and Publications
+    publisher: World Bank
+    canonical_url: https://www.worldbank.org/
+    source_type: dataset
+    geographic_scope: global
+    language: en
+    category: economic
+    access_method: public_api
+    terms: Dataset-specific license and indicator attribution must be captured before import.
+    enabled_by_default: false
+  - stable_id: oecd
+    name: OECD Data and Publications
+    publisher: OECD
+    canonical_url: https://www.oecd.org/
+    source_type: organization
+    geographic_scope: global
+    language: en
+    category: economic
+    access_method: public_web
+    terms: Review content and dataset licensing separately before enabling ingestion.
+    enabled_by_default: false
+  - stable_id: who
+    name: World Health Organization
+    publisher: World Health Organization
+    canonical_url: https://www.who.int/
+    source_type: organization
+    geographic_scope: global
+    language: en
+    category: social
+    access_method: public_web
+    terms: Review WHO publication copyright and data terms before enabling ingestion.
+    enabled_by_default: false
+  - stable_id: sipri
+    name: SIPRI Publications
+    publisher: Stockholm International Peace Research Institute
+    canonical_url: https://www.sipri.org/
+    source_type: organization
+    geographic_scope: global
+    language: en
+    category: security
+    access_method: public_web
+    terms: Review publication-specific reuse terms; do not assume bulk republication is permitted.
+    enabled_by_default: false
+  - stable_id: ucdp
+    name: Uppsala Conflict Data Program
+    publisher: Uppsala University
+    canonical_url: https://ucdp.uu.se/
+    source_type: dataset
+    geographic_scope: global
+    language: en
+    category: security
+    access_method: public_dataset
+    terms: Dataset-specific citation, update, and redistribution requirements apply.
+    enabled_by_default: false
+  - stable_id: acled
+    name: ACLED
+    publisher: Armed Conflict Location & Event Data Project
+    canonical_url: https://acleddata.com/
+    source_type: dataset
+    geographic_scope: global
+    language: en
+    category: security
+    access_method: licensed_api
+    terms: Requires a separately approved account, license, and permitted-use review.
+    enabled_by_default: false

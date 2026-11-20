@@ -6,7 +6,7 @@
 - **Language**: TypeScript
 - **Validation**: Zod for runtime validation of all external inputs
 - **Database**: PostgreSQL via pg-pool
-- **Authentication**: JWT tokens (http-only cookies)
+- **Authentication**: JWT bearer tokens
 - **Logging**: Winston structured logging (@open-polityra/observability/logging)
 - **Rate Limiting**: express-rate-limit
 
@@ -31,7 +31,9 @@ apps/api/src/
 │   ├── sources/               # Research source registry
 │   ├── datasets/              # Dataset management
 │   ├── indicators/            # Economic and analytical indicators
-│   ├── analyses/              # Analysis request lifecycle (submit -> run -> results)
+│   ├── analyses/              # Analysis persistence and durable queue submission
+│   ├── intelligence/          # Documents, claims, evidence, events and human review
+│   ├── pipeline/              # Durable jobs, retries and worker status
 │   ├── scenarios/             # Scenario creation and comparison
 │   ├── forecasts/             # Forecast storage and retrieval
 │   ├── reports/               # Report storage and export
@@ -66,19 +68,30 @@ All endpoints return:
 
 ## Route Registration (api/v1/)
 
-| Method   | Path          | Purpose                     | Auth Required |
-| -------- | ------------- | --------------------------- | ------------- |
-| GET      | /health       | Service health check        | No            |
-| POST     | /auth/login   | User authentication         | No            |
-| POST     | /auth/logout  | Session invalidation        | Yes           |
-| GET      | /users        | List users                  | Yes (admin)   |
-| GET      | /users/:id    | Get user by ID              | Yes           |
-| GET      | /sources      | List sources (paginated)    | Yes           |
-| POST     | /sources      | Register new source         | Yes (editor+) |
-| GET      | /datasets     | List datasets               | Yes           |
-| GET      | /indicators   | List indicators by category | Yes           |
-| POST     | /analyses     | Submit analysis request     | Yes           |
-| GET      | /analyses/:id | Get analysis status/results | Yes (owner)   |
-| GET/POST | /scenarios    | Scenario CRUD               | Yes           |
-| GET      | /forecasts    | Forecast retrieval          | Yes           |
-| GET/POST | /reports      | Report CRUD and export      | Yes           |
+| Method   | Path                            | Purpose                     | Auth Required  |
+| -------- | ------------------------------- | --------------------------- | -------------- |
+| GET      | /health                         | Service health check        | No             |
+| POST     | /auth/login                     | User authentication         | No             |
+| POST     | /auth/logout                    | Session invalidation        | Yes            |
+| GET      | /users                          | List users                  | Yes (admin)    |
+| GET      | /users/:id                      | Get user by ID              | Yes            |
+| GET      | /sources                        | List sources (paginated)    | Yes            |
+| POST     | /sources                        | Register new source         | Yes (editor+)  |
+| GET      | /datasets                       | List datasets               | Yes            |
+| GET      | /indicators                     | List indicators by category | Yes            |
+| POST     | /analyses                       | Queue analysis request      | Yes            |
+| GET      | /analyses                       | List analysis history       | Yes            |
+| GET      | /analyses/:id                   | Get analysis status/results | Yes (owner)    |
+| GET      | /pipeline/jobs                  | List durable jobs           | Yes            |
+| POST     | /pipeline/jobs/:id/retry        | Retry failed job            | Yes (editor+)  |
+| GET      | /pipeline/workers               | Worker heartbeats           | Yes            |
+| GET      | /intelligence/documents         | List normalized documents   | Yes            |
+| GET      | /intelligence/claims            | List claims for review      | Yes            |
+| POST     | /intelligence/claims/:id/review | Append human review         | Yes (analyst+) |
+| GET/POST | /scenarios                      | Scenario CRUD               | Yes            |
+| GET      | /forecasts                      | Forecast retrieval          | Yes            |
+| GET/POST | /reports                        | Report CRUD and export      | Yes            |
+
+`POST /analyses` creates the database record and queue job in one transaction, then returns
+`202 Accepted`. It does not run the Python request inside the Express request. A separate Rust
+worker claims the job, updates status, persists the result and records attempts/errors.
