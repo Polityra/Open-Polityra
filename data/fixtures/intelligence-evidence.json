@@ -1,0 +1,29 @@
+{
+  "claim": "Agency A reported 120 incidents.",
+  "supporting": [
+    {
+      "source": "independent-report-b",
+      "dependency_root": "independent-report-b",
+      "quote": "The independent report records 120 incidents."
+    }
+  ],
+  "contradictory": [
+    {
+      "source": "independent-report-c",
+      "dependency_root": "independent-report-c",
+      "quote": "The independent report records 90 incidents."
+    }
+  ],
+  "copied_reporting": [
+    {
+      "source": "republisher-1",
+      "dependency_root": "agency-a",
+      "quote": "Agency A says there were 120 incidents."
+    },
+    {
+      "source": "republisher-2",
+      "dependency_root": "agency-a",
+      "quote": "Agency A says there were 120 incidents."
+    }
+  ]
+}

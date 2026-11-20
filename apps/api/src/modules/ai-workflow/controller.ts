@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import * as aiWorkflowService from "./service";
 import { checkOllamaStatus, listModels } from "../../services/ollamaService";
 import { AiWorkflowRepository, WorkflowTaskRepository } from "./repository";
-import { createWorkflowSchema, type AiWorkflowType } from "./schema";
+import { createWorkflowSchema } from "./schema";
 
 type AuthenticatedRequest = Request & { userId?: string };
 type AuthenticatedWorkflowRequest = Request<{ id: string }> & { userId?: string };
@@ -87,13 +87,7 @@ export async function createWorkflow(req: AuthenticatedRequest, res: Response): 
     return;
   }
 
-  const result = await aiWorkflowService.executeWorkflow(
-    userId,
-    parsed.data.title,
-    parsed.data.type as AiWorkflowType,
-    parsed.data.parameters,
-    parsed.data.systemPrompt,
-  );
+  const result = await aiWorkflowService.executeWorkflow(userId, parsed.data);
 
   const repo = new AiWorkflowRepository();
   const workflow = await repo.findById(result.workflowId);

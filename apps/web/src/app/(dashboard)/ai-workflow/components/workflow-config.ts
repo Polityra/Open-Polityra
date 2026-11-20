@@ -21,46 +21,34 @@ export const WORKFLOW_TYPES: {
   icon: LucideIcon;
 }[] = [
   {
-    value: "economic-analysis",
-    label: "Economic Analysis",
-    description: "Analyze economic data and generate forecasts",
+    value: "fiscal-explanation",
+    label: "Fiscal evidence explanation",
+    description:
+      "Explain Finland's Eurostat fiscal data and a deterministic scenario, with citations",
     icon: BarChart3,
   },
   {
-    value: "geopolitical-assessment",
-    label: "Geopolitical Assessment",
-    description: "Assess geopolitical risks and actor dynamics",
-    icon: Globe2,
-  },
-  {
-    value: "scenario-generation",
-    label: "Scenario Generation",
-    description: "Generate plausible strategic scenarios",
-    icon: GitBranch,
-  },
-  {
-    value: "text-summary",
-    label: "Text Summary",
-    description: "Summarize research documents and reports",
+    value: "source-summary",
+    label: "Source summary",
+    description: "Summarise a source text you paste in, citing its numbered passages",
     icon: FileText,
-  },
-  {
-    value: "forecast",
-    label: "Forecast",
-    description: "Generate predictions with confidence intervals",
-    icon: TrendingUp,
-  },
-  {
-    value: "custom",
-    label: "Custom Analysis",
-    description: "Free-form analysis with custom prompts",
-    icon: Wrench,
   },
 ];
 
-export const TYPE_CONFIG: Record<string, { label: string; icon: LucideIcon }> = Object.fromEntries(
-  WORKFLOW_TYPES.map((t) => [t.value, { label: t.label, icon: t.icon }]),
-);
+/** Analyses created before the evidence-grounded redesign; shown read-only. */
+const LEGACY_TYPES: Record<string, { label: string; icon: LucideIcon }> = {
+  "economic-analysis": { label: "Legacy: economic analysis", icon: BarChart3 },
+  "geopolitical-assessment": { label: "Legacy: geopolitical assessment", icon: Globe2 },
+  "scenario-generation": { label: "Legacy: scenario generation", icon: GitBranch },
+  "text-summary": { label: "Legacy: text summary", icon: FileText },
+  forecast: { label: "Legacy: forecast", icon: TrendingUp },
+  custom: { label: "Legacy: custom", icon: Wrench },
+};
+
+export const TYPE_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
+  ...LEGACY_TYPES,
+  ...Object.fromEntries(WORKFLOW_TYPES.map((t) => [t.value, { label: t.label, icon: t.icon }])),
+};
 
 export const STATUS_CONFIG: Record<
   string,

@@ -2,8 +2,9 @@
 
 ## Architecture Diagram (Text Description)
 
-The diagram shows the intended service layout; the Python worker integration is not currently wired
-into the fiscal-balance prototype.
+The platform combines a request/response frontend and API with separate durable data-processing and
+analysis workers. The fiscal-balance prototype remains deterministic and does not require the
+workers.
 
 ```
 +------------------+       +----------------------+       +------------------------+
@@ -11,19 +12,18 @@ into the fiscal-balance prototype.
 |  apps/web/       |       |  apps/api/           |       |  packages/database/    |
 |                  | <---- |                      | <---- |                        |
 +------------------+       +----------------------+       +------------------------+
-                                   |                           |
-                                   v                           |
-                          +-----------------+                  |
-                          | Python Analysis |                  |
-                          | Service         |                  |
-                          | services/       |                  |
-                          | analysis-worker |                  |
-                          +-----------------+                  |
-                                   ^                           |
-                                   |                           |
-                          +-----------------+                  |
-                          | AI Provider     | <--------------+
-                          | (local/remote)  |   Model queries
+                                   |       durable jobs        |
+                                   v                           v
+                          +-----------------+       +----------------------+
+                          | Python Analysis | <---> | Rust pipeline worker |
+                          | Service         |       | services/rust/       |
+                          | analysis-worker |       +----------------------+
+                          +-----------------+
+                                   |
+                                   v
+                          +-----------------+
+                          | AI Provider     |
+                          | (local/remote)  |
                           +-----------------+
 ```
 
@@ -42,13 +42,23 @@ into the fiscal-balance prototype.
 - Database queries and business logic for existing application modules
 - Public fiscal-balance data and deterministic scenario routes independent of the database
 - Consistent JSON API responses with standardized error handling
+- Enqueues analyses and source-processing work in PostgreSQL instead of holding browser requests
+  open
+- Exposes queue, worker, document, claim, evidence, review and analysis history APIs
+
+### Rust Pipeline Worker (services/rust/)
+
+- Claims durable PostgreSQL jobs with leases and `FOR UPDATE SKIP LOCKED`
+- Performs bounded HTTPS feed fetching, SSRF checks, normalization, hashing and deduplication
+- Orchestrates Python extraction, verification and cited report stages
+- Publishes worker heartbeats and structured job failures
 
 ### Python Analysis Service (services/analysis-worker/)
 
 - Separate FastAPI service with analysis and health routes
 - Contains statistical, scenario, and provider scaffolding
-- Is not currently invoked by the fiscal-balance prototype
-- Its readiness response includes placeholders and does not verify external dependencies
+- Provides typed claim/entity/event extraction, evidence matching and deterministic report endpoints
+- Is optional for the fiscal-balance prototype
 
 ### Shared Packages
 
@@ -70,13 +80,14 @@ This flow does not use PostgreSQL or the Python worker.
 
 ### Existing database-backed application routes
 
-Authenticated routes validate requests and use the API's data-access modules for configured database
-operations. The Python worker is a separate service; a general end-to-end API-to-worker-to-database
-analytical flow is not yet demonstrated.
+Authenticated analysis routes create a `pending` analysis and durable `analysis.create` job. The
+frontend can navigate away and poll the saved analysis ID. The Rust worker consumes the job, gathers
+authorized database context, calls the Python service and writes the final result or retryable
+failure state.
 
 ## Security Model
 
 - All external inputs validated at trust boundaries (Zod on Express, Pydantic on Python)
-- Authentication via JWT tokens; authorization checked per-request
-- Internal service communication authenticated and rate-limited
+- Authentication via JWT bearer tokens; authorization checked per-request
+- Rust-to-Python internal routes accept the server-only `INTERNAL_SERVICE_TOKEN`
 - No direct client-to-database or client-to-Python communication
