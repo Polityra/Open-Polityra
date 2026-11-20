@@ -26,8 +26,12 @@ project maintainers before use.
   frontend ignores it and uses the same-origin route.
 - For deployments where the API is hosted separately, set `NEXT_PUBLIC_API_URL` to its HTTPS origin
   (without an `/api` path), and configure CORS and authentication appropriately.
-- Review the Python worker's permissive development CORS setting and placeholder readiness checks
-  before exposing it.
+- Configure the separate Python and Rust worker processes on durable infrastructure. Vercel
+  cron/functions may enqueue work, but they must not be the only process consuming `pipeline_jobs`.
+- Set the same `INTERNAL_SERVICE_TOKEN` on the Python and Rust workers. It must be at least 32
+  characters and must not be sent to the browser.
+- Set `ANALYSIS_ALLOWED_ORIGINS` for any direct analysis-worker access. Production CORS is
+  restricted and credentials are disabled.
 - Test build, migrations, health/readiness semantics, backup restoration, logging, and rollback
   procedures in a non-production environment.
 - Publish an alpha disclaimer, supported-use policy, and contact path for security reports.
@@ -53,3 +57,21 @@ configuration independently rather than treating that warning as the package ins
 
 The fiscal-balance prototype serves a checked-in public-data snapshot. Refreshing it is a separate
 source-data operation and should be reviewed before publication.
+
+## Intelligence worker deployment
+
+Run PostgreSQL, the Python service and [services/rust](../../services/rust) together:
+
+```bash
+docker compose -f infra/containers/docker-compose.yml up --build
+```
+
+For non-container deployments, start `polityra-ingestion` with:
+
+```bash
+cargo run --manifest-path services/rust/Cargo.toml --release --bin polityra-ingestion
+```
+
+The Vercel cron route `/api/v1/pipeline/schedule` only inserts idempotent fetch jobs. Apply
+`packages/database/migrations/009_intelligence_pipeline.sql` before deploying API code that
+references the pipeline tables.
