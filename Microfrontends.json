@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/microfrontends.json",
   "applications": {
-    "web": {
+    "polityra": {
       "development": {
         "local": 3000
       }
