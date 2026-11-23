@@ -1,7 +1,5 @@
-
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "corepack enable && pnpm install --frozen-lockfile",
   "services": {
     "api": {
       "root": "apps/api",
@@ -16,8 +14,7 @@
     },
     "analysis-worker": {
       "root": "services/analysis-worker",
-      "framework": "fastapi",
-      "installCommand": "corepack enable && pnpm install --frozen-lockfile"
+      "framework": "fastapi"
     }
   },
   "rewrites": [
