@@ -1,10 +1,6 @@
-<a href="https://github.com/Polityra/Open-Polityra">
-  <img
-    alt="Repository banner"
-    width="1100"
-    src="https://repository-images.githubusercontent.com/1445344815/d90ab79d-be9f-421e-b2e8-2ec518092c8d"
-  />
-</a>
+<p align="center">
+  <img src="./images/banner.png" alt="Open Polityra" width="100%">
+</p>
 
 # Open Polityra
 
