@@ -1,3 +1,4 @@
+
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "corepack enable && pnpm install --frozen-lockfile",
@@ -5,15 +6,18 @@
     "api": {
       "root": "apps/api",
       "framework": "express",
-      "entrypoint": "src/index.ts"
+      "entrypoint": "src/index.ts",
+      "installCommand": "corepack enable && pnpm install --frozen-lockfile"
     },
     "web": {
       "root": "apps/web",
-      "framework": "nextjs"
+      "framework": "nextjs",
+      "installCommand": "corepack enable && pnpm install --frozen-lockfile"
     },
     "analysis-worker": {
       "root": "services/analysis-worker",
-      "framework": "fastapi"
+      "framework": "fastapi",
+      "installCommand": "corepack enable && pnpm install --frozen-lockfile"
     }
   },
   "rewrites": [
