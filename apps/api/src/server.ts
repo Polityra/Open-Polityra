@@ -1,8 +1,8 @@
 async function startServer(): Promise<void> {
   const [{ createApp }, { getEnv }, { closePool }] = await Promise.all([
-    import("./app"),
-    import("./config/env"),
-    import("./config/database"),
+    import("./app.js"),
+    import("./config/env.js"),
+    import("./config/database.js"),
   ]);
 
   const app = createApp();
