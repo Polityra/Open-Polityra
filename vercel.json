@@ -4,7 +4,7 @@
     "api": {
       "root": "apps/api",
       "framework": "express",
-      "entrypoint": "dist/index.js",
+      "entrypoint": "entry.js",
       "installCommand": "corepack enable && pnpm install --frozen-lockfile"
     },
     "web": {
