@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { Pool } from "pg";
 import { getPool } from "../../config/database";
 import { UnauthorizedError, ValidationError } from "../../errors/appError";
