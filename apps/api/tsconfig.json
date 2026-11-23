@@ -4,10 +4,9 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "noEmit": false,
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "verbatimModuleSyntax": false,
-    "baseUrl": ".",
     "paths": {
       "@open-polityra/contracts": ["../../packages/contracts/src"]
     }

@@ -364,7 +364,7 @@ export async function scrapeConfiguredSources(): Promise<{
         )
           throw originalError;
         if (!source.canonical_url) throw originalError;
-        const { discoverFeed } = await import("./discovery");
+        const { discoverFeed } = await import("./discovery.js");
         let replacement: string;
         try {
           replacement = await discoverFeed(source.canonical_url);

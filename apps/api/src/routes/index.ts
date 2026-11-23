@@ -830,7 +830,7 @@ export function registerRoutes(app: Express): void {
     const status = req.query.status as string | undefined;
     const type = req.query.type as string | undefined;
 
-    const { AiWorkflowRepository } = await import("../modules/ai-workflow/repository");
+    const { AiWorkflowRepository } = await import("../modules/ai-workflow/repository.js");
     const repo = new AiWorkflowRepository();
     const data = await repo.findAll(userId, { status, type, limit, offset });
 
@@ -851,7 +851,7 @@ export function registerRoutes(app: Express): void {
       return;
     }
 
-    const { createWorkflowSchema } = await import("../modules/ai-workflow/schema");
+    const { createWorkflowSchema } = await import("../modules/ai-workflow/schema.js");
     const parsed = createWorkflowSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
@@ -862,11 +862,11 @@ export function registerRoutes(app: Express): void {
       return;
     }
 
-    const aiWorkflowService = await import("../modules/ai-workflow/service");
+    const aiWorkflowService = await import("../modules/ai-workflow/service.js");
     const result = await aiWorkflowService.executeWorkflow(req.userId, parsed.data);
 
     const { AiWorkflowRepository, WorkflowTaskRepository } =
-      await import("../modules/ai-workflow/repository");
+      await import("../modules/ai-workflow/repository.js");
     const repo = new AiWorkflowRepository();
     const workflow = await repo.findById(result.workflowId);
     const taskRepo = new WorkflowTaskRepository();
@@ -894,7 +894,7 @@ export function registerRoutes(app: Express): void {
       }
 
       const { AiWorkflowRepository, WorkflowTaskRepository } =
-        await import("../modules/ai-workflow/repository");
+        await import("../modules/ai-workflow/repository.js");
       const repo = new AiWorkflowRepository();
       const workflow = await repo.findById(req.params.id);
 
@@ -932,7 +932,7 @@ export function registerRoutes(app: Express): void {
         return;
       }
 
-      const { reviewWorkflowSchema } = await import("../modules/ai-workflow/schema");
+      const { reviewWorkflowSchema } = await import("../modules/ai-workflow/schema.js");
       const parsed = reviewWorkflowSchema.safeParse(req.body);
       if (!parsed.success) {
         res.status(400).json({
@@ -943,7 +943,7 @@ export function registerRoutes(app: Express): void {
         return;
       }
 
-      const aiWorkflowService = await import("../modules/ai-workflow/service");
+      const aiWorkflowService = await import("../modules/ai-workflow/service.js");
       const workflow = await aiWorkflowService.reviewWorkflow(req.params.id, userId, parsed.data);
 
       res.json({
@@ -968,7 +968,7 @@ export function registerRoutes(app: Express): void {
         return;
       }
 
-      const aiWorkflowService = await import("../modules/ai-workflow/service");
+      const aiWorkflowService = await import("../modules/ai-workflow/service.js");
       try {
         const deleted = await aiWorkflowService.cancelWorkflow(req.params.id, userId);
         if (!deleted) {
@@ -1007,7 +1007,7 @@ export function registerRoutes(app: Express): void {
 
   // ---- AI Service Health (unauthenticated) ----
   app.get("/api/v1/ai-health", async (req, res) => {
-    const { checkOllamaStatus, listModels } = await import("../services/ollamaService");
+    const { checkOllamaStatus, listModels } = await import("../services/ollamaService.js");
     const status = await checkOllamaStatus();
     const models = await listModels();
 

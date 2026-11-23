@@ -8,11 +8,7 @@ if (process.env.VERCEL !== "1" && !process.env.LAMBDA_TASK_ROOT) {
     const dotenv = require("dotenv") as typeof import("dotenv");
     dotenv.config({ path: resolve(__dirname, "../../../.env") });
   } catch (error) {
-    if (
-      !(error instanceof Error) ||
-      !("code" in error) ||
-      error.code !== "MODULE_NOT_FOUND"
-    ) {
+    if (!(error instanceof Error) || !("code" in error) || error.code !== "MODULE_NOT_FOUND") {
       throw error;
     }
   }
