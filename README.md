@@ -1,10 +1,6 @@
-<a href="https://github.com/Polityra/Open-Polityra">
-  <img
-    alt="Repository banner"
-    width="1100"
-    src="https://repository-images.githubusercontent.com/1445344815/d90ab79d-be9f-421e-b2e8-2ec518092c8d"
-  />
-</a>
+<p align="center">
+  <img src="./images/banner.png" alt="Open Polityra" width="100%">
+</p>
 
 # Open Polityra
 
@@ -42,10 +38,10 @@ Website: [open.polityra.org](https://open.polityra.org)
 
 ## What is Open Polityra?
 
-Open Polityra is a community-built platform for analysing geopolitical and global developments
-using **public, lawfully usable data**. It supports risk analysis, scenario comparison and
-source-grounded reporting. Every material claim should be traceable to a source, every model output
-requires human review, and methods and limitations are kept inspectable.
+Open Polityra is a community-built platform for analysing geopolitical and global developments using
+**public, lawfully usable data**. It supports risk analysis, scenario comparison and source-grounded
+reporting. Every material claim should be traceable to a source, every model output requires human
+review, and methods and limitations are kept inspectable.
 
 Typical use cases:
 
@@ -241,17 +237,17 @@ Open Polityra is built around **open-weight models** and does not depend on any 
   (default `olmo-3:7b`, see [Getting started](#setup)). Model governance is described in
   [MODEL_POLICY.md](MODEL_POLICY.md).
 - **Planned:** a provider adapter for OpenAI-compatible APIs, so the project can run larger
-  open-weight models on hosted infrastructure without code changes beyond configuration. Progress
-  is tracked in [ROADMAP.md](ROADMAP.md).
+  open-weight models on hosted infrastructure without code changes beyond configuration. Progress is
+  tracked in [ROADMAP.md](ROADMAP.md).
 - **Provider requirements:** the project only sends **public data** to model providers. No personal
   data, credentials, or non-public sensitive information are used (see
-  [DATA_POLICY.md](DATA_POLICY.md) and [PRIVACY.md](PRIVACY.md)). Providers with EU hosting and
-  zero data retention are preferred.
+  [DATA_POLICY.md](DATA_POLICY.md) and [PRIVACY.md](PRIVACY.md)). Providers with EU hosting and zero
+  data retention are preferred.
 - **Independence:** providers and sponsors have no influence over analysis outputs, source
   selection, or evaluation results (see [SPONSORS.md](SPONSORS.md)).
 
-The project is currently unfunded and relies on free tiers and in-kind support. If you operate an
-AI service or cloud platform and would like to support open, public-interest analysis tooling, see
+The project is currently unfunded and relies on free tiers and in-kind support. If you operate an AI
+service or cloud platform and would like to support open, public-interest analysis tooling, see
 [SPONSORS.md](SPONSORS.md).
 
 ## Development principles
@@ -291,14 +287,14 @@ documentation.
 
 ## Community and communication
 
-| Purpose                                  | Channel                                                                                   |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Questions, ideas, proposals              | [GitHub Discussions](https://github.com/Polityra/Open-Polityra/discussions)                |
-| Bugs and feature requests                | [GitHub Issues](https://github.com/Polityra/Open-Polityra/issues)                          |
-| Day-to-day contributor chat              | Community chat: https://dsc.gg/polityra                                           |
-| Sponsors, partners and press             | 
-openpolityra@gmail.com                                                             |
-| Security vulnerabilities (private)       | See [SECURITY.md](SECURITY.md). Never report vulnerabilities in public issues.            |
+| Purpose                            | Channel                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------ |
+| Questions, ideas, proposals        | [GitHub Discussions](https://github.com/Polityra/Open-Polityra/discussions)    |
+| Bugs and feature requests          | [GitHub Issues](https://github.com/Polityra/Open-Polityra/issues)              |
+| Day-to-day contributor chat        | Community chat: https://dsc.gg/polityra                                        |
+| Sponsors, partners and press       |
+| openpolityra@gmail.com             |
+| Security vulnerabilities (private) | See [SECURITY.md](SECURITY.md). Never report vulnerabilities in public issues. |
 
 Community roles (maintainer, moderator, contributor, observer) are described in
 [GOVERNANCE.md](GOVERNANCE.md). All spaces follow the [Code of Conduct](CODE_OF_CONDUCT.md).
@@ -337,8 +333,7 @@ independently verify information and consult qualified experts before relying on
 ## Contact
 
 - General questions: [GitHub Discussions](https://github.com/Polityra/Open-Polityra/discussions)
-- Sponsorship, partnerships and press: 
-openpolityra@gmail.com
+- Sponsorship, partnerships and press: openpolityra@gmail.com
 - Security: [SECURITY.md](SECURITY.md)
 
 Never disclose vulnerabilities, personal data, credentials, or confidential information in public

@@ -5,14 +5,17 @@
   "tasks": {
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": ["MONGODB_URI", "GLOBAL_CONFIG", "OLLAMA_MODEL", "OLLAMA_CLOUD_MODEL"]
     },
     "start": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": ["MONGODB_URI", "GLOBAL_CONFIG", "OLLAMA_MODEL", "OLLAMA_CLOUD_MODEL"]
     },
     "build": {
       "dependsOn": ["^build"],
+      "env": ["MONGODB_URI", "GLOBAL_CONFIG", "OLLAMA_MODEL", "OLLAMA_CLOUD_MODEL"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
     },
     "lint": {

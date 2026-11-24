@@ -9,26 +9,26 @@ they can expect in return.
 
 We are looking mainly for **in-kind support**, not cash:
 
-| Need                                   | Details                                                                                       |
-| -------------------------------------- | --------------------------------------------------------------------------------------------- |
-| LLM inference credits or API access    | OpenAI-compatible API for open-weight models. Larger models than we can run locally.          |
-| GPU compute                            | For evaluation runs, backtesting and benchmarking of open-weight models.                      |
-| Hosting and infrastructure             | Small hosted environment for demo, staging and CI (PostgreSQL, containers).                   |
-| Technical guidance                     | Advice on inference optimisation, deployment and evaluation.                                  |
+| Need                                | Details                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------ |
+| LLM inference credits or API access | OpenAI-compatible API for open-weight models. Larger models than we can run locally. |
+| GPU compute                         | For evaluation runs, backtesting and benchmarking of open-weight models.             |
+| Hosting and infrastructure          | Small hosted environment for demo, staging and CI (PostgreSQL, containers).          |
+| Technical guidance                  | Advice on inference optimisation, deployment and evaluation.                         |
 
 Indicative scale at this stage: a few million tokens per month for development and evaluation,
 growing as the project matures. We can share concrete usage estimates on request.
 
-We prefer providers with **EU data residency** and **zero data retention**, but we welcome any
-offer that fits the project's goals.
+We prefer providers with **EU data residency** and **zero data retention**, but we welcome any offer
+that fits the project's goals.
 
 ## What we offer in return
 
 - **Visible attribution:** your name and logo in this file, in the README and on
   [open.polityra.org](https://open.polityra.org).
 - **Public thanks** in release notes and project announcements.
-- **Technical case study:** a write-up on running source-grounded geopolitical analysis on open-weight
-  models, with benchmarks run on your infrastructure.
+- **Technical case study:** a write-up on running source-grounded geopolitical analysis on
+  open-weight models, with benchmarks run on your infrastructure.
 - **Real-world feedback:** a public-interest workload using open models, with honest feedback on
   performance, reliability and developer experience.
 - **Open evaluation results:** model and provider benchmarks published openly where licences allow.
@@ -91,8 +91,7 @@ Supports the project with: <what they provide>. Since: <month year>.
 
 ## Technical notes for providers
 
-- Stack: Next.js, Express, Python, Rust, PostgreSQL. See
-  [README](README.md#repository-structure).
+- Stack: Next.js, Express, Python, Rust, PostgreSQL. See [README](README.md#repository-structure).
 - Current model runtime: Ollama with open-weight models. A provider adapter for OpenAI-compatible
   APIs is planned (see [ROADMAP.md](ROADMAP.md)).
 - Workload: batch and queue-based analysis jobs over public news and data sources, with human review
