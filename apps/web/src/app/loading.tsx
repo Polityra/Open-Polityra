@@ -15,8 +15,8 @@ export default function Loading() {
         priority
         className="h-12 w-auto animate-pulse"
       />
-      <div className="mt-8 h-0.5 w-40 overflow-hidden rounded bg-neutral-200">
-        <div className="h-full w-1/2 animate-[loadbar_1.2s_ease-in-out_infinite] bg-gradient-to-r from-neutral-400 to-neutral-950" />
+      <div className="mt-8 h-0.5 w-40 overflow-hidden rounded bg-white">
+        <div className="h-full w-1/2 animate-[loadbar_1.2s_ease-in-out_infinite] bg-white" />
       </div>
       <span className="sr-only">Loading…</span>
       <style>{`@keyframes loadbar{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}`}</style>

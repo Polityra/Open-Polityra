@@ -149,6 +149,43 @@ export class ApiClient {
   delete<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: "DELETE" });
   }
+
+  listDocuments(params: { limit?: number; offset?: number; sourceId?: string } = {}) {
+    const query = new URLSearchParams();
+    if (params.limit !== undefined) query.set("limit", String(params.limit));
+    if (params.offset !== undefined) query.set("offset", String(params.offset));
+    if (params.sourceId) query.set("sourceId", params.sourceId);
+    return this.get<{ documents: IntelligenceDocument[]; meta: { total: number } }>(
+      `/api/v1/intelligence/documents?${query}`,
+    );
+  }
+
+  getDocument(id: string) {
+    return this.get<{ document: IntelligenceDocument }>(`/api/v1/intelligence/documents/${id}`);
+  }
+
+  listClaims(params: { limit?: number; offset?: number; status?: ClaimStatus } = {}) {
+    const query = new URLSearchParams();
+    if (params.limit !== undefined) query.set("limit", String(params.limit));
+    if (params.offset !== undefined) query.set("offset", String(params.offset));
+    if (params.status) query.set("status", params.status);
+    return this.get<{ claims: IntelligenceClaim[] }>(`/api/v1/intelligence/claims?${query}`);
+  }
+
+  getClaim(id: string) {
+    return this.get<{ claim: IntelligenceClaim }>(`/api/v1/intelligence/claims/${id}`);
+  }
+
+  listPipelineJobs(params: { limit?: number; status?: string } = {}) {
+    const query = new URLSearchParams();
+    if (params.limit !== undefined) query.set("limit", String(params.limit));
+    if (params.status) query.set("status", params.status);
+    return this.get<{ jobs: PipelineJob[] }>(`/api/v1/pipeline/jobs?${query}`);
+  }
+
+  listPipelineWorkers() {
+    return this.get<{ workers: PipelineWorker[] }>("/api/v1/pipeline/workers");
+  }
 }
 
 export class ApiError extends Error {
@@ -209,8 +246,16 @@ export interface SourceRow {
   publisher: string | null;
   license: string | null;
   data_type: string;
+  source_type?: string;
   category: string;
   canonical_url: string | null;
+  geographic_scope?: string[];
+  language?: string | null;
+  source_classification?: string | null;
+  reliability_metadata?: Record<string, unknown>;
+  fetch_config?: Record<string, unknown>;
+  last_successful_fetch?: string | null;
+  last_failed_fetch?: string | null;
   metadata: Record<string, unknown> | null;
   is_active: boolean;
   created_at: string;
@@ -255,9 +300,11 @@ export interface IndicatorRow {
 export type AnalysisStatus = "pending" | "running" | "completed" | "failed";
 export interface AnalysisRow {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  title: string;
   status: AnalysisStatus;
   parameters: Record<string, unknown> | null;
+  result: Record<string, unknown> | null;
   result_id: string | null;
   error_message: string | null;
   created_at: string;
@@ -270,14 +317,14 @@ export interface ScenarioRow {
   description: string | null;
   assumptions: Record<string, unknown> | null;
   parameters: Record<string, unknown> | null;
-  created_by: string;
+  created_by: string | null;
   created_at: string;
 }
 
 export type ReportStatus = "draft" | "reviewing" | "published";
 export interface ReportRow {
   id: string;
-  user_id: string;
+  user_id: string | null;
   title: string;
   status: ReportStatus;
   format: string;
@@ -287,13 +334,108 @@ export interface ReportRow {
 
 export interface ForecastRow {
   id: string;
-  analysis_id: string;
+  analysis_id: string | null;
   target: string;
   method: string;
   values: Record<string, unknown> | null;
   confidence_lower: number | null;
   confidence_upper: number | null;
   created_at: string;
+}
+
+export type ClaimStatus =
+  | "unverified"
+  | "supported"
+  | "corroborated"
+  | "contradicted"
+  | "disputed"
+  | "insufficient_evidence"
+  | "under_review";
+
+export interface IntelligenceDocument {
+  id: string;
+  source_id: string;
+  source_name?: string;
+  canonical_url: string;
+  title: string;
+  document_type: string;
+  language: string | null;
+  content_hash: string;
+  normalized_text: string | null;
+  published_at: string | null;
+  ingested_at: string;
+  current_version: number;
+  metadata: Record<string, unknown>;
+  versions?: DocumentVersion[];
+}
+
+export interface DocumentVersion {
+  id: string;
+  version: number;
+  content_hash: string;
+  ingested_at: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface IntelligenceClaim {
+  id: string;
+  document_id: string;
+  document_title?: string;
+  claim_text: string;
+  claim_type: string;
+  source_start: number;
+  source_end: number;
+  status: ClaimStatus;
+  extraction_model: string;
+  extraction_confidence: number;
+  extracted_at: string;
+  evidence?: EvidenceRecord[];
+  verification_history?: VerificationRecord[];
+}
+
+export interface EvidenceRecord {
+  id: string;
+  claim_id: string;
+  document_id: string;
+  stance: "supports" | "contradicts" | "context";
+  quote: string;
+  source_start: number;
+  source_end: number;
+  relevance: number;
+  dependency_root: string | null;
+}
+
+export interface VerificationRecord {
+  id: string;
+  claim_id: string;
+  status: ClaimStatus;
+  reasoning: string;
+  created_at: string;
+}
+
+export interface PipelineJob {
+  id: string;
+  job_type: string;
+  payload: Record<string, unknown>;
+  status: string;
+  priority: number;
+  attempts: number;
+  max_attempts: number;
+  run_after: string;
+  last_error: string | null;
+  correlation_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PipelineWorker {
+  worker_id: string;
+  worker_type: string;
+  status: string;
+  started_at: string;
+  last_heartbeat_at: string;
+  healthy: boolean;
+  metadata: Record<string, unknown>;
 }
 
 export interface ModelRegistryRow {
@@ -386,6 +528,8 @@ export interface FiscalAnalysis {
 
 export type AiWorkflowStatus = "pending" | "running" | "completed" | "failed" | "cancelled";
 export type AiWorkflowType =
+  | "fiscal-explanation"
+  | "source-summary"
   | "economic-analysis"
   | "geopolitical-assessment"
   | "scenario-generation"
@@ -433,7 +577,7 @@ export interface OllamaHealthStatus {
   available: boolean;
   models: string[];
   modelAvailable: boolean;
-  provider: "ollama" | "ollama-cloud" | null;
+  provider: "ollama" | null;
   selectedModel: string | null;
   available_models?: Array<{
     name: string;
@@ -511,6 +655,12 @@ export const api = {
 
   /* ── Sources ───────────────────────────────────────────── */
   sources: {
+    discoverFeed(canonicalUrl: string) {
+      return _buildClient().post<{ feedUrl: string }, { canonicalUrl: string }>(
+        "/api/v1/sources/discover-feed",
+        { canonicalUrl },
+      );
+    },
     list(params?: { limit?: number; offset?: number; category?: string; topic?: NewsTopic }) {
       const qs = new URLSearchParams();
       if (params?.limit) qs.set("limit", String(params.limit));
@@ -541,7 +691,10 @@ export const api = {
     update(
       id: string,
       updates: Partial<
-        Pick<SourceRow, "name" | "publisher" | "license" | "canonical_url" | "metadata">
+        Pick<
+          SourceRow,
+          "name" | "publisher" | "license" | "canonical_url" | "metadata" | "is_active"
+        >
       >,
     ) {
       return _buildClient().patch<{ source: SourceRow }, typeof updates>(
@@ -611,16 +764,54 @@ export const api = {
       const qs = new URLSearchParams();
       if (params?.limit) qs.set("limit", String(params.limit));
       if (params?.offset) qs.set("offset", String(params.offset));
-      return _buildClient().get<{ analyses: AnalysisRow[] }>(`/api/v1/analyses?${qs}`);
+      return _buildClient().get<{ analyses: AnalysisRow[]; meta: PaginatedMeta }>(
+        `/api/v1/analyses?${qs}`,
+      );
     },
-    create(payload: { type: string; parameters: Record<string, unknown>; sourceIds?: string[] }) {
+    create(payload: {
+      title?: string;
+      topic: string;
+      context?: string;
+      sourceIds?: string[];
+      indicatorIds?: string[];
+      reportIds?: string[];
+      scenarioIds?: string[];
+      observations?: number[];
+      scope?: "global" | "regional" | "national" | "subnational" | "organization" | "topic";
+      time_horizon?: number;
+      methodology?: "descriptive" | "timeseries" | "forecasting" | "simulation" | "comprehensive";
+      enable_ai_synthesis?: boolean;
+    }) {
       return _buildClient().post<{ analysis: AnalysisRow }, typeof payload>(
         "/api/v1/analyses",
         payload,
       );
     },
     status(id: string) {
-      return _buildClient().get<{ status: string; result: unknown }>(`/api/v1/analyses/${id}`);
+      return _buildClient().get<{ analysis: AnalysisRow }>(`/api/v1/analyses/${id}`);
+    },
+  },
+
+  intelligence: {
+    listClaims(params?: { limit?: number; offset?: number; status?: ClaimStatus }) {
+      const qs = new URLSearchParams();
+      if (params?.limit) qs.set("limit", String(params.limit));
+      if (params?.offset) qs.set("offset", String(params.offset));
+      if (params?.status) qs.set("status", params.status);
+      return _buildClient().get<{ claims: IntelligenceClaim[] }>(
+        `/api/v1/intelligence/claims?${qs}`,
+      );
+    },
+    claim(id: string) {
+      return _buildClient().get<{ claim: IntelligenceClaim }>(
+        `/api/v1/intelligence/claims/${encodeURIComponent(id)}`,
+      );
+    },
+    review(id: string, payload: { status: ClaimStatus; note: string }) {
+      return _buildClient().post<{ verification: VerificationRecord }, typeof payload>(
+        `/api/v1/intelligence/claims/${encodeURIComponent(id)}/review`,
+        payload,
+      );
     },
   },
 
@@ -630,7 +821,9 @@ export const api = {
       const qs = new URLSearchParams();
       if (params?.limit) qs.set("limit", String(params.limit));
       if (params?.offset) qs.set("offset", String(params.offset));
-      return _buildClient().get<{ scenarios: ScenarioRow[] }>(`/api/v1/scenarios?${qs}`);
+      return _buildClient().get<{ scenarios: ScenarioRow[]; meta: PaginatedMeta }>(
+        `/api/v1/scenarios?${qs}`,
+      );
     },
     create(payload: {
       name: string;
@@ -655,7 +848,9 @@ export const api = {
       if (params?.status) qs.set("status", params.status);
       if (params?.limit) qs.set("limit", String(params.limit));
       if (params?.offset) qs.set("offset", String(params.offset));
-      return _buildClient().get<{ reports: ReportRow[] }>(`/api/v1/reports?${qs}`);
+      return _buildClient().get<{ reports: ReportRow[]; meta: PaginatedMeta }>(
+        `/api/v1/reports?${qs}`,
+      );
     },
     create(payload: { title: string; content?: Record<string, unknown> }) {
       return _buildClient().post<{ report: ReportRow }, typeof payload>("/api/v1/reports", payload);
@@ -698,7 +893,24 @@ export const api = {
       if (params?.analysisId) qs.set("analysisId", params.analysisId);
       if (params?.limit) qs.set("limit", String(params.limit));
       if (params?.offset) qs.set("offset", String(params.offset));
-      return _buildClient().get<{ forecasts: ForecastRow[] }>(`/api/v1/forecasts?${qs}`);
+      return _buildClient().get<{ forecasts: ForecastRow[]; meta: PaginatedMeta }>(
+        `/api/v1/forecasts?${qs}`,
+      );
+    },
+    create(payload: {
+      target: string;
+      observations: number[];
+      horizon?: number;
+      context?: string;
+      sourceIds?: string[];
+      indicatorIds?: string[];
+      reportIds?: string[];
+      scenarioIds?: string[];
+    }) {
+      return _buildClient().post<{ forecast: ForecastRow; analysis: AnalysisRow }, typeof payload>(
+        "/api/v1/forecasts",
+        payload,
+      );
     },
   },
 
@@ -741,12 +953,15 @@ export const api = {
         `/api/v1/ai-workflows?${qs}`,
       );
     },
+    review(id: string, payload: { decision: "approved" | "rejected"; note?: string }) {
+      return _buildClient().post<{ workflow: AiWorkflowRow }, typeof payload>(
+        `/api/v1/ai-workflows/${id}/review`,
+        payload,
+      );
+    },
     create(payload: {
       title: string;
-      description?: string;
-      type: AiWorkflowType;
-      model?: string;
-      systemPrompt?: string;
+      type: "fiscal-explanation" | "source-summary";
       parameters: Record<string, unknown>;
     }) {
       return _buildClient().post<

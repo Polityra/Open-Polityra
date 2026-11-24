@@ -6,7 +6,7 @@ import HeroBackground from "@/components/landing/HeroBackground";
 import { createPageMetadata, REPO_URL } from "@/lib/site";
 
 export const metadata = createPageMetadata({
-  title: "About the Open Polityra Project",
+  title: "About: Mission & Principles",
   description:
     "Learn about Open Polityra, an independent open-source research project focused on public evidence, transparent methods, uncertainty, and human accountability.",
   path: "/about",

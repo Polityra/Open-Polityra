@@ -4,11 +4,13 @@
     "api": {
       "root": "apps/api",
       "framework": "express",
-      "entrypoint": "src/index.ts"
+      "entrypoint": "entry.js",
+      "installCommand": "corepack enable && pnpm install --frozen-lockfile"
     },
     "web": {
       "root": "apps/web",
-      "framework": "nextjs"
+      "framework": "nextjs",
+      "installCommand": "corepack enable && pnpm install --frozen-lockfile"
     },
     "analysis-worker": {
       "root": "services/analysis-worker",
@@ -31,7 +33,7 @@
   ],
   "crons": [
     {
-      "path": "/api/v1/news/sync",
+      "path": "/api/v1/pipeline/schedule",
       "schedule": "0 0 * * *"
     }
   ]

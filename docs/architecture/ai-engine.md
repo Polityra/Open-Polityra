@@ -11,10 +11,10 @@ quantification.
 The Python analysis service (`services/analysis-worker/`) uses a provider abstraction interface
 (`src/ai/providers/base.py`). Implementations:
 
-- **OllamaLocalProvider** (`src/ai/providers/local_provider.py`): Development default using local
-  Ollama instances
-- **Future providers**: Cloud-based models can be added by implementing the `AIProvider` abstract
-  interface
+- **OllamaLocalProvider** (`src/ai/providers/local_provider.py`): Uses the local `olmo-3:7b` model
+  by default. Configure `OLLAMA_BASE_URL` and `OLLAMA_MODEL` for the worker.
+- The Express API's AI workflows use the same local Ollama endpoint and default model through
+  `OLLAMA_BASE_URL` and `AI_MODEL`. Cloud fallback is disabled.
 
 This ensures the platform is not locked into any single AI provider and can swap providers based on
 capability, cost, and compliance requirements.
@@ -22,7 +22,7 @@ capability, cost, and compliance requirements.
 ## Analysis Pipeline
 
 ```
-User Request → Data Retrieval → Statistical Processing → AI-Assisted Synthesis → Result Formatting
+User Request → Supplied DB Context/Observed Values → Statistical Processing → AI Synthesis → Result Formatting
                    │                    │                      │                        │
               Source metadata       Descriptive stats     Context generation         Evidence + confidence
               Provenance tracking   Timeseries methods    Interpretation draft      Methodology documentation

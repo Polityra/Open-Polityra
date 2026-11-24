@@ -1,8 +1,18 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Database, Search, CheckCircle2, ChevronLeft, ChevronRight, Plus, Rss } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Database,
+  Search,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Rss,
+  Pause,
+  Play,
+} from "lucide-react";
 import { api, type NewsTopic, type SourceRow } from "@open-polityra/api-client";
 import {
   PageHeader,
@@ -23,7 +33,7 @@ import {
 } from "@/components/dashboard/kit";
 
 const PAGE = 20;
-const TYPES = ["primary", "secondary", "tertiary"];
+const TYPES = ["api", "dataset", "indicator", "report", "raw_data"];
 const NEWS_TOPICS: { id: NewsTopic; label: string }[] = [
   { id: "geopolitics", label: "Geopolitics" },
   { id: "conflict", label: "Wars & conflicts" },
@@ -73,11 +83,23 @@ export default function SourcesClient() {
   const [publisher, setPublisher] = useState("");
   const [domainUrl, setDomainUrl] = useState("");
   const [feedUrl, setFeedUrl] = useState("");
+  const [discovering, setDiscovering] = useState(false);
+  const [feedNotice, setFeedNotice] = useState<string | null>(null);
+  const discoveryVersion = useRef(0);
   const [sourceCategory, setSourceCategory] = useState<"geopolitical" | "security">("geopolitical");
   const [selectedTopics, setSelectedTopics] = useState<NewsTopic[]>(["geopolitics"]);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  useEffect(
+    () => () => {
+      discoveryVersion.current += 1;
+    },
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -130,13 +152,35 @@ export default function SourcesClient() {
   const active = sources.filter((s) => s.is_active).length;
   const pages = Math.max(1, Math.ceil(total / PAGE));
 
+  async function findFeed(website: string) {
+    if (!getSuggestedFeedUrl(website)) return;
+    const version = ++discoveryVersion.current;
+    setDiscovering(true);
+    setFeedNotice(null);
+    try {
+      const result = await api.sources.discoverFeed(website);
+      if (version === discoveryVersion.current) {
+        setFeedUrl(result.feedUrl);
+        setFeedNotice("Verified RSS/Atom feed found.");
+      }
+    } catch (cause) {
+      if (version === discoveryVersion.current) {
+        setFeedNotice(
+          cause instanceof Error ? cause.message : "Feed discovery failed. Enter a feed URL.",
+        );
+      }
+    } finally {
+      if (version === discoveryVersion.current) setDiscovering(false);
+    }
+  }
+
   async function addSource(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
     setFormError(null);
     setFormSuccess(null);
     try {
-      await api.sources.create({
+      const { source } = await api.sources.create({
         name: name.trim(),
         publisher: publisher.trim() || undefined,
         dataType: "api",
@@ -151,7 +195,9 @@ export default function SourcesClient() {
       setFeedUrl("");
       setPage(1);
       setCategory("");
-      setFormSuccess("RSS/Atom source added. It will be checked on the next 15-minute feed sync.");
+      setFormSuccess(
+        `RSS/Atom source added with feed ${getNewsFeedUrl(source.metadata)}. It will be checked on the next 15-minute feed sync.`,
+      );
       try {
         const refreshed = await api.sources.list({ limit: PAGE, offset: 0 });
         const rows = pick<SourceRow>(refreshed, "sources");
@@ -172,6 +218,21 @@ export default function SourcesClient() {
     }
   }
 
+  async function toggleActive(source: SourceRow) {
+    setUpdatingId(source.id);
+    setActionError(null);
+    try {
+      const { source: updated } = await api.sources.update(source.id, {
+        is_active: !source.is_active,
+      });
+      setSources((current) => current.map((row) => (row.id === updated.id ? updated : row)));
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "Could not update this source.");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -180,6 +241,8 @@ export default function SourcesClient() {
         description="Manage public RSS/Atom feeds used for geopolitics and security news monitoring."
       />
 
+      {actionError && <ErrorNote>{actionError}</ErrorNote>}
+
       <form className={`${panel} space-y-5 p-5`} onSubmit={addSource}>
         <div>
           <div className="flex items-center gap-2 text-sm font-semibold text-neutral-950">
@@ -187,8 +250,8 @@ export default function SourcesClient() {
             Add a news feed
           </div>
           <p className="mt-1 text-xs text-neutral-600">
-            Only the configured HTTPS RSS/Atom feed is fetched; the scraper does not crawl or probe
-            the rest of the site.
+            The site is checked for an advertised feed and a few common feed paths. Only HTTPS feeds
+            on the same domain are accepted.
           </p>
         </div>
         {formError && <ErrorNote>{formError}</ErrorNote>}
@@ -223,9 +286,13 @@ export default function SourcesClient() {
               value={domainUrl}
               onChange={(event) => {
                 const url = event.target.value;
+                discoveryVersion.current += 1;
+                setDiscovering(false);
+                setFeedNotice(null);
                 setDomainUrl(url);
                 setFeedUrl(getSuggestedFeedUrl(url));
               }}
+              onBlur={() => void findFeed(domainUrl.trim())}
               className={`${inputClass} mt-2`}
               placeholder="https://news.example.org"
             />
@@ -236,12 +303,22 @@ export default function SourcesClient() {
               required
               type="url"
               value={feedUrl}
-              onChange={(event) => setFeedUrl(event.target.value)}
+              onChange={(event) => {
+                discoveryVersion.current += 1;
+                setDiscovering(false);
+                setFeedNotice(null);
+                setFeedUrl(event.target.value);
+              }}
               className={`${inputClass} mt-2`}
               placeholder="https://news.example.org/rss.xml"
             />
           </label>
         </div>
+        {(discovering || feedNotice) && (
+          <p role="status" className="text-xs text-neutral-600">
+            {discovering ? "Looking for a verified feed…" : feedNotice}
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <span className="mr-2 font-mono text-[11px] uppercase tracking-wider text-neutral-500">
             Category
@@ -285,7 +362,7 @@ export default function SourcesClient() {
         </fieldset>
         <button
           type="submit"
-          disabled={saving || selectedTopics.length === 0}
+          disabled={saving || discovering || selectedTopics.length === 0}
           className="inline-flex items-center gap-2 rounded-lg bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
@@ -427,6 +504,7 @@ export default function SourcesClient() {
                     "Category",
                     "Topics",
                     "Status",
+                    "Action",
                   ].map((h) => (
                     <th key={h} className={th}>
                       {h}
@@ -445,9 +523,7 @@ export default function SourcesClient() {
                       {getNewsFeedUrl(s.metadata) || s.canonical_url || "—"}
                     </td>
                     <td className="px-6 py-3.5">
-                      <Badge tone={s.data_type === "primary" ? "info" : "neutral"}>
-                        {s.data_type}
-                      </Badge>
+                      <Badge tone={s.data_type === "api" ? "info" : "neutral"}>{s.data_type}</Badge>
                     </td>
                     <td className="px-6 py-3.5 text-neutral-600">{s.publisher || "—"}</td>
                     <td className="px-6 py-3.5 capitalize text-neutral-600">{s.category || "—"}</td>
@@ -458,6 +534,22 @@ export default function SourcesClient() {
                       <Badge tone={s.is_active ? "success" : "danger"}>
                         {s.is_active ? "Active" : "Inactive"}
                       </Badge>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <button
+                        type="button"
+                        disabled={updatingId === s.id}
+                        onClick={() => void toggleActive(s)}
+                        className={btnGhost}
+                        aria-label={`${s.is_active ? "Pause" : "Activate"} ${s.name}`}
+                      >
+                        {s.is_active ? (
+                          <Pause className="h-3.5 w-3.5" />
+                        ) : (
+                          <Play className="h-3.5 w-3.5" />
+                        )}
+                        {s.is_active ? "Pause" : "Activate"}
+                      </button>
                     </td>
                   </tr>
                 ))}

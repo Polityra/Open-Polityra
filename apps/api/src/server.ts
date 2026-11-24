@@ -1,21 +1,18 @@
 async function startServer(): Promise<void> {
   const [{ createApp }, { getEnv }, { closePool }] = await Promise.all([
-    import("./app"),
-    import("./config/env"),
-    import("./config/database"),
+    import("./app.js"),
+    import("./config/env.js"),
+    import("./config/database.js"),
   ]);
 
   const app = createApp();
   const cfg = getEnv();
-  const { startNewsScraper } = await import("./modules/news/scraper");
-  const stopNewsScraper = startNewsScraper();
   const server = app.listen(cfg.PORT, () => {
     console.log(`Open Polityra API listening on port ${cfg.PORT}`);
   });
 
   function gracefulShutdown(signal: string) {
     console.log(`\n${signal} received. Shutting down...`);
-    stopNewsScraper();
     server.close(async () => {
       await closePool();
       console.log("Database connection pool closed.");

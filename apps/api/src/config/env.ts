@@ -8,15 +8,11 @@ export const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: z.string().default("7d"),
   PYTHON_SERVICE_URL: z.string().url().default("http://localhost:8000"),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900_000),
-  RATE_LIMIT_MAX: z.coerce.number().default(100),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000_000),
+  RATE_LIMIT_MAX: z.coerce.number().default(9_999_999_999),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
-  AI_PROVIDER: z.string().default("ollama"),
   OLLAMA_BASE_URL: z.string().url().default("http://localhost:11434"),
-  OLLAMA_API_KEY: z.string().default(""),
-  AI_API_KEY: z.string().default(""),
-  AI_MODEL: z.string().default("qwen3:14b"),
-  OLLAMA_CLOUD_MODEL: z.string().default("gemma4:31b"),
+  AI_MODEL: z.string().default("beam"),
   AI_ENABLED: z.coerce.boolean().default(true),
 });
 

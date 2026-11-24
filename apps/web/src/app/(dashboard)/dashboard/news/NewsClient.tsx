@@ -13,6 +13,7 @@ import {
   chip,
   inputClass,
 } from "@/components/dashboard/kit";
+import AnalysisRunner from "@/components/dashboard/AnalysisRunner";
 
 const TOPICS: { id: NewsTopic; label: string }[] = [
   { id: "geopolitics", label: "Geopolitics" },
@@ -194,6 +195,15 @@ export default function NewsClient() {
         </div>
       </div>
 
+      <AnalysisRunner
+        topic={
+          search.trim()
+            ? `Assess the news pattern around: ${search.trim()}`
+            : `${topic || category || "global news"} monitoring assessment`
+        }
+        sourceIds={[...new Set(items.map((item) => item.source_id))].slice(0, 40)}
+      />
+
       {syncNote && (
         <p role="status" className="text-sm text-neutral-600">
           {syncNote}
@@ -206,12 +216,12 @@ export default function NewsClient() {
         <EmptyState
           icon={Newspaper}
           title="No feed items found"
-          text="Add HTTPS RSS/Atom feeds in Sources, then sync them. Configured feeds are checked every 15 minutes, including by Vercel Cron in production."
+          text="Add HTTPS RSS/Atom feeds in Sources, then sync or queue a scheduled fetch. Results remain in the stored archive."
         />
       ) : (
         <div className="space-y-3">
           <p className="text-xs text-neutral-500">
-            Showing {items.length} of {total} stored items · retained for up to 90 days
+            Showing {items.length} of {total} stored items · retained as historical source records
           </p>
           {items.map((item) => (
             <article key={item.id} className={`${panel} space-y-3 p-5`}>

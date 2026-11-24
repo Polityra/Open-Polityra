@@ -19,6 +19,9 @@ const sourceObjectSchema = z
     publisher: z.string().max(255).optional(),
     license: z.string().max(128).optional(),
     dataType: z.enum(["dataset", "indicator", "report", "api", "raw_data"]),
+    sourceType: z
+      .enum(["rss", "atom", "rest_api", "government", "organization", "dataset", "document"])
+      .optional(),
     category: z.enum([
       "economic",
       "geopolitical",
@@ -29,9 +32,15 @@ const sourceObjectSchema = z
       "infrastructure",
     ]),
     canonicalUrl: z.string().url().optional(),
+    geographicScope: z.array(z.string().min(1).max(120)).max(100).optional(),
+    language: z.string().min(2).max(16).optional(),
+    sourceClassification: z.string().min(1).max(64).optional(),
+    reliabilityMetadata: z.record(z.string(), z.unknown()).optional(),
+    fetchConfig: z.record(z.string(), z.unknown()).optional(),
     feedUrl: httpsUrl.optional(),
     topics: z.array(z.enum(newsTopics)).min(1).max(newsTopics.length).optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
+    is_active: z.boolean().optional(),
   })
   .strict();
 

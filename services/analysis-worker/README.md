@@ -19,6 +19,10 @@ poetry run dev
 The service listens on `http://localhost:8000`. Health endpoints are available at `/api/v1/health`
 and `/api/v1/health/ready`; interactive API documentation is available at `/docs`.
 
+The root `pnpm dev` command starts the worker alongside the web app and API. It uses
+`services/analysis-worker/.venv` if present, or `poetry run dev` otherwise, and passes root `.env`
+settings to the worker. Install the worker dependencies first.
+
 ## Checks
 
 ```bash
@@ -27,6 +31,6 @@ poetry run mypy src
 poetry run pytest
 ```
 
-The current worker includes placeholder readiness checks and a local storage implementation. Do not
-treat its health response as proof that external AI providers, persistent storage, or production
-integrations are available.
+Readiness checks the configured Ollama model, but is not proof of persistent storage or other
+production integrations. Forecasts are simple moving-average baselines, not calibrated predictions;
+they require at least ten observations, and their uncertainty bounds assume normality.

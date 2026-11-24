@@ -1,0 +1,16 @@
+FROM rust:1.88-bookworm AS builder
+
+WORKDIR /app
+COPY services/rust ./services/rust
+RUN cargo build --manifest-path services/rust/Cargo.toml --release --bin polityra-ingestion
+
+FROM debian:bookworm-slim AS runner
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/services/rust/target/release/polityra-ingestion /usr/local/bin/polityra-ingestion
+
+ENV PIPELINE_POLL_INTERVAL_MS=1000
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD test -d /proc/1
+CMD ["polityra-ingestion"]

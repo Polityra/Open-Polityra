@@ -25,7 +25,7 @@ import HeroBackground from "@/components/landing/HeroBackground";
 export const metadata = createPageMetadata({
   title: "Open-Source Research on Public Issues",
   description:
-    "Explore transparent, public-source analysis of economics, geopolitics, security, and resilience. Open Polityra makes sources, assumptions, and uncertainty easier to inspect.",
+    "Explore Open Polityra, an open-source research platform for economics, geopolitics, security, and resilience. Inspect its public sources, methods, assumptions, and limitations.",
   path: "/",
 });
 export const instant = false;

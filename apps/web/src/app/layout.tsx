@@ -43,20 +43,42 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: "Open Polityra | Open-Source Public-Interest Research",
     description: DEFAULT_DESCRIPTION,
-    images: [{ url: OG_IMAGE, alt: "Open Polityra research platform" }],
+    images: [
+      {
+        url: OG_IMAGE,
+        width: 1672,
+        height: 941,
+        alt: "Open Polityra research platform",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Open Polityra | Open-Source Public-Interest Research",
     description: DEFAULT_DESCRIPTION,
-    images: [OG_IMAGE],
+    images: [{ url: OG_IMAGE, alt: "Open Polityra research platform" }],
   },
+};
+
+const websiteStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+  description: DEFAULT_DESCRIPTION,
+  inLanguage: "en",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteStructuredData).replace(/</g, "\\u003c"),
+          }}
+        />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

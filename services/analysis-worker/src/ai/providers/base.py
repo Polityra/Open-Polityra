@@ -54,7 +54,7 @@ class ModelRegistry:
     Usage::
 
         reg = ModelRegistry()
-        reg.register("default", OllamaProvider(model="llama3.2"))
+        reg.register("default", OllamaProvider(model="olmo-3:7b"))
         prov = reg.resolve("default")
     """
 

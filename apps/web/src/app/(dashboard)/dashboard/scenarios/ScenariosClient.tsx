@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, GitBranch, TrendingUp, Zap, ArrowRightLeft, Sprout } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
+import { Plus, GitBranch, TrendingUp, Zap, ArrowRightLeft, Sprout, Loader2 } from "lucide-react";
 import { api, type ScenarioRow } from "@open-polityra/api-client";
 import {
   PageHeader,
@@ -12,10 +12,12 @@ import {
   panel,
   sectionTitle,
   btnPrimary,
+  inputClass,
   th,
   pick,
   fmtDate,
 } from "@/components/dashboard/kit";
+import AnalysisRunner from "@/components/dashboard/AnalysisRunner";
 
 // Reference templates (documentation of scenario archetypes, not database records)
 const templates = [
@@ -45,10 +47,23 @@ const templates = [
   },
 ];
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export default function ScenariosClient() {
   const [scenarios, setScenarios] = useState<ScenarioRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [assumptions, setAssumptions] = useState("");
+  const [parameters, setParameters] = useState("{}");
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +80,40 @@ export default function ScenariosClient() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshKey]);
+
+  function applyTemplate(template: (typeof templates)[number]) {
+    setName(template.name);
+    setDescription(template.description);
+    setAssumptions("");
+    setParameters(JSON.stringify({ archetype: template.name, tags: template.parameters }, null, 2));
+    setShowForm(true);
+    setFormError(null);
+  }
+
+  async function createScenario(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setFormError(null);
+    try {
+      const parsedParameters: unknown = JSON.parse(parameters);
+      if (!isRecord(parsedParameters)) {
+        throw new Error("Parameters must be a JSON object.");
+      }
+      await api.scenarios.create({
+        name: name.trim(),
+        description: description.trim() || undefined,
+        assumptions: assumptions.trim() ? { narrative: assumptions.trim() } : {},
+        parameters: parsedParameters,
+      });
+      setShowForm(false);
+      setRefreshKey((key) => key + 1);
+    } catch (cause) {
+      setFormError(cause instanceof Error ? cause.message : "Could not save this scenario.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -76,14 +124,67 @@ export default function ScenariosClient() {
         action={
           <button
             type="button"
-            disabled
-            title="Scenario creation isn't available yet"
+            onClick={() => setShowForm((value) => !value)}
             className={btnPrimary}
           >
-            <Plus className="h-4 w-4" /> New scenario
+            <Plus className="h-4 w-4" /> {showForm ? "Close form" : "New scenario"}
           </button>
         }
       />
+
+      {showForm && (
+        <form onSubmit={createScenario} className={`${panel} space-y-4 p-6`}>
+          <h2 className="font-display text-lg font-semibold text-neutral-950">
+            Save a scenario pathway
+          </h2>
+          <label className="block text-sm font-medium text-neutral-700">
+            Name
+            <input
+              required
+              minLength={2}
+              maxLength={255}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className={`${inputClass} mt-1.5`}
+            />
+          </label>
+          <label className="block text-sm font-medium text-neutral-700">
+            Description
+            <input
+              maxLength={2000}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              className={`${inputClass} mt-1.5`}
+            />
+          </label>
+          <label className="block text-sm font-medium text-neutral-700">
+            Assumptions
+            <textarea
+              rows={3}
+              maxLength={6000}
+              value={assumptions}
+              onChange={(event) => setAssumptions(event.target.value)}
+              className={`${inputClass} mt-1.5`}
+              placeholder="State the assumptions and uncertainty behind this pathway."
+            />
+          </label>
+          <label className="block text-sm font-medium text-neutral-700">
+            Parameters (JSON object)
+            <textarea
+              required
+              rows={5}
+              value={parameters}
+              onChange={(event) => setParameters(event.target.value)}
+              className={`${inputClass} mt-1.5 font-mono`}
+            />
+          </label>
+          {formError && <ErrorNote>{formError}</ErrorNote>}
+          <button type="submit" className={btnPrimary} disabled={saving}>
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {saving ? "Saving…" : "Save scenario"}
+          </button>
+        </form>
+      )}
 
       <InfoNote>
         <span className="font-semibold">Note:</span> Scenario modeling produces non-predictive
@@ -121,16 +222,44 @@ export default function ScenariosClient() {
               </thead>
               <tbody className="divide-y divide-black/[0.08]">
                 {scenarios.map((s) => (
-                  <tr key={s.id} className="transition-colors hover:bg-black/[0.03]">
-                    <td className="px-6 py-3.5 font-medium text-neutral-950">{s.name}</td>
-                    <td className="max-w-xs truncate px-6 py-3.5 text-neutral-600">
-                      {s.description || "—"}
-                    </td>
-                    <td className="px-6 py-3.5 font-mono text-xs text-neutral-600">
-                      {s.parameters ? Object.keys(s.parameters).length : 0} values
-                    </td>
-                    <td className="px-6 py-3.5 text-neutral-600">{fmtDate(s.created_at)}</td>
-                  </tr>
+                  <Fragment key={s.id}>
+                    <tr className="transition-colors hover:bg-black/[0.03]">
+                      <td className="px-6 py-3.5 font-medium text-neutral-950">
+                        <button
+                          type="button"
+                          aria-expanded={expanded === s.id}
+                          onClick={() => setExpanded(expanded === s.id ? null : s.id)}
+                          className="text-left hover:underline"
+                        >
+                          {s.name}
+                        </button>
+                      </td>
+                      <td className="max-w-xs truncate px-6 py-3.5 text-neutral-600">
+                        {s.description || "—"}
+                      </td>
+                      <td className="px-6 py-3.5 font-mono text-xs text-neutral-600">
+                        {s.parameters ? Object.keys(s.parameters).length : 0} values
+                      </td>
+                      <td className="px-6 py-3.5 text-neutral-600">{fmtDate(s.created_at)}</td>
+                    </tr>
+                    {expanded === s.id && (
+                      <tr>
+                        <td colSpan={4} className="space-y-4 bg-neutral-50 p-5">
+                          <pre className="overflow-auto whitespace-pre-wrap text-xs leading-5 text-neutral-600">
+                            {JSON.stringify(
+                              { assumptions: s.assumptions, parameters: s.parameters },
+                              null,
+                              2,
+                            )}
+                          </pre>
+                          <AnalysisRunner
+                            topic={`Scenario assessment: ${s.name}`}
+                            scenarioIds={[s.id]}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -142,7 +271,12 @@ export default function ScenariosClient() {
         <h2 className={`${sectionTitle} mb-3`}>Scenario templates</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {templates.map((t) => (
-            <div key={t.name} className={`${panel} p-5 transition-colors hover:border-black/40`}>
+            <button
+              type="button"
+              key={t.name}
+              onClick={() => applyTemplate(t)}
+              className={`${panel} p-5 text-left transition-colors hover:border-black/40`}
+            >
               <span className="inline-flex rounded-lg border border-black/10 bg-neutral-100 p-2.5 text-neutral-900">
                 <t.icon className="h-5 w-5" />
               </span>
@@ -160,7 +294,7 @@ export default function ScenariosClient() {
                   </span>
                 ))}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

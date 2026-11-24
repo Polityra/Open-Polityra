@@ -2,6 +2,47 @@ import type { Request, Response } from "express";
 import * as sourceService from "./service";
 import { createSourceSchema, updateSourceSchema } from "./schema";
 import { validateFeedUrl } from "../news/scraper";
+import { discoverFeed } from "../news/discovery";
+import { z } from "zod";
+
+const discoverFeedSchema = z.object({
+  canonicalUrl: z
+    .string()
+    .url()
+    .refine(
+      (value) => URL.canParse(value) && new URL(value).protocol === "https:",
+      "URL must use HTTPS",
+    ),
+});
+
+export async function discoverSourceFeed(req: Request, res: Response): Promise<void> {
+  const parsed = discoverFeedSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      ok: false,
+      error: { code: "validation_error", message: parsed.error.message },
+      meta: { timestamp: new Date().toISOString() },
+    });
+    return;
+  }
+  try {
+    const feedUrl = await discoverFeed(parsed.data.canonicalUrl);
+    res.json({
+      ok: true,
+      data: { feedUrl },
+      meta: { requestId: req.id ?? "", timestamp: new Date().toISOString() },
+    });
+  } catch (error) {
+    res.status(400).json({
+      ok: false,
+      error: {
+        code: "feed_discovery_failed",
+        message: error instanceof Error ? error.message : String(error),
+      },
+      meta: { timestamp: new Date().toISOString() },
+    });
+  }
+}
 
 export async function listSources(req: Request, res: Response): Promise<void> {
   const category = req.query.category as string | undefined;
@@ -31,6 +72,7 @@ export async function createSource(req: Request, res: Response): Promise<void> {
   if (parsed.data.feedUrl && parsed.data.canonicalUrl) {
     try {
       await validateFeedUrl(parsed.data.feedUrl, new URL(parsed.data.canonicalUrl).hostname);
+      parsed.data.feedUrl = await discoverFeed(parsed.data.canonicalUrl, parsed.data.feedUrl);
     } catch (error) {
       res.status(400).json({
         ok: false,

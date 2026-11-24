@@ -15,7 +15,7 @@ import { createPageMetadata, REPO_URL } from "@/lib/site";
 import HeroBackground from "@/components/landing/HeroBackground";
 
 export const metadata = createPageMetadata({
-  title: "Research Areas: Economics, Security and More",
+  title: "Research Areas: Economics, Geopolitics & Security",
   description:
     "Explore Open Polityra's research areas, including economics and public finance, geopolitics, security and cybersecurity, resilience, public services, and international trade.",
   path: "/research",

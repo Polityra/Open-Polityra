@@ -4,13 +4,13 @@
   "private": true,
   "description": "Independent open-source research and strategic intelligence platform.",
   "license": "Apache-2.0",
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@12.18.0",
   "engines": {
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "turbo run dev --parallel",
-    "start": "turbo run start",
+    "dev": "node --env-file-if-exists=.env scripts/dev.mjs",
+    "start": "node --env-file-if-exists=.env scripts/dev.mjs start",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
@@ -22,12 +22,7 @@
   },
   "devDependencies": {
     "prettier": "^3.0.0",
-    "turbo": "^2.0.0",
+    "turbo": "^2.11.11",
     "typescript": "^5.0.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "@typescript-eslint/typescript-estree>minimatch": "11.0.4"
-    }
   }
 }

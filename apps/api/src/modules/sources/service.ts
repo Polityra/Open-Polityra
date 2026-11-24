@@ -22,8 +22,14 @@ export async function createSource(params: CreateSourceInput): Promise<SourceRow
     publisher: params.publisher,
     license: params.license,
     dataType: params.dataType,
+    sourceType: params.sourceType,
     category: params.category,
     canonicalUrl: params.canonicalUrl,
+    language: params.language,
+    geographicScope: params.geographicScope,
+    sourceClassification: params.sourceClassification,
+    reliabilityMetadata: params.reliabilityMetadata,
+    fetchConfig: params.fetchConfig,
     metadata: {
       ...params.metadata,
       ...(params.feedUrl && params.topics
@@ -56,13 +62,34 @@ export async function updateSource(
   if (!existing) throw new NotFoundError("Source");
 
   const mapped: Partial<
-    Pick<SourceRow, "name" | "publisher" | "license" | "canonical_url" | "metadata">
+    Pick<
+      SourceRow,
+      | "name"
+      | "publisher"
+      | "license"
+      | "canonical_url"
+      | "metadata"
+      | "is_active"
+      | "geographic_scope"
+      | "language"
+      | "source_classification"
+      | "reliability_metadata"
+      | "fetch_config"
+    >
   > = {};
   if (updates.name !== undefined) mapped.name = updates.name;
   if (updates.publisher !== undefined) mapped.publisher = updates.publisher;
   if (updates.license !== undefined) mapped.license = updates.license;
   if (updates.canonicalUrl !== undefined) mapped.canonical_url = updates.canonicalUrl;
   if (updates.metadata !== undefined) mapped.metadata = updates.metadata;
+  if (updates.is_active !== undefined) mapped.is_active = updates.is_active;
+  if (updates.geographicScope !== undefined) mapped.geographic_scope = updates.geographicScope;
+  if (updates.language !== undefined) mapped.language = updates.language;
+  if (updates.sourceClassification !== undefined)
+    mapped.source_classification = updates.sourceClassification;
+  if (updates.reliabilityMetadata !== undefined)
+    mapped.reliability_metadata = updates.reliabilityMetadata;
+  if (updates.fetchConfig !== undefined) mapped.fetch_config = updates.fetchConfig;
 
   return repo.update(id, mapped);
 }
