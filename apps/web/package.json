@@ -13,7 +13,7 @@
     "@open-polityra/api-client": "file:../../packages/api-client",
     "@open-polityra/contracts": "file:../../packages/contracts",
     "@open-polityra/ui": "file:../../packages/ui",
-    "lucide-react": "^1.73.0",
+    "lucide-react": "^1.77.0",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.1",
